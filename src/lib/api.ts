@@ -3,7 +3,7 @@ import type { paths } from '@/types/generated/api';
 
 const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const API_BASE_URL = RAW_BASE_URL.replace(/\/+$/, '');
-const AUTO_REDIRECT_ON_401 = process.env.NEXT_PUBLIC_AUTH_AUTO_REDIRECT_ON_401 === 'true';
+const AUTO_REDIRECT_ON_401 = process.env.NEXT_PUBLIC_AUTH_AUTO_REDIRECT_ON_401 !== 'false'; // Default to true
 
 // Create the main API client
 export const api = createClient<paths>({
@@ -30,11 +30,30 @@ api.use({
 
   onResponse({ response }) {
     if (!response.ok) {
-      // Handle 401 Unauthorized without force-logging the user out
+      // Handle 401 Unauthorized - token expired
       if (response.status === 401) {
-        console.warn('API 401 Unauthorized:', response.url);
-        if (AUTO_REDIRECT_ON_401 && typeof window !== 'undefined') {
-          window.location.href = '/auth/login';
+        console.warn('API 401 Unauthorized - Token expired:', response.url);
+
+        // Clear expired tokens
+        clearAuthToken();
+
+        // Clear auth store if available
+        if (typeof window !== 'undefined') {
+          // Clear localStorage auth storage
+          localStorage.removeItem('auth-storage');
+
+          // Note: Auth store invalidation will be handled by the auth hook
+          // when it detects 401 responses
+
+          // Redirect to login with current path if it's not a login request
+          if (!response.url.includes('/login') && !response.url.includes('/register')) {
+            const currentPath = window.location.pathname;
+            const loginUrl = `/auth/login?redirect=${encodeURIComponent(currentPath)}`;
+
+            if (AUTO_REDIRECT_ON_401) {
+              window.location.href = loginUrl;
+            }
+          }
         }
       }
 

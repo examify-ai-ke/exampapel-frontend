@@ -227,9 +227,9 @@ export default function QuestionSetsPage() {
         try {
             setLoading(true);
 
-            // Connect to real backend API (when available)
-            if ((adminAPI as any).questionSets) {
-                const response = await (adminAPI as any).questionSets.list({
+            // Connect to real backend API
+            if (adminAPI.questionSets) {
+                const response = await adminAPI.questionSets.list({
                     skip: currentPage * ITEMS_PER_PAGE,
                     limit: ITEMS_PER_PAGE,
                     ...filters,
@@ -470,9 +470,11 @@ export default function QuestionSetsPage() {
                         Manage organized collections of questions for exam papers
                     </p>
                 </div>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Question Set
+                <Button asChild>
+                    <Link href="/dashboard/questions/sets/create">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Question Set
+                    </Link>
                 </Button>
             </div>
 

@@ -20,13 +20,14 @@ interface AuthActions {
   login: (user: User, token: string) => void;
   logout: () => void;
   clearError: () => void;
+  invalidateSession: () => void;
 }
 
 export type AuthStore = AuthState & AuthActions;
 
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // State
       user: null,
       token: null,
@@ -58,6 +59,21 @@ export const useAuthStore = create<AuthStore>()(
       }),
       
       clearError: () => set({ error: null }),
+
+      invalidateSession: () => {
+        // Clear tokens from both localStorage and cookies
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth-token');
+          document.cookie = 'auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        }
+        // Reset auth state
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          error: 'Your session has expired. Please login again.',
+        });
+      },
     }),
     {
       name: 'auth-storage',

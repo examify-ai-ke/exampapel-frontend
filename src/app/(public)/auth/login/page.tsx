@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,8 +17,9 @@ import type { LoginFormData } from '@/lib/validation';
 function LoginForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const { login } = useAuth();
+    const { login, isAuthenticated, logout } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const {
         register,
@@ -28,12 +29,28 @@ function LoginForm() {
         resolver: zodResolver(loginSchema),
     });
 
+    // Get redirect URL from query params or default to dashboard
+    const redirectUrl = searchParams.get('redirect') || '/dashboard';
+
+    // Clear expired tokens on component mount
+    useEffect(() => {
+        // If user is already authenticated, redirect them
+        if (isAuthenticated) {
+            router.push(redirectUrl);
+            return;
+        }
+
+        // Clear any existing tokens that might be expired
+        logout();
+    }, [isAuthenticated, redirectUrl, router, logout]);
+
     const onSubmit = async (data: LoginFormData) => {
         setIsLoading(true);
         try {
             const result = await login(data);
             if (result.success) {
-                router.push('/dashboard');
+                // Redirect to the original destination or dashboard
+                router.push(redirectUrl);
             }
         } catch (error) {
             console.error('Login error:', error);

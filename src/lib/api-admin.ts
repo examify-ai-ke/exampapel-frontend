@@ -862,11 +862,16 @@ export const adminHelpers = {
      */
     questions: {
         async list(params?: {
+            /** Filter by question type: main, sub, or all */
+            question_type?: 'main' | 'sub' | 'all';
+            /** Filter by question set ID (for main questions) */
+            question_set_id?: string | null;
+            /** Filter by parent question ID (for sub-questions) */
+            parent_id?: string | null;
+            /** Filter by exam paper ID (for main questions) */
+            exam_paper_id?: string | null;
             skip?: number;
             limit?: number;
-            question_set_id?: string;
-            exam_paper_id?: string;
-            parent_id?: string;
         }) {
             const response = await api.GET('/api/v1/questions', {
                 params: {
@@ -877,14 +882,30 @@ export const adminHelpers = {
         },
 
         async search(params: {
+            /** Search query for questions */
             q: string;
-            question_set_id?: string;
-            exam_paper_id?: string;
-            marks_min?: number;
-            marks_max?: number;
-            numbering_style?: string;
+            /** Filter by question type */
+            question_type?: 'main' | 'sub' | 'all';
+            /** Filter by exam paper ID */
+            exam_paper_id?: string | null;
+            /** Filter by question set ID */
+            question_set_id?: string | null;
+            /** Minimum marks */
+            marks_min?: number | null;
+            /** Maximum marks */
+            marks_max?: number | null;
+            /** Filter by numbering style */
+            numbering_style?: string | null;
+            /** Filter questions with/without answers */
+            has_answers?: boolean | null;
+            /** Sort by: relevance, marks, created_at */
+            sort_by?: string;
+            /** Sort order: asc, desc */
+            sort_order?: string;
             skip?: number;
             limit?: number;
+            /** Enable search term highlighting */
+            highlight?: boolean;
         }) {
             const response = await api.GET('/api/v1/questions/search', {
                 params: {
@@ -960,10 +981,10 @@ export const adminHelpers = {
             return response;
         },
 
-        async getSearchSuggestions(q: string, limit?: number) {
+        async getSearchSuggestions(q: string, limit?: number, question_type?: 'main' | 'sub' | 'all') {
             const response = await api.GET('/api/v1/questions/search/suggestions', {
                 params: {
-                    query: { q, limit }
+                    query: { q, limit, question_type }
                 }
             });
             return response;

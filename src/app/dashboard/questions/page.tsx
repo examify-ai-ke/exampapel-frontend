@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     HelpCircle,
     Search,
@@ -19,6 +19,7 @@ import {
     MoreHorizontal,
     Clock,
     AlertTriangle,
+    RefreshCw,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -47,6 +48,7 @@ import { AdminBreadcrumb } from '@/components/ui/breadcrumb';
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/ui';
 import { adminAPI } from '@/lib/api-admin';
+import { api } from '@/lib/api';
 import { formatDate, formatRelativeTime } from '@/lib/utils';
 import Link from 'next/link';
 import type { components } from '@/types/generated/api';
@@ -88,198 +90,127 @@ interface QuestionsFilters {
     exam_paper_id?: string;
 }
 
-// Mock data
-const mockStats: QuestionsOverviewStats = {
-    totalQuestions: 12847,
-    mainQuestions: 5234,
-    subQuestions: 7613,
-    questionsWithAnswers: 11543,
-    totalMarks: 67890,
-    averageMarks: 5.3,
-    recentQuestions: 234,
-    orphanQuestions: 45,
-};
-
-const mockQuestions: QuestionRead[] = [
-    {
-        id: '1',
-        text: {
-            content: 'Explain the fundamental principles of object-oriented programming, including encapsulation, inheritance, and polymorphism. Provide examples for each principle.',
-            format: 'text' as any,
-        },
-        marks: 15,
-        numbering_style: 'numeric' as any,
-        question_number: '1',
-        slug: 'oop-principles-question',
-        created_at: '2024-12-15T10:30:00Z',
-        question_set_id: 'set-1',
-        exam_paper_id: 'paper-1',
-        parent_id: null,
-        children: [
-            {
-                id: '1a',
-                text: { content: 'Define encapsulation with an example.', format: 'text' as any },
-                marks: 5,
-                numbering_style: 'alphabetic' as any,
-                question_number: '1a',
-                created_at: '2024-12-15T10:30:00Z',
-                question_set_id: 'set-1',
-                exam_paper_id: 'paper-1',
-                parent_id: '1',
-                children: [],
-                answers: [],
-                slug: 'encapsulation-definition',
-            }
-        ],
-        answers: [
-            {
-                id: 'a1',
-                content: 'Sample answer for OOP principles...',
-                is_correct: true,
-                explanation: 'This demonstrates the key concepts...'
-            }
-        ],
-    },
-    {
-        id: '2',
-        text: {
-            content: 'Calculate the derivative of f(x) = 3x² + 2x - 5 using the power rule.',
-            format: 'text' as any,
-        },
-        marks: 8,
-        numbering_style: 'alphabetic' as any,
-        question_number: '2',
-        slug: 'derivative-calculation',
-        created_at: '2024-12-16T14:20:00Z',
-        question_set_id: 'set-2',
-        exam_paper_id: 'paper-2',
-        parent_id: null,
-        children: [],
-        answers: [],
-    },
-    {
-        id: '3',
-        text: {
-            content: 'Define "sustainable development" and explain its three pillars. Discuss how these pillars interact with each other.',
-            format: 'text' as any,
-        },
-        marks: 12,
-        numbering_style: 'roman' as any,
-        question_number: 'i',
-        slug: 'sustainable-development-definition',
-        created_at: '2024-12-17T09:15:00Z',
-        question_set_id: 'set-1',
-        exam_paper_id: 'paper-1',
-        parent_id: null,
-        children: [],
-        answers: [
-            {
-                id: 'a3',
-                content: 'Sustainable development is...',
-                is_correct: true,
-                explanation: 'The three pillars are environmental, social, and economic...'
-            }
-        ],
-    },
-    {
-        id: '4',
-        text: {
-            content: 'What is photosynthesis?',
-            format: 'text' as any,
-        },
-        marks: 3,
-        numbering_style: 'numeric' as any,
-        question_number: '4',
-        slug: 'photosynthesis-definition',
-        created_at: '2024-12-18T16:45:00Z',
-        question_set_id: 'set-3',
-        exam_paper_id: 'paper-3',
-        parent_id: null,
-        children: [],
-        answers: [],
-    },
-];
+// No mock data – always use backend API
 
 export default function AllQuestionsPage() {
     const { user } = useAuth();
     const { addNotification } = useUIStore();
 
     // State management
-    const [questions, setQuestions] = useState<QuestionRead[]>(mockQuestions);
+    const [questions, setQuestions] = useState<QuestionRead[]>([]);
     const [loading, setLoading] = useState(false);
-    const [stats, setStats] = useState<QuestionsOverviewStats>(mockStats);
+    const [stats, setStats] = useState<QuestionsOverviewStats>({
+        totalQuestions: 0,
+        mainQuestions: 0,
+        subQuestions: 0,
+        questionsWithAnswers: 0,
+        totalMarks: 0,
+        averageMarks: 0,
+        recentQuestions: 0,
+        orphanQuestions: 0,
+    });
     const [filters, setFilters] = useState<QuestionsFilters>({});
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalItems, setTotalItems] = useState(0);
+    const [apiStatus, setApiStatus] = useState<'connected' | 'error'>('error');
+    const hasInitializedRef = useRef(false);
 
     const ITEMS_PER_PAGE = 20;
+
+    // Initial load (guarded to avoid React StrictMode double-fetch in dev)
+    useEffect(() => {
+        if (!hasInitializedRef.current) {
+            hasInitializedRef.current = true;
+            void loadQuestions();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Load questions data
     const loadQuestions = async () => {
         try {
             setLoading(true);
+            console.log('Loading questions from backend API...');
 
-            // Connect to real backend API (when available)
-            if ((adminAPI as any).questions) {
-                let response;
-                if (filters.search && filters.search.trim() !== '') {
-                    response = await (adminAPI as any).questions.search({
-                        q: filters.search,
-                        numbering_style: filters.numbering_style,
-                        marks_min: getMarksRangeMin(filters.marks_range),
-                        marks_max: getMarksRangeMax(filters.marks_range),
-                        skip: currentPage * ITEMS_PER_PAGE,
-                        limit: ITEMS_PER_PAGE,
-                    });
-                } else {
-                    response = await (adminAPI as any).questions.list({
-                        skip: currentPage * ITEMS_PER_PAGE,
-                        limit: ITEMS_PER_PAGE,
-                        ...filters,
-                    });
-                }
+            // Always call backend API
+            let response;
+            if (filters.search && filters.search.trim() !== '') {
+                console.log('Searching questions with query:', filters.search);
+                const hasAnswersBool =
+                    filters.has_answers === 'yes' ? true : filters.has_answers === 'no' ? false : undefined;
+                response = await api.GET('/api/v1/questions/search', {
+                    params: {
+                        query: {
+                            q: filters.search,
+                            numbering_style: (filters.numbering_style as any) ?? undefined,
+                            marks_min: getMarksRangeMin(filters.marks_range),
+                            marks_max: getMarksRangeMax(filters.marks_range),
+                            question_type: (filters.question_type as any) ?? undefined,
+                            has_answers: hasAnswersBool ?? null,
+                            exam_paper_id: filters.exam_paper_id ?? null,
+                            skip: currentPage * ITEMS_PER_PAGE,
+                            limit: ITEMS_PER_PAGE,
+                        }
+                    }
+                });
+            } else {
+                console.log('Listing questions with filters:', filters);
+                response = await api.GET('/api/v1/questions', {
+                    params: {
+                        query: {
+                            question_type: (filters.question_type as any) ?? undefined,
+                            exam_paper_id: filters.exam_paper_id ?? null,
+                            parent_id: undefined,
+                            question_set_id: undefined,
+                            skip: currentPage * ITEMS_PER_PAGE,
+                            limit: ITEMS_PER_PAGE,
+                        }
+                    }
+                });
+            }
 
-                if (response.data && response.data.data) {
-                    const responseData = response.data.data;
-                    setQuestions(responseData.items || []);
-                    setTotalItems(responseData.total || 0);
-                    setTotalPages(Math.ceil((responseData.total || 0) / ITEMS_PER_PAGE));
+            console.log('API Response:', response);
+
+            if (response.data) {
+                const responseData = (response as any).data.data ?? (response as any).data;
+                console.log('Response data:', responseData);
+                setQuestions(responseData.items || []);
+                setTotalItems(responseData.total || 0);
+                setTotalPages(Math.ceil((responseData.total || 0) / ITEMS_PER_PAGE));
+                setApiStatus('connected');
+
+                // Update stats if available
+                if (responseData.stats) {
+                    setStats({
+                        totalQuestions: responseData.total || 0,
+                        mainQuestions: responseData.stats.main_questions || 0,
+                        subQuestions: responseData.stats.sub_questions || 0,
+                        questionsWithAnswers: responseData.stats.with_answers || 0,
+                        totalMarks: responseData.stats.total_marks || 0,
+                        averageMarks: responseData.stats.average_marks || 0,
+                        recentQuestions: responseData.stats.recent || 0,
+                        orphanQuestions: responseData.stats.orphan || 0,
+                    });
                 }
             } else {
-                // Fallback to mock data
-                console.log('Using mock data - questions API not available');
-                const filteredData = mockQuestions.filter(question => {
-                    if (filters.search && !question.text?.content?.toLowerCase().includes(filters.search.toLowerCase())) {
-                        return false;
-                    }
-                    if (filters.numbering_style && question.numbering_style !== filters.numbering_style) {
-                        return false;
-                    }
-                    if (filters.has_answers === 'yes' && (!question.answers || question.answers.length === 0)) {
-                        return false;
-                    }
-                    if (filters.has_answers === 'no' && question.answers && question.answers.length > 0) {
-                        return false;
-                    }
-                    if (filters.question_type === 'main' && question.parent_id) {
-                        return false;
-                    }
-                    if (filters.question_type === 'sub' && !question.parent_id) {
-                        return false;
-                    }
-                    return true;
-                });
-                setQuestions(filteredData);
-                setTotalItems(filteredData.length);
+                console.log('No data in response');
+                setQuestions([]);
+                setTotalItems(0);
+                setApiStatus('error');
             }
         } catch (error) {
             console.error('Error loading questions:', error);
+            setApiStatus('error');
             addNotification({
                 type: 'error',
                 title: 'Failed to load questions',
                 message: 'Please try again later.',
             });
+
+            // Do not fallback – keep empty state
+            setQuestions([]);
+            setTotalItems(0);
         } finally {
             setLoading(false);
         }
@@ -306,7 +237,11 @@ export default function AllQuestionsPage() {
 
     // Transform question data for table display
     const transformQuestionForTable = (question: QuestionRead): QuestionTableData => {
-        const displayText = question.text?.content || 'No text content';
+        // The API returns QuestionTextSchema for text with blocks; derive a plain preview
+        const firstBlock = question.text?.blocks?.[0];
+        // Most editors store paragraph text under data.text
+        const blockText = typeof firstBlock?.data?.['text'] === 'string' ? (firstBlock?.data?.['text'] as string) : '';
+        const displayText = blockText || 'No text content';
         const truncatedText = displayText.length > 120 ?
             `${displayText.substring(0, 120)}...` : displayText;
 
@@ -448,9 +383,11 @@ export default function AllQuestionsPage() {
         setCurrentPage(0);
     };
 
-    // Load data on mount and when filters change
+    // Load when filters/page change (skip if not initialized yet)
     useEffect(() => {
-        loadQuestions();
+        if (!hasInitializedRef.current) return;
+        void loadQuestions();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPage, filters]);
 
     // Define table columns
@@ -517,15 +454,41 @@ export default function AllQuestionsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">All Questions</h1>
-                    <p className="text-gray-600">
-                        Browse and explore questions from all exam papers
+                    <h1 className="text-2xl font-bold text-gray-900">Questions Bank</h1>
+                    <p className="text-gray-600 mt-1">
+                        Manage and organize all questions in the system
                     </p>
+                    {/* API Status Indicator */}
+                    <div className="flex items-center gap-2 mt-2">
+                        <div className={`w-2 h-2 rounded-full ${apiStatus === 'connected' ? 'bg-green-500' :
+                            apiStatus === 'error' ? 'bg-red-500' : 'bg-yellow-500'
+                            }`} />
+                        <span className={`text-sm ${apiStatus === 'connected' ? 'text-green-700' :
+                            apiStatus === 'error' ? 'text-red-700' : 'text-yellow-700'
+                            }`}>
+                            {apiStatus === 'connected' ? 'Connected to Backend' :
+                                apiStatus === 'error' ? 'API Error - Using Mock Data' :
+                                    'Using Mock Data'}
+                        </span>
+                    </div>
                 </div>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Question
-                </Button>
+                <div className="flex items-center gap-3">
+                    <Button
+                        variant="outline"
+                        onClick={loadQuestions}
+                        disabled={loading}
+                        className="flex items-center gap-2"
+                    >
+                        <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </Button>
+                    <Link href="/dashboard/questions/create">
+                        <Button className="flex items-center gap-2">
+                            <Plus className="h-4 w-4" />
+                            Add Question
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             {/* Statistics Cards */}

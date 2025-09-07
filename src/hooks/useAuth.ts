@@ -12,7 +12,7 @@ type LoginResponse = components['schemas']['IPostResponseBase_Token_'];
 
 export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { user, isAuthenticated, login, logout, setError, clearError } = useAuthStore();
+  const { user, isAuthenticated, login, logout, setError, clearError, invalidateSession } = useAuthStore();
   const { addNotification } = useUIStore();
 
   const handleLogin = async (credentials: LoginRequest) => {
@@ -26,11 +26,21 @@ export const useAuth = () => {
 
 
       if (error) {
-        const errorMessage = typeof error.detail === 'string'
-          ? error.detail
-          : Array.isArray(error.detail)
-            ? error.detail.map(e => e.msg).join(', ')
-            : 'Login failed. Please check your credentials.';
+        // Handle specific error cases
+        let errorMessage = 'Login failed. Please check your credentials.';
+
+        if (typeof error.detail === 'string') {
+          errorMessage = error.detail;
+        } else if (Array.isArray(error.detail)) {
+          errorMessage = error.detail.map(e => e.msg).join(', ');
+        }
+
+        // Handle token expiration specifically
+        if (errorMessage.toLowerCase().includes('token') && errorMessage.toLowerCase().includes('expired')) {
+          invalidateSession();
+          errorMessage = 'Your session has expired. Please login again.';
+        }
+
         setError(errorMessage);
         addNotification({
           type: 'error',
@@ -220,5 +230,6 @@ export const useAuth = () => {
     logout: handleLogout,
     getCurrentUser,
     requestPasswordReset,
+    invalidateSession,
   };
 };
