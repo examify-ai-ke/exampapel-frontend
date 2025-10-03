@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/ui/data-table';
+import { HierarchicalQuestions } from '@/components/ui/hierarchical-questions';
 import {
     Select,
     SelectContent,
@@ -52,6 +53,7 @@ import type { components } from '@/types/generated/api';
 
 // Type definitions from API schema
 type QuestionSetRead = components['schemas']['QuestionSetRead'];
+type QuestionRead = components['schemas']['QuestionRead'];
 
 // Interface for the display table data
 interface QuestionSetTableData extends QuestionSetRead {
@@ -59,7 +61,6 @@ interface QuestionSetTableData extends QuestionSetRead {
     statusDisplay: React.ReactNode;
     questionsDisplay: React.ReactNode;
     statsDisplay: React.ReactNode;
-    examPaperInfo: React.ReactNode;
     createdAtDisplay: React.ReactNode;
     actions: React.ReactNode;
 }
@@ -74,147 +75,28 @@ interface QuestionSetsStats {
     emptySets: number;
 }
 
-// Filter interface
+// Filter interface - simplified to match actual API
 interface QuestionSetsFilters {
     search?: string;
-    has_questions?: 'yes' | 'no';
-    exam_paper_id?: string;
-    status?: 'active' | 'draft' | 'archived';
 }
-
-// Mock data
-const mockStats: QuestionSetsStats = {
-    totalQuestionSets: 1247,
-    totalQuestions: 8934,
-    averageQuestionsPerSet: 7.2,
-    setsWithQuestions: 1189,
-    recentSets: 89,
-    emptySets: 58,
-};
-
-const mockQuestionSets: QuestionSetRead[] = [
-    {
-        id: 'qs-1',
-        name: 'Computer Science Fundamentals - Part A',
-        description: 'Basic programming concepts and algorithms',
-        exam_paper_id: 'ep-1',
-        exam_paper: {
-            id: 'ep-1',
-            title: 'Computer Science Final Exam 2024',
-            created_at: '2024-12-01T10:00:00Z',
-            exam_year: 2024,
-            exam_semester: 'Fall',
-            institution: {
-                id: 'inst-1',
-                name: 'University of Nairobi',
-                key: 'UON'
-            },
-            course: {
-                id: 'course-1',
-                name: 'Computer Science',
-                slug: 'computer-science'
-            }
-        },
-        questions: [],
-        questions_count: 15,
-        total_marks: 75,
-        created_at: '2024-12-15T10:30:00Z',
-        updated_at: '2024-12-15T10:30:00Z',
-    },
-    {
-        id: 'qs-2',
-        name: 'Mathematics - Calculus Section',
-        description: 'Differential and integral calculus problems',
-        exam_paper_id: 'ep-2',
-        exam_paper: {
-            id: 'ep-2',
-            title: 'Advanced Mathematics Exam',
-            created_at: '2024-12-02T14:00:00Z',
-            exam_year: 2024,
-            exam_semester: 'Fall',
-            institution: {
-                id: 'inst-2',
-                name: 'Strathmore University',
-                key: 'SU'
-            },
-            course: {
-                id: 'course-2',
-                name: 'Mathematics',
-                slug: 'mathematics'
-            }
-        },
-        questions: [],
-        questions_count: 8,
-        total_marks: 40,
-        created_at: '2024-12-16T14:20:00Z',
-        updated_at: '2024-12-16T14:20:00Z',
-    },
-    {
-        id: 'qs-3',
-        name: 'Biology - Ecology and Environment',
-        description: 'Environmental science and ecosystem questions',
-        exam_paper_id: 'ep-3',
-        exam_paper: {
-            id: 'ep-3',
-            title: 'Biology Comprehensive Exam',
-            created_at: '2024-12-03T09:00:00Z',
-            exam_year: 2024,
-            exam_semester: 'Spring',
-            institution: {
-                id: 'inst-1',
-                name: 'University of Nairobi',
-                key: 'UON'
-            },
-            course: {
-                id: 'course-3',
-                name: 'Biology',
-                slug: 'biology'
-            }
-        },
-        questions: [],
-        questions_count: 12,
-        total_marks: 60,
-        created_at: '2024-12-17T09:15:00Z',
-        updated_at: '2024-12-17T09:15:00Z',
-    },
-    {
-        id: 'qs-4',
-        name: 'Physics - Mechanics Problems',
-        description: 'Classical mechanics and dynamics',
-        exam_paper_id: 'ep-4',
-        exam_paper: {
-            id: 'ep-4',
-            title: 'Physics Midterm Exam',
-            created_at: '2024-12-04T11:00:00Z',
-            exam_year: 2024,
-            exam_semester: 'Fall',
-            institution: {
-                id: 'inst-3',
-                name: 'Moi University',
-                key: 'MU'
-            },
-            course: {
-                id: 'course-4',
-                name: 'Physics',
-                slug: 'physics'
-            }
-        },
-        questions: [],
-        questions_count: 0,
-        total_marks: 0,
-        created_at: '2024-12-18T16:45:00Z',
-        updated_at: '2024-12-18T16:45:00Z',
-    },
-];
 
 export default function QuestionSetsPage() {
     const { user } = useAuth();
     const { addNotification } = useUIStore();
 
     // State management
-    const [questionSets, setQuestionSets] = useState<QuestionSetRead[]>(mockQuestionSets);
-    const [loading, setLoading] = useState(false);
-    const [stats, setStats] = useState<QuestionSetsStats>(mockStats);
+    const [questionSets, setQuestionSets] = useState<QuestionSetRead[]>([]);
+    const [questions, setQuestions] = useState<QuestionRead[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [viewMode, setViewMode] = useState<'hierarchical' | 'table'>('hierarchical');
+    const [stats, setStats] = useState<QuestionSetsStats>({
+        totalQuestionSets: 0,
+        totalQuestions: 0,
+        averageQuestionsPerSet: 0,
+        setsWithQuestions: 0,
+        recentSets: 0,
+        emptySets: 0,
+    });
     const [filters, setFilters] = useState<QuestionSetsFilters>({});
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -227,45 +109,67 @@ export default function QuestionSetsPage() {
         try {
             setLoading(true);
 
-            // Connect to real backend API
-            if (adminAPI.questionSets) {
-                const response = await adminAPI.questionSets.list({
+            console.log('Loading question sets and questions from API...');
+
+            // Load question sets and questions in parallel
+            const [questionSetsResponse, questionsResponse] = await Promise.all([
+                adminAPI.questionSets.list({
                     skip: currentPage * ITEMS_PER_PAGE,
                     limit: ITEMS_PER_PAGE,
-                    ...filters,
-                });
+                }),
+                adminAPI.questions.list({ limit: 100 }) // Load questions to show in hierarchy (API max limit is 100)
+            ]);
 
-                if (response.data && response.data.data) {
-                    const responseData = response.data.data;
-                    setQuestionSets(responseData.items || []);
-                    setTotalItems(responseData.total || 0);
-                    setTotalPages(Math.ceil((responseData.total || 0) / ITEMS_PER_PAGE));
-                }
-            } else {
-                // Fallback to mock data
-                console.log('Using mock data - question sets API not available');
-                const filteredData = mockQuestionSets.filter(set => {
-                    if (filters.search && !set.name.toLowerCase().includes(filters.search.toLowerCase())) {
-                        return false;
-                    }
-                    if (filters.has_questions === 'yes' && (!set.questions_count || set.questions_count === 0)) {
-                        return false;
-                    }
-                    if (filters.has_questions === 'no' && set.questions_count && set.questions_count > 0) {
-                        return false;
-                    }
-                    return true;
+            console.log('Question sets API response:', questionSetsResponse);
+            console.log('Questions API response:', questionsResponse);
+
+            if (!questionSetsResponse.error && questionSetsResponse.data) {
+                const responseData = questionSetsResponse.data.data || questionSetsResponse.data;
+                const items = responseData.items || [];
+
+                console.log('Question sets loaded:', items);
+                setQuestionSets(items);
+                setTotalItems(responseData.total || items.length);
+                setTotalPages(Math.ceil((responseData.total || items.length) / ITEMS_PER_PAGE));
+
+                // Calculate stats from loaded data
+                const totalQuestions = items.reduce((sum: number, set: QuestionSetRead) =>
+                    sum + (set.questions_count || 0), 0);
+                const setsWithQuestions = items.filter((set: QuestionSetRead) =>
+                    set.questions_count && set.questions_count > 0).length;
+                const emptySets = items.length - setsWithQuestions;
+
+                setStats({
+                    totalQuestionSets: items.length,
+                    totalQuestions,
+                    averageQuestionsPerSet: items.length > 0 ? totalQuestions / items.length : 0,
+                    setsWithQuestions,
+                    recentSets: items.length, // For now, assume all are recent
+                    emptySets,
                 });
-                setQuestionSets(filteredData);
-                setTotalItems(filteredData.length);
+            } else {
+                console.error('Error in question sets response:', questionSetsResponse.error);
+                throw new Error(questionSetsResponse.error?.message || 'Failed to load question sets');
+            }
+
+            // Load questions data
+            if (!questionsResponse.error && questionsResponse.data) {
+                const questionsData = questionsResponse.data.data || questionsResponse.data;
+                const questionsItems = questionsData.items || [];
+                console.log('Questions loaded:', questionsItems);
+                setQuestions(questionsItems);
             }
         } catch (error) {
             console.error('Error loading question sets:', error);
             addNotification({
                 type: 'error',
                 title: 'Failed to load question sets',
-                message: 'Please try again later.',
+                message: error instanceof Error ? error.message : 'Please try again later.',
             });
+            // Set empty state on error
+            setQuestionSets([]);
+            setTotalItems(0);
+            setTotalPages(0);
         } finally {
             setLoading(false);
         }
@@ -273,7 +177,8 @@ export default function QuestionSetsPage() {
 
     // Transform question set data for table display
     const transformQuestionSetForTable = (questionSet: QuestionSetRead): QuestionSetTableData => {
-        const displayName = questionSet.name;
+        // Use title from the API schema (enum value)
+        const displayName = questionSet.title || `Question Set ${questionSet.id.slice(0, 8)}`;
 
         const statusDisplay = (
             <Badge
@@ -291,44 +196,39 @@ export default function QuestionSetsPage() {
                     <span className="font-medium">{questionSet.questions_count || 0}</span>
                     <span className="text-gray-500 ml-1">questions</span>
                 </div>
-                <div className="flex items-center">
-                    <Star className="mr-1 h-4 w-4 text-yellow-500" />
-                    <span className="font-medium">{questionSet.total_marks || 0}</span>
-                    <span className="text-gray-500 ml-1">marks</span>
-                </div>
+                {questionSet.questions && questionSet.questions.length > 0 && (
+                    <div className="flex items-center">
+                        <Star className="mr-1 h-4 w-4 text-yellow-500" />
+                        <span className="font-medium">
+                            {questionSet.questions.reduce((sum, q) => sum + (q.marks || 0), 0)}
+                        </span>
+                        <span className="text-gray-500 ml-1">marks</span>
+                    </div>
+                )}
             </div>
         );
 
         const statsDisplay = (
             <div className="flex flex-col space-y-1 text-xs text-gray-600">
-                <div>
-                    Avg: {questionSet.questions_count && questionSet.questions_count > 0 ?
-                        ((questionSet.total_marks || 0) / questionSet.questions_count).toFixed(1) : 0} marks/question
-                </div>
-                {questionSet.questions_count === 0 && (
+                {questionSet.questions && questionSet.questions.length > 0 ? (
+                    <div>
+                        Avg: {(questionSet.questions.reduce((sum, q) => sum + (q.marks || 0), 0) / questionSet.questions.length).toFixed(1)} marks/question
+                    </div>
+                ) : (
                     <div className="text-orange-600">No questions added</div>
                 )}
-            </div>
-        );
-
-        const examPaperInfo = (
-            <div className="space-y-1">
-                <div className="font-medium text-sm">
-                    {questionSet.exam_paper?.title || 'No exam paper'}
-                </div>
-                <div className="text-xs text-gray-600">
-                    {questionSet.exam_paper?.course?.name} • {questionSet.exam_paper?.exam_year}
-                </div>
-                <div className="text-xs text-gray-500">
-                    {questionSet.exam_paper?.institution?.name}
-                </div>
+                {questionSet.slug && (
+                    <div className="text-gray-500">ID: {questionSet.slug}</div>
+                )}
             </div>
         );
 
         const createdAtDisplay = (
             <div className="text-xs text-gray-600">
-                <div>{formatDate(questionSet.created_at)}</div>
-                <div className="text-gray-500">{formatRelativeTime(questionSet.created_at)}</div>
+                <div>ID: {questionSet.id.slice(0, 8)}...</div>
+                <div className="text-gray-500">
+                    {questionSet.slug ? `Slug: ${questionSet.slug}` : 'No slug'}
+                </div>
             </div>
         );
 
@@ -376,7 +276,6 @@ export default function QuestionSetsPage() {
             statusDisplay,
             questionsDisplay,
             statsDisplay,
-            examPaperInfo,
             createdAtDisplay,
             actions,
         };
@@ -410,7 +309,7 @@ export default function QuestionSetsPage() {
                     <div className="min-w-0 flex-1">
                         <div className="font-medium text-gray-900 mb-1">{item.displayName}</div>
                         <div className="text-sm text-gray-600 line-clamp-2 mb-2">
-                            {item.description || 'No description available'}
+                            {item.slug ? `Slug: ${item.slug}` : `ID: ${item.id.slice(0, 8)}...`}
                         </div>
                         <div className="flex items-center space-x-2">
                             {item.statusDisplay}
@@ -419,7 +318,7 @@ export default function QuestionSetsPage() {
                 </div>
             ),
             sortable: true,
-            width: '30%',
+            width: '40%',
         },
         {
             key: 'questionsDisplay' as keyof QuestionSetTableData,
@@ -431,21 +330,14 @@ export default function QuestionSetsPage() {
                 </div>
             ),
             sortable: false,
-            width: '20%',
-        },
-        {
-            key: 'examPaperInfo' as keyof QuestionSetTableData,
-            header: 'Exam Paper',
-            cell: (item: QuestionSetTableData) => item.examPaperInfo,
-            sortable: false,
-            width: '25%',
+            width: '30%',
         },
         {
             key: 'createdAtDisplay' as keyof QuestionSetTableData,
-            header: 'Created',
+            header: 'Details',
             cell: (item: QuestionSetTableData) => item.createdAtDisplay,
             sortable: true,
-            width: '15%',
+            width: '20%',
         },
         {
             key: 'actions' as keyof QuestionSetTableData,
@@ -470,12 +362,32 @@ export default function QuestionSetsPage() {
                         Manage organized collections of questions for exam papers
                     </p>
                 </div>
-                <Button asChild>
-                    <Link href="/dashboard/questions/sets/create">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Question Set
-                    </Link>
-                </Button>
+                <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1 mr-4">
+                        <Button
+                            variant={viewMode === 'hierarchical' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setViewMode('hierarchical')}
+                        >
+                            <BookOpen className="h-4 w-4 mr-1" />
+                            Hierarchical
+                        </Button>
+                        <Button
+                            variant={viewMode === 'table' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setViewMode('table')}
+                        >
+                            <FileText className="h-4 w-4 mr-1" />
+                            Table
+                        </Button>
+                    </div>
+                    <Button asChild>
+                        <Link href="/dashboard/questions/sets/create">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create Question Set
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             {/* Statistics Cards */}
@@ -518,7 +430,7 @@ export default function QuestionSetsPage() {
                 </Card>
             </div>
 
-            {/* Filters and Search */}
+            {/* Search */}
             <Card>
                 <CardContent className="pt-6">
                     <div className="flex flex-col sm:flex-row gap-4">
@@ -526,62 +438,116 @@ export default function QuestionSetsPage() {
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <Input
-                                    placeholder="Search question sets by name..."
+                                    placeholder="Search question sets by title..."
                                     className="pl-10"
                                     value={filters.search || ''}
                                     onChange={(e) => handleSearch(e.target.value)}
                                 />
                             </div>
                         </div>
-
-                        <Select
-                            value={filters.has_questions || 'all'}
-                            onValueChange={(value) => handleFilterChange('has_questions', value)}
-                        >
-                            <SelectTrigger className="w-full sm:w-[200px]">
-                                <SelectValue placeholder="Filter by questions" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Question Sets</SelectItem>
-                                <SelectItem value="yes">With Questions</SelectItem>
-                                <SelectItem value="no">Empty Sets</SelectItem>
-                            </SelectContent>
-                        </Select>
-
-                        <Select
-                            value={filters.status || 'all'}
-                            onValueChange={(value) => handleFilterChange('status', value)}
-                        >
-                            <SelectTrigger className="w-full sm:w-[180px]">
-                                <SelectValue placeholder="Filter by status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Status</SelectItem>
-                                <SelectItem value="active">Active</SelectItem>
-                                <SelectItem value="draft">Draft</SelectItem>
-                                <SelectItem value="archived">Archived</SelectItem>
-                            </SelectContent>
-                        </Select>
                     </div>
                 </CardContent>
             </Card>
 
-            {/* Data Table */}
-            <Card>
-                <LoadingOverlay isLoading={loading}>
-                    <DataTable
-                        data={transformedQuestionSets}
-                        columns={columns}
-                        title={`${totalItems} Question Sets`}
-                        searchable={false}
-                        filterable={false}
-                        pagination={true}
-                        pageSize={ITEMS_PER_PAGE}
+            {/* Question Sets Display */}
+            <LoadingOverlay isLoading={loading}>
+                {viewMode === 'hierarchical' ? (
+                    <HierarchicalQuestions
+                        questionSets={questionSets}
+                        questions={questions}
+                        onEditQuestion={(question) => {
+                            addNotification({
+                                type: 'info',
+                                title: 'Edit Question',
+                                message: `Opening editor for question ${question.question_number}...`,
+                            });
+                        }}
+                        onDeleteQuestion={async (questionId) => {
+                            if (confirm('Are you sure you want to delete this question?')) {
+                                try {
+                                    await adminAPI.questions.delete(questionId);
+                                    addNotification({
+                                        type: 'success',
+                                        title: 'Question Deleted',
+                                        message: 'Question has been deleted successfully.',
+                                    });
+                                    loadQuestionSets();
+                                } catch (error) {
+                                    addNotification({
+                                        type: 'error',
+                                        title: 'Delete Failed',
+                                        message: 'Failed to delete the question. Please try again.',
+                                    });
+                                }
+                            }
+                        }}
+                        onViewQuestion={(questionId) => {
+                            addNotification({
+                                type: 'info',
+                                title: 'View Question',
+                                message: `Opening details for question ${questionId}...`,
+                            });
+                        }}
+                        onAddSubQuestion={(parentId) => {
+                            addNotification({
+                                type: 'info',
+                                title: 'Add Sub-question',
+                                message: `Adding sub-question to question ${parentId}...`,
+                            });
+                        }}
+                        onEditQuestionSet={(questionSet) => {
+                            addNotification({
+                                type: 'info',
+                                title: 'Edit Question Set',
+                                message: `Opening editor for question set ${questionSet.title || questionSet.id}...`,
+                            });
+                        }}
+                        onDeleteQuestionSet={async (questionSetId) => {
+                            if (confirm('Are you sure you want to delete this question set? This will also delete all questions in it.')) {
+                                try {
+                                    await adminAPI.questionSets.delete(questionSetId);
+                                    addNotification({
+                                        type: 'success',
+                                        title: 'Question Set Deleted',
+                                        message: 'Question set has been deleted successfully.',
+                                    });
+                                    loadQuestionSets();
+                                } catch (error) {
+                                    addNotification({
+                                        type: 'error',
+                                        title: 'Delete Failed',
+                                        message: 'Failed to delete the question set. Please try again.',
+                                    });
+                                }
+                            }
+                        }}
+                        onAddQuestion={() => {
+                            addNotification({
+                                type: 'info',
+                                title: 'Add Question',
+                                message: 'Question creation feature coming soon...',
+                            });
+                        }}
+                        showActions={true}
+                        defaultExpanded={true}
                         emptyMessage="No question sets found. Create your first question set to get started."
-                        loading={loading}
                     />
-                </LoadingOverlay>
-            </Card>
+                ) : (
+                    <Card>
+                        <DataTable
+                            data={transformedQuestionSets}
+                            columns={columns}
+                            title={`${totalItems} Question Sets`}
+                            searchable={false}
+                            filterable={false}
+                            pagination={true}
+                            pageSize={ITEMS_PER_PAGE}
+                            emptyMessage="No question sets found. Create your first question set to get started."
+                            loading={loading}
+                        />
+                    </Card>
+                )}
+            </LoadingOverlay>
         </div>
     );
 }

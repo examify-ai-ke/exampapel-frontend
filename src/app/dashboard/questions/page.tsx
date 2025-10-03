@@ -27,6 +27,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/ui/data-table';
+import { HierarchicalQuestions } from '@/components/ui/hierarchical-questions';
 import {
     Select,
     SelectContent,
@@ -55,6 +56,7 @@ import type { components } from '@/types/generated/api';
 
 // Type definitions from API schema
 type QuestionRead = components['schemas']['QuestionRead'];
+type QuestionSetRead = components['schemas']['QuestionSetRead'];
 
 // Interface for the display table data
 interface QuestionTableData extends QuestionRead {
@@ -99,6 +101,7 @@ export default function AllQuestionsPage() {
     // State management
     const [questions, setQuestions] = useState<QuestionRead[]>([]);
     const [loading, setLoading] = useState(false);
+    const [viewMode, setViewMode] = useState<'hierarchical' | 'table'>('hierarchical');
     const [stats, setStats] = useState<QuestionsOverviewStats>({
         totalQuestions: 0,
         mainQuestions: 0,
@@ -131,73 +134,85 @@ export default function AllQuestionsPage() {
     const loadQuestions = async () => {
         try {
             setLoading(true);
-            console.log('Loading questions from backend API...');
+            console.log('Loading main questions with sub-questions from backend API...');
 
-            // Always call backend API
-            let response;
-            if (filters.search && filters.search.trim() !== '') {
-                console.log('Searching questions with query:', filters.search);
-                const hasAnswersBool =
-                    filters.has_answers === 'yes' ? true : filters.has_answers === 'no' ? false : undefined;
-                response = await api.GET('/api/v1/questions/search', {
-                    params: {
-                        query: {
-                            q: filters.search,
-                            numbering_style: (filters.numbering_style as any) ?? undefined,
-                            marks_min: getMarksRangeMin(filters.marks_range),
-                            marks_max: getMarksRangeMax(filters.marks_range),
-                            question_type: (filters.question_type as any) ?? undefined,
-                            has_answers: hasAnswersBool ?? null,
-                            exam_paper_id: filters.exam_paper_id ?? null,
-                            skip: currentPage * ITEMS_PER_PAGE,
-                            limit: ITEMS_PER_PAGE,
-                        }
-                    }
+            // Load main questions and all questions for hierarchy building
+            const [mainQuestionsResponse, allQuestionsResponse] = await Promise.all([
+                // Load main questions
+                filters.search && filters.search.trim() !== ''
+                    ? adminAPI.questions.search({
+                        q: filters.search,
+                        question_type: 'main', // Only main questions
+                        numbering_style: filters.numbering_style,
+                        has_answers: filters.has_answers === 'yes' ? true : filters.has_answers === 'no' ? false : undefined,
+                        exam_paper_id: filters.exam_paper_id,
+                        skip: currentPage * ITEMS_PER_PAGE,
+                        limit: ITEMS_PER_PAGE,
+                    })
+                    : adminAPI.questions.list({
+                        question_type: 'main', // Only main questions
+                        exam_paper_id: filters.exam_paper_id,
+                        skip: currentPage * ITEMS_PER_PAGE,
+                        limit: ITEMS_PER_PAGE,
+                    }),
+                // Load all questions to build parent-child relationships
+                adminAPI.questions.list({ limit: 100 }) // Load questions to find sub-questions (API max limit is 100)
+            ]);
+
+            console.log('Main questions API response:', mainQuestionsResponse);
+            console.log('All questions API response:', allQuestionsResponse);
+
+            if (mainQuestionsResponse.data?.data) {
+                const responseData = mainQuestionsResponse.data.data;
+                const mainQuestionsData = responseData.items || [];
+
+                // Get all questions to find sub-questions
+                const allQuestionsData = allQuestionsResponse.data?.data?.items || [];
+
+                // Build hierarchy: attach sub-questions to their parent main questions
+                const questionsWithChildren = mainQuestionsData.map(mainQuestion => {
+                    const subQuestions = allQuestionsData.filter(q => q.parent_id === mainQuestion.id);
+                    return {
+                        ...mainQuestion,
+                        children: subQuestions
+                    };
                 });
-            } else {
-                console.log('Listing questions with filters:', filters);
-                response = await api.GET('/api/v1/questions', {
-                    params: {
-                        query: {
-                            question_type: (filters.question_type as any) ?? undefined,
-                            exam_paper_id: filters.exam_paper_id ?? null,
-                            parent_id: undefined,
-                            question_set_id: undefined,
-                            skip: currentPage * ITEMS_PER_PAGE,
-                            limit: ITEMS_PER_PAGE,
-                        }
-                    }
-                });
-            }
 
-            console.log('API Response:', response);
-
-            if (response.data) {
-                const responseData = (response as any).data.data ?? (response as any).data;
-                console.log('Response data:', responseData);
-                setQuestions(responseData.items || []);
+                setQuestions(questionsWithChildren);
                 setTotalItems(responseData.total || 0);
                 setTotalPages(Math.ceil((responseData.total || 0) / ITEMS_PER_PAGE));
-                setApiStatus('connected');
 
-                // Update stats if available
-                if (responseData.stats) {
-                    setStats({
-                        totalQuestions: responseData.total || 0,
-                        mainQuestions: responseData.stats.main_questions || 0,
-                        subQuestions: responseData.stats.sub_questions || 0,
-                        questionsWithAnswers: responseData.stats.with_answers || 0,
-                        totalMarks: responseData.stats.total_marks || 0,
-                        averageMarks: responseData.stats.average_marks || 0,
-                        recentQuestions: responseData.stats.recent || 0,
-                        orphanQuestions: responseData.stats.orphan || 0,
-                    });
-                }
-            } else {
-                console.log('No data in response');
-                setQuestions([]);
-                setTotalItems(0);
-                setApiStatus('error');
+                // Calculate stats from loaded data
+                const totalSubQuestions = questionsWithChildren.reduce((sum, q) => sum + (q.children?.length || 0), 0);
+                const questionsWithAnswers = questionsWithChildren.filter(q => q.answers && q.answers.length > 0).length;
+                const totalMarks = questionsWithChildren.reduce((sum, q) => {
+                    const mainMarks = q.marks || 0;
+                    const subMarks = (q.children || []).reduce((subSum, sub) => subSum + (sub.marks || 0), 0);
+                    return sum + mainMarks + subMarks;
+                }, 0);
+                const totalQuestionCount = questionsWithChildren.length + totalSubQuestions;
+                const averageMarks = totalQuestionCount > 0 ? totalMarks / totalQuestionCount : 0;
+
+                // For recent questions, count those created in the last 7 days
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                const recentQuestions = questionsWithChildren.filter(q => new Date(q.created_at) > sevenDaysAgo).length;
+
+                // Orphan questions are main questions without question_set_id or exam_paper_id
+                const orphanQuestions = questionsWithChildren.filter(q => !q.question_set_id && !q.exam_paper_id).length;
+
+                setStats({
+                    totalQuestions: totalQuestionCount,
+                    mainQuestions: questionsWithChildren.length,
+                    subQuestions: totalSubQuestions,
+                    questionsWithAnswers,
+                    totalMarks,
+                    averageMarks: Math.round(averageMarks * 10) / 10,
+                    recentQuestions,
+                    orphanQuestions,
+                });
+
+                setApiStatus('connected');
             }
         } catch (error) {
             console.error('Error loading questions:', error);
@@ -205,7 +220,7 @@ export default function AllQuestionsPage() {
             addNotification({
                 type: 'error',
                 title: 'Failed to load questions',
-                message: 'Please try again later.',
+                message: error instanceof Error ? error.message : 'Please try again later.',
             });
 
             // Do not fallback – keep empty state
@@ -473,6 +488,24 @@ export default function AllQuestionsPage() {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
+                    <div className="flex items-center space-x-1 mr-2">
+                        <Button
+                            variant={viewMode === 'hierarchical' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setViewMode('hierarchical')}
+                        >
+                            <BookOpen className="h-4 w-4 mr-1" />
+                            Hierarchical
+                        </Button>
+                        <Button
+                            variant={viewMode === 'table' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setViewMode('table')}
+                        >
+                            <FileText className="h-4 w-4 mr-1" />
+                            Table
+                        </Button>
+                    </div>
                     <Button
                         variant="outline"
                         onClick={loadQuestions}
@@ -606,22 +639,280 @@ export default function AllQuestionsPage() {
                 </CardContent>
             </Card>
 
-            {/* Data Table */}
-            <Card>
-                <LoadingOverlay isLoading={loading}>
-                    <DataTable
-                        data={transformedQuestions}
-                        columns={columns}
-                        title={`${totalItems} Questions`}
-                        searchable={false}
-                        filterable={false}
-                        pagination={true}
-                        pageSize={ITEMS_PER_PAGE}
-                        emptyMessage="No questions found. Try adjusting your search criteria."
-                        loading={loading}
-                    />
-                </LoadingOverlay>
-            </Card>
+            {/* Questions Display */}
+            <LoadingOverlay isLoading={loading}>
+                {viewMode === 'hierarchical' ? (
+                    <div className="space-y-4">
+                        {questions.length > 0 ? (
+                            questions.map((mainQuestion) => (
+                                <Card key={mainQuestion.id} className="border border-gray-200">
+                                    <CardContent className="p-6">
+                                        {/* Main Question */}
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex-1">
+                                                <div className="flex items-center space-x-3 mb-3">
+                                                    <HelpCircle className="h-6 w-6 text-blue-600" />
+                                                    <Badge variant="default" className="text-sm">
+                                                        <Hash className="mr-1 h-4 w-4" />
+                                                        {mainQuestion.question_number}
+                                                    </Badge>
+                                                    <Badge variant="outline" className="text-sm">
+                                                        Main Question
+                                                    </Badge>
+                                                    <div className="flex items-center text-sm font-medium text-amber-600">
+                                                        <Star className="mr-1 h-4 w-4" />
+                                                        {mainQuestion.marks || 0} marks
+                                                    </div>
+                                                    {mainQuestion.children && mainQuestion.children.length > 0 && (
+                                                        <Badge variant="secondary" className="text-sm">
+                                                            {mainQuestion.children.length} sub-question{mainQuestion.children.length !== 1 ? 's' : ''}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+
+                                                <div className="mb-3">
+                                                    <p className="text-gray-800 font-medium">
+                                                        {(() => {
+                                                            if (mainQuestion.text?.blocks && Array.isArray(mainQuestion.text.blocks)) {
+                                                                const textBlocks = mainQuestion.text.blocks
+                                                                    .filter(block => block.type === 'paragraph' || block.type === 'header')
+                                                                    .map(block => block.data?.text || '')
+                                                                    .join(' ');
+                                                                const text = textBlocks || 'No text content';
+                                                                return text.length > 200 ? `${text.substring(0, 200)}...` : text;
+                                                            }
+                                                            return 'No text content';
+                                                        })()}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                                                    <span>Created: {formatDate(mainQuestion.created_at)}</span>
+                                                    <div className="flex items-center">
+                                                        {mainQuestion.answers && mainQuestion.answers.length > 0 ? (
+                                                            <>
+                                                                <CheckCircle className="mr-1 h-4 w-4 text-green-500" />
+                                                                Has Answers
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <AlertTriangle className="mr-1 h-4 w-4 text-orange-500" />
+                                                                No Answers
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                    {mainQuestion.question_set_id && (
+                                                        <span>Set: {mainQuestion.question_set_id.slice(0, 8)}</span>
+                                                    )}
+                                                    {mainQuestion.exam_paper_id && (
+                                                        <span>Paper: {mainQuestion.exam_paper_id.slice(0, 8)}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                    <DropdownMenuItem onClick={() => addNotification({
+                                                        type: 'info',
+                                                        title: 'View Question',
+                                                        message: `Opening details for question ${mainQuestion.question_number}...`,
+                                                    })}>
+                                                        <Eye className="mr-2 h-4 w-4" />
+                                                        View Details
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => addNotification({
+                                                        type: 'info',
+                                                        title: 'Edit Question',
+                                                        message: `Opening editor for question ${mainQuestion.question_number}...`,
+                                                    })}>
+                                                        <Edit className="mr-2 h-4 w-4" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => addNotification({
+                                                        type: 'info',
+                                                        title: 'Add Sub-question',
+                                                        message: `Adding sub-question to question ${mainQuestion.question_number}...`,
+                                                    })}>
+                                                        <Plus className="mr-2 h-4 w-4" />
+                                                        Add Sub-question
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem
+                                                        onClick={async () => {
+                                                            if (confirm('Are you sure you want to delete this question?')) {
+                                                                try {
+                                                                    await adminAPI.questions.delete(mainQuestion.id);
+                                                                    addNotification({
+                                                                        type: 'success',
+                                                                        title: 'Question Deleted',
+                                                                        message: 'Question has been deleted successfully.',
+                                                                    });
+                                                                    loadQuestions();
+                                                                } catch (error) {
+                                                                    addNotification({
+                                                                        type: 'error',
+                                                                        title: 'Delete Failed',
+                                                                        message: 'Failed to delete the question. Please try again.',
+                                                                    });
+                                                                }
+                                                            }
+                                                        }}
+                                                        className="text-red-600"
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+
+                                        {/* Sub-questions */}
+                                        {mainQuestion.children && mainQuestion.children.length > 0 && (
+                                            <div className="ml-8 border-l-2 border-blue-200 pl-6 space-y-3">
+                                                {mainQuestion.children.map((subQuestion) => (
+                                                    <div key={subQuestion.id} className="flex items-start justify-between py-3 border-b border-gray-100 last:border-b-0">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center space-x-2 mb-2">
+                                                                <Badge variant="secondary" className="text-xs">
+                                                                    <Hash className="mr-1 h-3 w-3" />
+                                                                    {subQuestion.question_number}
+                                                                </Badge>
+                                                                <Badge variant="outline" className="text-xs">
+                                                                    Sub-question
+                                                                </Badge>
+                                                                <div className="flex items-center text-xs text-amber-600">
+                                                                    <Star className="mr-1 h-3 w-3" />
+                                                                    {subQuestion.marks || 0} marks
+                                                                </div>
+                                                            </div>
+
+                                                            <p className="text-sm text-gray-700 mb-2">
+                                                                {(() => {
+                                                                    if (subQuestion.text?.blocks && Array.isArray(subQuestion.text.blocks)) {
+                                                                        const textBlocks = subQuestion.text.blocks
+                                                                            .filter(block => block.type === 'paragraph' || block.type === 'header')
+                                                                            .map(block => block.data?.text || '')
+                                                                            .join(' ');
+                                                                        const text = textBlocks || 'No text content';
+                                                                        return text.length > 150 ? `${text.substring(0, 150)}...` : text;
+                                                                    }
+                                                                    return 'No text content';
+                                                                })()}
+                                                            </p>
+
+                                                            <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                                                <span>Created: {formatDate(subQuestion.created_at)}</span>
+                                                                <div className="flex items-center">
+                                                                    {subQuestion.answers && subQuestion.answers.length > 0 ? (
+                                                                        <>
+                                                                            <CheckCircle className="mr-1 h-3 w-3 text-green-500" />
+                                                                            Has Answers
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <AlertTriangle className="mr-1 h-3 w-3 text-orange-500" />
+                                                                            No Answers
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                                                    <MoreHorizontal className="h-3 w-3" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                <DropdownMenuItem onClick={() => addNotification({
+                                                                    type: 'info',
+                                                                    title: 'View Sub-question',
+                                                                    message: `Opening details for sub-question ${subQuestion.question_number}...`,
+                                                                })}>
+                                                                    <Eye className="mr-2 h-4 w-4" />
+                                                                    View Details
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem onClick={() => addNotification({
+                                                                    type: 'info',
+                                                                    title: 'Edit Sub-question',
+                                                                    message: `Opening editor for sub-question ${subQuestion.question_number}...`,
+                                                                })}>
+                                                                    <Edit className="mr-2 h-4 w-4" />
+                                                                    Edit
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem
+                                                                    onClick={async () => {
+                                                                        if (confirm('Are you sure you want to delete this sub-question?')) {
+                                                                            try {
+                                                                                await adminAPI.questions.delete(subQuestion.id);
+                                                                                addNotification({
+                                                                                    type: 'success',
+                                                                                    title: 'Sub-question Deleted',
+                                                                                    message: 'Sub-question has been deleted successfully.',
+                                                                                });
+                                                                                loadQuestions();
+                                                                            } catch (error) {
+                                                                                addNotification({
+                                                                                    type: 'error',
+                                                                                    title: 'Delete Failed',
+                                                                                    message: 'Failed to delete the sub-question. Please try again.',
+                                                                                });
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                    className="text-red-600"
+                                                                >
+                                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                                    Delete
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            ))
+                        ) : (
+                            <div className="text-center py-12">
+                                <HelpCircle className="mx-auto h-16 w-16 text-gray-300 mb-4" />
+                                <h3 className="text-lg font-semibold text-gray-600 mb-2">No Questions Found</h3>
+                                <p className="text-gray-500 mb-4">No questions match your current search criteria or create your first question.</p>
+                                <Link href="/dashboard/questions/create">
+                                    <Button>
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Add First Question
+                                    </Button>
+                                </Link>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <Card>
+                        <DataTable
+                            data={transformedQuestions}
+                            columns={columns}
+                            title={`${totalItems} Questions`}
+                            searchable={false}
+                            filterable={false}
+                            pagination={true}
+                            pageSize={ITEMS_PER_PAGE}
+                            emptyMessage="No questions found. Try adjusting your search criteria."
+                            loading={loading}
+                        />
+                    </Card>
+                )}
+            </LoadingOverlay>
         </div>
     );
 }

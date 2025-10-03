@@ -31,6 +31,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/ui/data-table';
+import { HierarchicalQuestions } from '@/components/ui/hierarchical-questions';
 import {
     Select,
     SelectContent,
@@ -94,7 +95,7 @@ interface QuestionsStats {
     orphanQuestions: number;
 }
 
-// Filter interface
+// Filter interface - matches API parameters
 interface QuestionsFilters {
     search?: string;
     question_set_id?: string;
@@ -104,80 +105,28 @@ interface QuestionsFilters {
     marks_range?: 'low' | 'medium' | 'high';
 }
 
-// Mock data
-const mockStats: QuestionsStats = {
-    totalQuestions: 2847,
-    mainQuestions: 1234,
-    subQuestions: 1613,
-    totalMarks: 15678,
-    averageMarks: 5.5,
-    recentQuestions: 89,
-    questionsWithAnswers: 2543,
-    orphanQuestions: 45,
+// Initial empty states - data will be loaded from API
+const initialStats: QuestionsStats = {
+    totalQuestions: 0,
+    mainQuestions: 0,
+    subQuestions: 0,
+    totalMarks: 0,
+    averageMarks: 0,
+    recentQuestions: 0,
+    questionsWithAnswers: 0,
+    orphanQuestions: 0,
 };
-
-const mockQuestions: QuestionRead[] = [
-    {
-        id: '1',
-        text: {
-            content: 'Explain the concept of object-oriented programming and its key principles.',
-            format: 'text' as any,
-        },
-        marks: 10,
-        numbering_style: 'numeric' as any,
-        question_number: '1',
-        slug: 'oop-principles-question',
-        created_at: '2024-12-15T10:30:00Z',
-        question_set_id: 'set-1',
-        exam_paper_id: 'paper-1',
-        parent_id: null,
-        children: [],
-        answers: [],
-    },
-    {
-        id: '2',
-        text: {
-            content: 'Calculate the derivative of f(x) = 3x² + 2x - 5',
-            format: 'text' as any,
-        },
-        marks: 5,
-        numbering_style: 'alphabetic' as any,
-        question_number: '2',
-        slug: 'derivative-calculation',
-        created_at: '2024-12-16T14:20:00Z',
-        question_set_id: 'set-2',
-        exam_paper_id: 'paper-2',
-        parent_id: null,
-        children: [],
-        answers: [],
-    },
-    {
-        id: '3',
-        text: {
-            content: 'Define the term "sustainable development" and explain its importance.',
-            format: 'text' as any,
-        },
-        marks: 8,
-        numbering_style: 'roman' as any,
-        question_number: '3',
-        slug: 'sustainable-development-definition',
-        created_at: '2024-12-17T09:15:00Z',
-        question_set_id: 'set-1',
-        exam_paper_id: 'paper-1',
-        parent_id: null,
-        children: [],
-        answers: [],
-    },
-];
 
 export default function QuestionsManagePage() {
     const { user } = useAuth();
     const { addNotification } = useUIStore();
 
     // State management
-    const [questions, setQuestions] = useState<QuestionRead[]>(mockQuestions);
+    const [questions, setQuestions] = useState<QuestionRead[]>([]);
+    const [questionSets, setQuestionSets] = useState<QuestionSetRead[]>([]);
     const [loading, setLoading] = useState(false);
-    const [stats, setStats] = useState<QuestionsStats>(mockStats);
+    const [stats, setStats] = useState<QuestionsStats>(initialStats);
+    const [viewMode, setViewMode] = useState<'hierarchical' | 'table'>('hierarchical');
     const [filters, setFilters] = useState<QuestionsFilters>({});
     const [selectedQuestion, setSelectedQuestion] = useState<QuestionRead | null>(null);
     const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -223,53 +172,107 @@ export default function QuestionsManagePage() {
         try {
             setLoading(true);
 
-            // Connect to real backend API (when available)
-            if ((adminAPI as any).questions) {
-                const response = await (adminAPI as any).questions.list({
-                    skip: currentPage * ITEMS_PER_PAGE,
-                    limit: ITEMS_PER_PAGE,
-                    ...filters,
-                });
+            // Build API parameters
+            const apiParams: any = {
+                skip: currentPage * ITEMS_PER_PAGE,
+                limit: ITEMS_PER_PAGE,
+            };
 
-                if (response.data && response.data.data) {
-                    const responseData = response.data.data;
-                    setQuestions(responseData.items || []);
-                    setTotalItems(responseData.total || 0);
-                    setTotalPages(Math.ceil((responseData.total || 0) / ITEMS_PER_PAGE));
-                }
-            } else {
-                // Fallback to mock data
-                console.log('Using mock data - questions API not available');
-                const filteredData = mockQuestions.filter(question => {
-                    if (filters.search && !question.text?.content?.toLowerCase().includes(filters.search.toLowerCase())) {
-                        return false;
-                    }
-                    if (filters.question_set_id && question.question_set_id !== filters.question_set_id) {
-                        return false;
-                    }
-                    if (filters.exam_paper_id && question.exam_paper_id !== filters.exam_paper_id) {
-                        return false;
-                    }
-                    return true;
-                });
-                setQuestions(filteredData);
-                setTotalItems(filteredData.length);
+            // Add filters to API params
+            if (filters.question_set_id) {
+                apiParams.question_set_id = filters.question_set_id;
+            }
+            if (filters.exam_paper_id) {
+                apiParams.exam_paper_id = filters.exam_paper_id;
+            }
+
+            // Load questions and question sets in parallel
+            const [questionsResponse, questionSetsResponse] = await Promise.all([
+                // Load questions
+                filters.search
+                    ? adminAPI.questions.search({
+                        q: filters.search,
+                        skip: apiParams.skip,
+                        limit: apiParams.limit,
+                        question_set_id: apiParams.question_set_id,
+                        exam_paper_id: apiParams.exam_paper_id,
+                        has_answers: filters.has_answers === 'yes' ? true : filters.has_answers === 'no' ? false : undefined,
+                        numbering_style: filters.numbering_style,
+                    })
+                    : adminAPI.questions.list(apiParams),
+                // Load question sets
+                adminAPI.questionSets.list({ limit: 20 }) // Load all question sets
+            ]);
+
+            if (questionsResponse.data?.data) {
+                const responseData = questionsResponse.data.data;
+                const questionsData = responseData.items || [];
+
+                setQuestions(questionsData);
+                setTotalItems(responseData.total || 0);
+                setTotalPages(Math.ceil((responseData.total || 0) / ITEMS_PER_PAGE));
+
+                // Calculate stats from the loaded data
+                calculateStats(questionsData, responseData.total || 0);
+            }
+
+            if (questionSetsResponse.data?.data) {
+                const questionSetsData = questionSetsResponse.data.data;
+                setQuestionSets(questionSetsData.items || []);
             }
         } catch (error) {
             console.error('Error loading questions:', error);
             addNotification({
                 type: 'error',
                 title: 'Failed to load questions',
-                message: 'Please try again later.',
+                message: error instanceof Error ? error.message : 'Please try again later.',
             });
         } finally {
             setLoading(false);
         }
     };
 
+    // Calculate statistics from questions data
+    const calculateStats = (questionsData: QuestionRead[], total: number) => {
+        const mainQuestions = questionsData.filter(q => !q.parent_id).length;
+        const subQuestions = questionsData.filter(q => q.parent_id).length;
+        const questionsWithAnswers = questionsData.filter(q => q.answers && q.answers.length > 0).length;
+        const totalMarks = questionsData.reduce((sum, q) => sum + (q.marks || 0), 0);
+        const averageMarks = questionsData.length > 0 ? totalMarks / questionsData.length : 0;
+
+        // For recent questions, we'll count questions created in the last 7 days
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const recentQuestions = questionsData.filter(q => new Date(q.created_at) > sevenDaysAgo).length;
+
+        // Orphan questions are those without question_set_id or exam_paper_id
+        const orphanQuestions = questionsData.filter(q => !q.question_set_id && !q.exam_paper_id).length;
+
+        setStats({
+            totalQuestions: total,
+            mainQuestions,
+            subQuestions,
+            totalMarks,
+            averageMarks: Math.round(averageMarks * 10) / 10, // Round to 1 decimal
+            recentQuestions,
+            questionsWithAnswers,
+            orphanQuestions,
+        });
+    };
+
     // Transform question data for table display
     const transformQuestionForTable = (question: QuestionRead): QuestionTableData => {
-        const displayText = question.text?.content || 'No text content';
+        // Extract text content from the QuestionTextSchema structure
+        let displayText = 'No text content';
+        if (question.text?.blocks && Array.isArray(question.text.blocks)) {
+            // Extract text from blocks (Editor.js format)
+            const textBlocks = question.text.blocks
+                .filter(block => block.type === 'paragraph' || block.type === 'header')
+                .map(block => block.data?.text || '')
+                .join(' ');
+            displayText = textBlocks || 'No text content';
+        }
+
         const truncatedText = displayText.length > 100 ?
             `${displayText.substring(0, 100)}...` : displayText;
 
@@ -408,28 +411,19 @@ export default function QuestionsManagePage() {
         if (!confirm('Are you sure you want to delete this question? This action cannot be undone.')) return;
 
         try {
-            if ((adminAPI as any).questions) {
-                await (adminAPI as any).questions.delete(questionId);
-                addNotification({
-                    type: 'success',
-                    title: 'Question Deleted',
-                    message: 'Question has been deleted successfully.',
-                });
-            } else {
-                // Mock delete
-                setQuestions(prev => prev.filter(q => q.id !== questionId));
-                addNotification({
-                    type: 'success',
-                    title: 'Question Deleted (Mock)',
-                    message: 'Question deletion simulated successfully.',
-                });
-            }
-            loadQuestions();
+            await adminAPI.questions.delete(questionId);
+            addNotification({
+                type: 'success',
+                title: 'Question Deleted',
+                message: 'Question has been deleted successfully.',
+            });
+            loadQuestions(); // Reload the questions list
         } catch (error) {
+            console.error('Error deleting question:', error);
             addNotification({
                 type: 'error',
                 title: 'Delete Failed',
-                message: 'Failed to delete the question. Please try again.',
+                message: error instanceof Error ? error.message : 'Failed to delete the question. Please try again.',
             });
         }
     };
@@ -468,9 +462,34 @@ export default function QuestionsManagePage() {
         setCurrentPage(0);
     };
 
+    // Load statistics from API if available
+    const loadQuestionStats = async () => {
+        try {
+            const response = await adminAPI.questions.getStats();
+            if (response.data?.data) {
+                // If API provides stats, use them
+                const apiStats = response.data.data;
+                setStats({
+                    totalQuestions: apiStats.total_questions || 0,
+                    mainQuestions: apiStats.main_questions || 0,
+                    subQuestions: apiStats.sub_questions || 0,
+                    totalMarks: apiStats.total_marks || 0,
+                    averageMarks: apiStats.average_marks || 0,
+                    recentQuestions: apiStats.recent_questions || 0,
+                    questionsWithAnswers: apiStats.questions_with_answers || 0,
+                    orphanQuestions: apiStats.orphan_questions || 0,
+                });
+            }
+        } catch (error) {
+            console.log('Stats API not available, using calculated stats');
+            // Stats will be calculated from loaded questions data
+        }
+    };
+
     // Load data on mount and when filters change
     useEffect(() => {
         loadQuestions();
+        loadQuestionStats();
     }, [currentPage, filters]);
 
     // Define table columns
@@ -547,6 +566,24 @@ export default function QuestionsManagePage() {
                     </p>
                 </div>
                 <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1 mr-4">
+                        <Button
+                            variant={viewMode === 'hierarchical' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setViewMode('hierarchical')}
+                        >
+                            <BookOpen className="h-4 w-4 mr-1" />
+                            Hierarchical
+                        </Button>
+                        <Button
+                            variant={viewMode === 'table' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setViewMode('table')}
+                        >
+                            <List className="h-4 w-4 mr-1" />
+                            Table
+                        </Button>
+                    </div>
                     <Button variant="outline" onClick={() => addNotification({ type: 'info', title: 'Import', message: 'Question import feature coming soon...' })}>
                         <Upload className="h-4 w-4 mr-2" />
                         Import
@@ -670,62 +707,103 @@ export default function QuestionsManagePage() {
                 </CardContent>
             </Card>
 
-            {/* Data Table */}
-            <Card>
-                <LoadingOverlay isLoading={loading}>
-                    <DataTable
-                        data={transformedQuestions}
-                        columns={columns}
-                        title={`${totalItems} Questions`}
-                        searchable={false}
-                        filterable={false}
-                        pagination={true}
-                        pageSize={ITEMS_PER_PAGE}
-                        actions={[
-                            {
-                                label: 'Export Selected',
-                                onClick: (selectedItems: QuestionTableData[]) => {
+            {/* Questions Display */}
+            <LoadingOverlay isLoading={loading}>
+                {viewMode === 'hierarchical' ? (
+                    <HierarchicalQuestions
+                        questionSets={questionSets}
+                        questions={questions}
+                        onEditQuestion={handleEditQuestion}
+                        onDeleteQuestion={handleDeleteQuestion}
+                        onViewQuestion={handleViewQuestion}
+                        onAddSubQuestion={handleAddSubQuestion}
+                        onEditQuestionSet={(questionSet) => {
+                            addNotification({
+                                type: 'info',
+                                title: 'Edit Question Set',
+                                message: `Opening editor for question set ${questionSet.title || questionSet.id}...`,
+                            });
+                        }}
+                        onDeleteQuestionSet={async (questionSetId) => {
+                            if (confirm('Are you sure you want to delete this question set? This will also delete all questions in it.')) {
+                                try {
+                                    await adminAPI.questionSets.delete(questionSetId);
                                     addNotification({
-                                        type: 'info',
-                                        title: 'Export Started',
-                                        message: `Exporting ${selectedItems.length} questions...`,
+                                        type: 'success',
+                                        title: 'Question Set Deleted',
+                                        message: 'Question set has been deleted successfully.',
                                     });
-                                },
-                                icon: Download,
-                                variant: 'outline',
-                            },
-                            {
-                                label: 'Bulk Edit Marks',
-                                onClick: (selectedItems: QuestionTableData[]) => {
+                                    loadQuestions();
+                                } catch (error) {
                                     addNotification({
-                                        type: 'info',
-                                        title: 'Bulk Edit',
-                                        message: `Editing marks for ${selectedItems.length} questions...`,
+                                        type: 'error',
+                                        title: 'Delete Failed',
+                                        message: 'Failed to delete the question set. Please try again.',
                                     });
-                                },
-                                icon: Edit,
-                                variant: 'outline',
-                            },
-                            {
-                                label: 'Delete Selected',
-                                onClick: (selectedItems: QuestionTableData[]) => {
-                                    if (confirm(`Are you sure you want to delete ${selectedItems.length} questions?`)) {
-                                        addNotification({
-                                            type: 'warning',
-                                            title: 'Bulk Delete',
-                                            message: `Deleting ${selectedItems.length} questions...`,
-                                        });
-                                    }
-                                },
-                                icon: Trash2,
-                                variant: 'destructive',
-                            },
-                        ]}
-                        emptyMessage="No questions found. Create your first question to get started."
-                        loading={loading}
+                                }
+                            }
+                        }}
+                        onAddQuestion={() => handleCreateQuestion()}
+                        showActions={true}
+                        defaultExpanded={false}
+                        emptyMessage="No question sets found. Create your first question to get started."
                     />
-                </LoadingOverlay>
-            </Card>
+                ) : (
+                    <Card>
+                        <DataTable
+                            data={transformedQuestions}
+                            columns={columns}
+                            title={`${totalItems} Questions`}
+                            searchable={false}
+                            filterable={false}
+                            pagination={true}
+                            pageSize={ITEMS_PER_PAGE}
+                            actions={[
+                                {
+                                    label: 'Export Selected',
+                                    onClick: (selectedItems: QuestionTableData[]) => {
+                                        addNotification({
+                                            type: 'info',
+                                            title: 'Export Started',
+                                            message: `Exporting ${selectedItems.length} questions...`,
+                                        });
+                                    },
+                                    icon: Download,
+                                    variant: 'outline',
+                                },
+                                {
+                                    label: 'Bulk Edit Marks',
+                                    onClick: (selectedItems: QuestionTableData[]) => {
+                                        addNotification({
+                                            type: 'info',
+                                            title: 'Bulk Edit',
+                                            message: `Editing marks for ${selectedItems.length} questions...`,
+                                        });
+                                    },
+                                    icon: Edit,
+                                    variant: 'outline',
+                                },
+                                {
+                                    label: 'Delete Selected',
+                                    onClick: (selectedItems: QuestionTableData[]) => {
+                                        if (confirm(`Are you sure you want to delete ${selectedItems.length} questions?`)) {
+                                            addNotification({
+                                                type: 'warning',
+                                                title: 'Bulk Delete',
+                                                message: `Deleting ${selectedItems.length} questions...`,
+                                            });
+                                        }
+                                    },
+                                    icon: Trash2,
+                                    variant: 'destructive',
+                                },
+                            ]}
+                            emptyMessage="No questions found. Create your first question to get started."
+                            loading={loading}
+                        />
+                    </Card>
+                )}
+            </LoadingOverlay>
         </div>
     );
 }

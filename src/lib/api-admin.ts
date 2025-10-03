@@ -798,64 +798,6 @@ const adminAPI = {
             return response;
         },
     },
-};
-
-/**
- * Helper functions for admin operations
- */
-export const adminHelpers = {
-    /**
-     * Calculate user activity percentage
-     */
-    calculateActivityRate(activeUsers: number, totalUsers: number): number {
-        if (totalUsers === 0) return 0;
-        return Math.round((activeUsers / totalUsers) * 100);
-    },
-
-    /**
-     * Format system health status
-     */
-    formatHealthStatus(status: any): 'healthy' | 'warning' | 'critical' {
-        if (!status) return 'critical';
-
-        // Add logic based on your health check response structure
-        if (status.database === 'connected' && status.api === 'operational') {
-            return 'healthy';
-        } else if (status.database === 'slow') {
-            return 'warning';
-        } else {
-            return 'critical';
-        }
-    },
-
-    /**
-     * Generate activity summary from user data
-     */
-    generateActivitySummary(users: UserRead[]): {
-        todayRegistrations: number;
-        weeklyRegistrations: number;
-        pendingVerifications: number;
-    } {
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-        // Mock data since created_at is not available in current schema
-        const todayRegistrations = Math.floor(Math.random() * 10);
-        const weeklyRegistrations = Math.floor(Math.random() * 50);
-
-        const pendingVerifications = users.filter(user =>
-            !user.email_verified
-        ).length;
-
-        return {
-            todayRegistrations,
-            weeklyRegistrations,
-            pendingVerifications,
-        };
-    },
-
-
 
     /**
      * Questions Management
@@ -991,6 +933,7 @@ export const adminHelpers = {
         },
     },
 
+
     /**
      * Question Sets Management
      */
@@ -1042,7 +985,39 @@ export const adminHelpers = {
             return response;
         },
     },
+
 };
+
+// Helper functions for backward compatibility
+export async function getInstitutions(token?: string) {
+    try {
+        const response = await adminAPI.institutions.list();
+        return { success: true, data: response.data };
+    } catch (error) {
+        console.error('Error fetching institutions:', error);
+        return { success: false, error: 'Failed to fetch institutions' };
+    }
+}
+
+export async function getCourses(token?: string) {
+    try {
+        const response = await adminAPI.courses.list();
+        return { success: true, data: response.data };
+    } catch (error) {
+        console.error('Error fetching courses:', error);
+        return { success: false, error: 'Failed to fetch courses' };
+    }
+}
+
+export async function getQuestions(token?: string) {
+    try {
+        const response = await adminAPI.questions.list();
+        return { success: true, data: response.data };
+    } catch (error) {
+        console.error('Error fetching questions:', error);
+        return { success: false, error: 'Failed to fetch questions' };
+    }
+}
 
 export { adminAPI };
 export default adminAPI;
