@@ -1379,6 +1379,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/faculty/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search Faculties
+         * @description Search faculties with filtering and sorting
+         */
+        get: operations["search_faculties_api_v1_faculty_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/faculty/get_by_created_at": {
         parameters: {
             query?: never;
@@ -1541,6 +1561,26 @@ export interface paths {
          *     - manager
          */
         post: operations["create_department_api_v1_department_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/department/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search Departments
+         * @description Search departments with filtering and sorting
+         */
+        get: operations["search_departments_api_v1_department_search_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2036,6 +2076,26 @@ export interface paths {
          *     - manager
          */
         post: operations["create_course_api_v1_course_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/course/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search Courses
+         * @description Search courses with filtering and sorting
+         */
+        get: operations["search_courses_api_v1_course_search_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4340,14 +4400,29 @@ export interface components {
              * @default []
              */
             tags: string[] | null;
+            /**
+             * Instructions
+             * @default []
+             */
+            instructions: components["schemas"]["InstructionRead"][] | null;
             title: components["schemas"]["ExamTitleReadForExamPaperRead"];
             description: components["schemas"]["ExamDescriptionReadForExamPaper"];
+            /**
+             * Modules
+             * @default []
+             */
+            modules: components["schemas"]["ModuleReadForExamPaper"][] | null;
             /**
              * Created By Id
              * Format: uuid
              */
             created_by_id: string;
             course: components["schemas"]["CourseReadForExamPaper"] | null;
+            /**
+             * Question Sets
+             * @default []
+             */
+            question_sets: components["schemas"]["QuestionSetReadForExamPaperReadForInstitution"][] | null;
         };
         /** ExamPaperReadForModule */
         ExamPaperReadForModule: {
@@ -4428,15 +4503,10 @@ export interface components {
         };
         /** ExamTitleReadForExamPaperRead */
         ExamTitleReadForExamPaperRead: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
             /** Name */
-            name: string;
+            name: string | null;
             /** Slug */
-            slug: string;
+            slug: string | null;
         };
         /** ExamTitleUpdate */
         ExamTitleUpdate: {
@@ -6986,11 +7056,8 @@ export interface components {
             parent_ministry?: string | null;
             /** Image Id */
             image_id?: string | null;
-            /**
-             * Tags
-             * @default []
-             */
-            tags: string[] | null;
+            /** Tags */
+            tags?: string[] | null;
             address?: components["schemas"]["AddressCreate"] | null;
         };
         /** InstitutionDetailedStatistics */
@@ -7053,7 +7120,7 @@ export interface components {
              * Tags
              * @default []
              */
-            tags: string[];
+            tags: string[] | null;
             /**
              * Id
              * Format: uuid
@@ -8142,6 +8209,16 @@ export interface components {
              * @default []
              */
             questions: components["schemas"]["QuestionReadForQuestionSet"][] | null;
+            /**
+             * Questions Count
+             * @default 0
+             */
+            questions_count: number | null;
+        };
+        /** QuestionSetReadForExamPaperReadForInstitution */
+        QuestionSetReadForExamPaperReadForInstitution: {
+            /** Slug */
+            slug?: string | null;
             /**
              * Questions Count
              * @default 0
@@ -10622,8 +10699,6 @@ export interface operations {
             query?: {
                 skip?: number;
                 limit?: number;
-                /** @description Search term for institution name and other fields */
-                search_term?: string;
             };
             header?: never;
             path?: never;
@@ -10671,6 +10746,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IPostResponseBase_FacultyRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_faculties_api_v1_faculty_search_get: {
+        parameters: {
+            query?: {
+                /** @description Search query for faculties */
+                q?: string;
+                /** @description Filter by institution ID */
+                institution_id?: string;
+                /** @description Sort by: name, created_at */
+                sort_by?: string;
+                /** @description Sort order: asc, desc */
+                sort_order?: string;
+                skip?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IGetResponsePaginated_FacultyRead_"];
                 };
             };
             /** @description Validation Error */
@@ -10965,6 +11080,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IPostResponseBase_DepartmentRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_departments_api_v1_department_search_get: {
+        parameters: {
+            query?: {
+                /** @description Search query for departments */
+                q?: string;
+                /** @description Filter by faculty ID */
+                faculty_id?: string;
+                /** @description Filter by institution ID (via faculty) */
+                institution_id?: string;
+                /** @description Sort by: name, created_at */
+                sort_by?: string;
+                /** @description Sort order: asc, desc */
+                sort_order?: string;
+                skip?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IGetResponsePaginated_DepartmentRead_"];
                 };
             };
             /** @description Validation Error */
@@ -11884,6 +12041,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IPostResponseBase_CourseRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_courses_api_v1_course_search_get: {
+        parameters: {
+            query?: {
+                /** @description Search query for courses */
+                q?: string;
+                /** @description Filter by programme ID */
+                programme_id?: string;
+                /** @description Filter by department ID (via programme) */
+                department_id?: string;
+                /** @description Filter by institution ID (via programme→department→faculty) */
+                institution_id?: string;
+                /** @description Filter by course acronym */
+                course_acronym?: string;
+                /** @description Sort by: name, created_at */
+                sort_by?: string;
+                /** @description Sort order: asc, desc */
+                sort_order?: string;
+                skip?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IGetResponsePaginated_CourseRead_"];
                 };
             };
             /** @description Validation Error */

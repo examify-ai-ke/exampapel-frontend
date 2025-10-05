@@ -16,6 +16,7 @@ import {
     ChevronRight,
     SortAsc,
     ExternalLink,
+    Plus,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -30,9 +31,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { LoadingSpinner, LoadingOverlay } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { AdminBreadcrumb } from '@/components/ui/breadcrumb';
+import { InstitutionForm } from '@/components/forms/institution-form';
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/ui';
 import { adminAPI } from '@/lib/api-admin';
@@ -155,6 +164,7 @@ const mockInstitutions: InstitutionRead[] = [
 ];
 
 export default function AllInstitutionsPage() {
+    const { user } = useAuth();
     const { addNotification } = useUIStore();
 
     // State management
@@ -166,6 +176,7 @@ export default function AllInstitutionsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(12);
     const [loading, setLoading] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     // Real data state
     const [institutions, setInstitutions] = useState<InstitutionRead[]>([]);
@@ -282,6 +293,33 @@ export default function AllInstitutionsPage() {
         }
     };
 
+    // Handle form success
+    const handleFormSuccess = async () => {
+        setShowCreateModal(false);
+        await loadInstitutions();
+    };
+
+    // Handle create institution
+    const handleCreateInstitution = () => {
+        setShowCreateModal(true);
+    };
+
+    // Check user permissions
+    const currentUser = user || {
+        role: { name: 'Student' },
+        email: 'student@dev.local',
+    };
+
+    const isAdmin = typeof currentUser?.role === 'string'
+        ? (currentUser?.role === 'admin' || currentUser?.role === 'Admin')
+        : (currentUser?.role?.name === 'admin' || currentUser?.role?.name === 'Admin');
+
+    const isManager = typeof currentUser?.role === 'string'
+        ? (currentUser?.role === 'manager' || currentUser?.role === 'Manager')
+        : (currentUser?.role?.name === 'manager' || currentUser?.role?.name === 'Manager');
+
+    const canCreateInstitution = isAdmin || isManager;
+
     // Utility functions
     const truncateText = (text: string | null | undefined, maxLength: number) => {
         if (!text) return 'No description available';
@@ -396,11 +434,19 @@ export default function AllInstitutionsPage() {
             <AdminBreadcrumb currentPage="All Institutions" />
 
             {/* Header */}
-            <div className="space-y-2">
-                <h1 className="text-3xl font-bold">Educational Institutions</h1>
-                <p className="text-muted-foreground">
-                    Discover {institutionsData.total} educational institutions across Kenya
-                </p>
+            <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                    <h1 className="text-3xl font-bold">Educational Institutions</h1>
+                    <p className="text-muted-foreground">
+                        Discover {institutionsData.total} educational institutions across Kenya
+                    </p>
+                </div>
+                {canCreateInstitution && (
+                    <Button onClick={handleCreateInstitution} className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        Add Institution
+                    </Button>
+                )}
             </div>
 
             {/* Search and Filters */}
@@ -668,6 +714,24 @@ export default function AllInstitutionsPage() {
             <Card>
                 <CardContent className="pt-6">{renderPagination()}</CardContent>
             </Card>
+
+            {/* Create Institution Modal */}
+            <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+                <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>Add New Institution</DialogTitle>
+                        <DialogDescription>
+                            Add a new educational institution to the system. This will make it available for browsing and exam paper management.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <InstitutionForm
+                        mode="create"
+                        onSuccess={handleFormSuccess}
+                        onCancel={() => setShowCreateModal(false)}
+                        embedded={true}
+                    />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

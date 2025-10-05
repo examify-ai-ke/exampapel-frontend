@@ -50,6 +50,7 @@ import {
 import { LoadingSpinner, LoadingOverlay } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { AdminBreadcrumb } from '@/components/ui/breadcrumb';
+import { ContentManagerGuard } from '@/components/ui/permission-guard';
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/ui';
 import { adminAPI, type ExamPaperRead } from '@/lib/api-admin';
@@ -496,171 +497,173 @@ export default function ExamPapersManagePage() {
     const transformedPapers = papers.map(transformPaperForTable);
 
     return (
-        <div className="space-y-6 p-6">
-            <AdminBreadcrumb currentPage="Exam Papers Management" />
+        <ContentManagerGuard>
+            <div className="space-y-6 p-6">
+                <AdminBreadcrumb currentPage="Exam Papers Management" />
 
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Exam Papers</h1>
-                    <p className="text-gray-600">
-                        Manage exam papers, questions, and institutional content
-                    </p>
-                </div>
-                <Button onClick={handleCreatePaper} className="flex items-center space-x-2">
-                    <Plus className="h-4 w-4" />
-                    <span>Create ExamPaper</span>
-                </Button>
-            </div>
-
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Papers</CardTitle>
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalPapers.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">All exam papers</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Published</CardTitle>
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.publishedPapers.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">Live papers</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Draft</CardTitle>
-                        <Edit className="h-4 w-4 text-yellow-600" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.draftPapers.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">In progress</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Archived</CardTitle>
-                        <Archive className="h-4 w-4 text-gray-600" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.archivedPapers.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">Old papers</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Questions</CardTitle>
-                        <Users className="h-4 w-4 text-blue-600" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalQuestions.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">Total questions</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Recent</CardTitle>
-                        <Star className="h-4 w-4 text-purple-600" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.recentPapers}</div>
-                        <p className="text-xs text-muted-foreground">This week</p>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Filters and Search */}
-            <Card>
-                <CardContent className="pt-6">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="flex-1">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <Input
-                                    placeholder="Search exam papers..."
-                                    className="pl-10"
-                                    value={filters.search || ''}
-                                    onChange={(e) => handleSearch(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <Select
-                            value={filters.year || 'all'}
-                            onValueChange={(value) => handleFilterChange('year', value === 'all' ? undefined : value)}
-                        >
-                            <SelectTrigger className="w-full sm:w-[180px]">
-                                <SelectValue placeholder="Filter by year" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Years</SelectItem>
-                                <SelectItem value="2024/2025">2024/2025</SelectItem>
-                                <SelectItem value="2023/2024">2023/2024</SelectItem>
-                                <SelectItem value="2022/2023">2022/2023</SelectItem>
-                            </SelectContent>
-                        </Select>
-
-                        <Select
-                            value={filters.sort_by || 'date'}
-                            onValueChange={(value) => handleFilterChange('sort_by', value)}
-                        >
-                            <SelectTrigger className="w-full sm:w-[180px]">
-                                <SelectValue placeholder="Sort by" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="date">Date</SelectItem>
-                                <SelectItem value="title">Title</SelectItem>
-                                <SelectItem value="duration">Duration</SelectItem>
-                                <SelectItem value="relevance">Relevance</SelectItem>
-                            </SelectContent>
-                        </Select>
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Exam Papers</h1>
+                        <p className="text-gray-600">
+                            Manage exam papers, questions, and institutional content
+                        </p>
                     </div>
-                </CardContent>
-            </Card>
+                    <Button onClick={handleCreatePaper} className="flex items-center space-x-2">
+                        <Plus className="h-4 w-4" />
+                        <span>Create ExamPaper</span>
+                    </Button>
+                </div>
 
-            {/* Data Table */}
-            <Card>
-                <LoadingOverlay isLoading={loading}>
-                    <DataTable
-                        data={transformedPapers}
-                        columns={columns}
-                        title={`${totalItems} Exam Papers`}
-                        searchable={false} // We handle search separately
-                        filterable={false} // We handle filters separately
-                        pagination={true}
-                        pageSize={ITEMS_PER_PAGE}
-                        actions={[
-                            {
-                                label: 'Export Selected',
-                                onClick: handleBulkExport,
-                                icon: Download,
-                                variant: 'outline',
-                            },
-                            {
-                                label: 'Delete Selected',
-                                onClick: handleBulkDelete,
-                                icon: Trash2,
-                                variant: 'destructive',
-                            },
-                        ]}
-                        emptyMessage="No exam papers found. Create your first exam paper to get started."
-                        loading={loading}
-                    />
-                </LoadingOverlay>
-            </Card>
-        </div>
+                {/* Statistics Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Papers</CardTitle>
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stats.totalPapers.toLocaleString()}</div>
+                            <p className="text-xs text-muted-foreground">All exam papers</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Published</CardTitle>
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stats.publishedPapers.toLocaleString()}</div>
+                            <p className="text-xs text-muted-foreground">Live papers</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Draft</CardTitle>
+                            <Edit className="h-4 w-4 text-yellow-600" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stats.draftPapers.toLocaleString()}</div>
+                            <p className="text-xs text-muted-foreground">In progress</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Archived</CardTitle>
+                            <Archive className="h-4 w-4 text-gray-600" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stats.archivedPapers.toLocaleString()}</div>
+                            <p className="text-xs text-muted-foreground">Old papers</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Questions</CardTitle>
+                            <Users className="h-4 w-4 text-blue-600" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stats.totalQuestions.toLocaleString()}</div>
+                            <p className="text-xs text-muted-foreground">Total questions</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Recent</CardTitle>
+                            <Star className="h-4 w-4 text-purple-600" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stats.recentPapers}</div>
+                            <p className="text-xs text-muted-foreground">This week</p>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Filters and Search */}
+                <Card>
+                    <CardContent className="pt-6">
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <div className="flex-1">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <Input
+                                        placeholder="Search exam papers..."
+                                        className="pl-10"
+                                        value={filters.search || ''}
+                                        onChange={(e) => handleSearch(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <Select
+                                value={filters.year || 'all'}
+                                onValueChange={(value) => handleFilterChange('year', value === 'all' ? undefined : value)}
+                            >
+                                <SelectTrigger className="w-full sm:w-[180px]">
+                                    <SelectValue placeholder="Filter by year" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Years</SelectItem>
+                                    <SelectItem value="2024/2025">2024/2025</SelectItem>
+                                    <SelectItem value="2023/2024">2023/2024</SelectItem>
+                                    <SelectItem value="2022/2023">2022/2023</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <Select
+                                value={filters.sort_by || 'date'}
+                                onValueChange={(value) => handleFilterChange('sort_by', value)}
+                            >
+                                <SelectTrigger className="w-full sm:w-[180px]">
+                                    <SelectValue placeholder="Sort by" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="date">Date</SelectItem>
+                                    <SelectItem value="title">Title</SelectItem>
+                                    <SelectItem value="duration">Duration</SelectItem>
+                                    <SelectItem value="relevance">Relevance</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Data Table */}
+                <Card>
+                    <LoadingOverlay isLoading={loading}>
+                        <DataTable
+                            data={transformedPapers}
+                            columns={columns}
+                            title={`${totalItems} Exam Papers`}
+                            searchable={false} // We handle search separately
+                            filterable={false} // We handle filters separately
+                            pagination={true}
+                            pageSize={ITEMS_PER_PAGE}
+                            actions={[
+                                {
+                                    label: 'Export Selected',
+                                    onClick: handleBulkExport,
+                                    icon: Download,
+                                    variant: 'outline',
+                                },
+                                {
+                                    label: 'Delete Selected',
+                                    onClick: handleBulkDelete,
+                                    icon: Trash2,
+                                    variant: 'destructive',
+                                },
+                            ]}
+                            emptyMessage="No exam papers found. Create your first exam paper to get started."
+                            loading={loading}
+                        />
+                    </LoadingOverlay>
+                </Card>
+            </div>
+        </ContentManagerGuard>
     );
 }

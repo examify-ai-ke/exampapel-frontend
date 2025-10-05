@@ -39,6 +39,9 @@ import {
 import { LoadingSpinner, LoadingOverlay } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { AdminBreadcrumb } from '@/components/ui/breadcrumb';
+import { FacultyForm } from '@/components/forms/faculty-form';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/ui';
 import { adminAPI } from '@/lib/api-admin';
@@ -73,85 +76,27 @@ interface FacultiesFilters {
     has_departments?: 'yes' | 'no';
 }
 
-// Mock data
-const mockStats: FacultiesStats = {
-    totalFaculties: 892,
-    totalDepartments: 2134,
-    totalInstitutions: 156,
-    averageDepartments: 2.4,
+// Initial empty state - data will be loaded from API
+const initialStats: FacultiesStats = {
+    totalFaculties: 0,
+    totalDepartments: 0,
+    totalInstitutions: 0,
+    averageDepartments: 0,
 };
-
-const mockFaculties: FacultyRead[] = [
-    {
-        id: '1',
-        name: 'Faculty of Engineering',
-        description: 'Leading engineering education and research programs',
-        departments: [
-            { id: 'd1', name: 'Civil Engineering', programmes: [] },
-            { id: 'd2', name: 'Electrical Engineering', programmes: [] },
-            { id: 'd3', name: 'Mechanical Engineering', programmes: [] },
-        ],
-        department_count: 8,
-        institutions: [
-            { id: 'i1', name: 'University of Nairobi' }
-        ],
-        institution_count: 1,
-    },
-    {
-        id: '2',
-        name: 'Faculty of Medicine',
-        description: 'Comprehensive medical education and healthcare training',
-        departments: [
-            { id: 'd4', name: 'Surgery', programmes: [] },
-            { id: 'd5', name: 'Internal Medicine', programmes: [] },
-            { id: 'd6', name: 'Pediatrics', programmes: [] },
-        ],
-        department_count: 12,
-        institutions: [
-            { id: 'i1', name: 'University of Nairobi' },
-            { id: 'i2', name: 'Moi University' }
-        ],
-        institution_count: 2,
-    },
-    {
-        id: '3',
-        name: 'Faculty of Arts',
-        description: 'Liberal arts and humanities education',
-        departments: [
-            { id: 'd7', name: 'Literature', programmes: [] },
-            { id: 'd8', name: 'Philosophy', programmes: [] },
-            { id: 'd9', name: 'History', programmes: [] },
-        ],
-        department_count: 15,
-        institutions: [
-            { id: 'i1', name: 'University of Nairobi' }
-        ],
-        institution_count: 1,
-    },
-    {
-        id: '4',
-        name: 'Faculty of Business',
-        description: 'Business administration and management programs',
-        departments: [
-            { id: 'd10', name: 'Accounting', programmes: [] },
-            { id: 'd11', name: 'Marketing', programmes: [] },
-        ],
-        department_count: 6,
-        institutions: [
-            { id: 'i3', name: 'Strathmore University' }
-        ],
-        institution_count: 1,
-    },
-];
 
 export default function FacultiesPage() {
     const { user } = useAuth();
     const { addNotification } = useUIStore();
 
     // State management
-    const [faculties, setFaculties] = useState<FacultyRead[]>(mockFaculties);
-    const [loading, setLoading] = useState(false);
-    const [stats, setStats] = useState<FacultiesStats>(mockStats);
+    const [faculties, setFaculties] = useState<FacultyRead[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [statsLoading, setStatsLoading] = useState(true);
+    const [stats, setStats] = useState<FacultiesStats>(initialStats);
+    const [institutions, setInstitutions] = useState<{ id: string; name: string }[]>([]);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [editingFaculty, setEditingFaculty] = useState<FacultyRead | null>(null);
+    const [deletingFaculty, setDeletingFaculty] = useState<FacultyRead | null>(null);
     const [filters, setFilters] = useState<FacultiesFilters>({});
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -164,15 +109,17 @@ export default function FacultiesPage() {
         try {
             setLoading(true);
 
-            // Connect to real backend API
-            const response = await adminAPI.faculties.list({
+            // Use the new search endpoint which supports institution_id filtering
+            const response = await adminAPI.faculties.search({
+                q: filters.search,
+                institution_id: filters.institution_id,
+                sort_by: 'name',
+                sort_order: 'asc',
                 skip: currentPage * ITEMS_PER_PAGE,
                 limit: ITEMS_PER_PAGE,
-                search: filters.search,
-                institution_id: filters.institution_id,
             });
 
-            if (response.data && response.data.data) {
+            if (response.data?.data) {
                 const responseData = response.data.data;
                 // Handle paginated response structure
                 if (responseData && typeof responseData === 'object' && 'items' in responseData) {
@@ -180,35 +127,33 @@ export default function FacultiesPage() {
                     setFaculties(responseData.items || []);
                     setTotalItems(responseData.total || 0);
                     setTotalPages(Math.ceil((responseData.total || 0) / ITEMS_PER_PAGE));
+
+                    // Update statistics with the total from this response (much simpler!)
+                    if (!filters.search && !filters.institution_id && currentPage === 0) {
+                        // Only update stats when showing all faculties (no filters, first page)
+                        setStats(prev => ({ ...prev, totalFaculties: responseData.total || 0 }));
+                    }
                 } else if (Array.isArray(responseData)) {
                     // Direct array response
                     setFaculties(responseData);
                     setTotalItems(responseData.length);
                     setTotalPages(Math.ceil(responseData.length / ITEMS_PER_PAGE));
+
+                    // Update stats for array response
+                    if (!filters.search && !filters.institution_id) {
+                        setStats(prev => ({ ...prev, totalFaculties: responseData.length }));
+                    }
                 } else {
-                    // Invalid response, use mock data
-                    console.log('Invalid API response structure, using mock data');
-                    setFaculties(mockFaculties);
-                    setTotalItems(mockFaculties.length);
-                    setTotalPages(Math.ceil(mockFaculties.length / ITEMS_PER_PAGE));
+                    // Empty response
+                    setFaculties([]);
+                    setTotalItems(0);
+                    setTotalPages(0);
                 }
             } else {
-                // Fallback to mock data if API returns no data
-                console.log('Using mock data - no API data available');
-                const filteredData = mockFaculties.filter(faculty => {
-                    if (filters.search && !faculty.name.toLowerCase().includes(filters.search.toLowerCase())) {
-                        return false;
-                    }
-                    if (filters.has_departments === 'yes' && (!faculty.departments || faculty.departments.length === 0)) {
-                        return false;
-                    }
-                    if (filters.has_departments === 'no' && faculty.departments && faculty.departments.length > 0) {
-                        return false;
-                    }
-                    return true;
-                });
-                setFaculties(filteredData);
-                setTotalItems(filteredData.length);
+                // Empty response
+                setFaculties([]);
+                setTotalItems(0);
+                setTotalPages(0);
             }
         } catch (error) {
             console.error('Error loading faculties:', error);
@@ -217,12 +162,98 @@ export default function FacultiesPage() {
                 title: 'Failed to load faculties',
                 message: 'Please try again later.',
             });
-            // Fallback to mock data on error
-            setFaculties(mockFaculties);
-            setTotalItems(mockFaculties.length);
+            // Set empty state on error
+            setFaculties([]);
+            setTotalItems(0);
+            setTotalPages(0);
         } finally {
             setLoading(false);
         }
+    };
+
+    // Load remaining statistics (departments and institutions only)
+    const loadRemainingStats = async () => {
+        try {
+            setStatsLoading(true);
+            console.log('Loading remaining statistics...');
+
+            // Use the clean API method instead of direct API calls
+            const response = await adminAPI.faculties.getPartialStats();
+
+            if (response.data) {
+                setStats(prev => {
+                    const totalFaculties = prev.totalFaculties; // Keep the faculty count from main search
+                    const averageDepartments = totalFaculties > 0 ?
+                        Number((response.data.totalDepartments / totalFaculties).toFixed(1)) : 0;
+
+                    console.log('Updated statistics:', {
+                        totalFaculties,
+                        totalDepartments: response.data.totalDepartments,
+                        totalInstitutions: response.data.totalInstitutions,
+                        averageDepartments,
+                    });
+
+                    return {
+                        totalFaculties,
+                        totalDepartments: response.data.totalDepartments,
+                        totalInstitutions: response.data.totalInstitutions,
+                        averageDepartments,
+                    };
+                });
+            }
+        } catch (error) {
+            console.error('Error loading remaining statistics:', error);
+        } finally {
+            setStatsLoading(false);
+        }
+    };
+
+    // Load institutions for filter dropdown
+    const loadInstitutions = async () => {
+        try {
+            const response = await adminAPI.institutions.list({ limit: 100 });
+            if (response.data?.data) {
+                const institutionsData = Array.isArray(response.data.data)
+                    ? response.data.data
+                    : response.data.data.items || [];
+                setInstitutions(institutionsData.map(inst => ({ id: inst.id, name: inst.name })));
+            }
+        } catch (error) {
+            console.error('Error loading institutions:', error);
+        }
+    };
+
+    // Delete faculty
+    const handleDeleteFaculty = async (faculty: FacultyRead) => {
+        try {
+            await adminAPI.faculties.delete(faculty.id);
+            addNotification({
+                type: 'success',
+                title: 'Faculty deleted',
+                message: `${faculty.name} has been deleted successfully.`,
+            });
+            loadFaculties();
+            loadRemainingStats(); // Fixed: was calling loadStats which doesn't exist anymore
+        } catch (error: any) {
+            console.error('Error deleting faculty:', error);
+            addNotification({
+                type: 'error',
+                title: 'Failed to delete faculty',
+                message: error.message || 'Please try again later.',
+            });
+        }
+        setDeletingFaculty(null);
+    };
+
+    // Handle form success
+    const handleFormSuccess = async () => {
+        // Reset form state first
+        setShowCreateModal(false);
+        setEditingFaculty(null);
+
+        // Reload data
+        await loadFaculties();
+        await loadRemainingStats();
     };
 
     // Transform faculty data for table display
@@ -302,7 +333,7 @@ export default function FacultiesPage() {
                             View Details
                         </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setEditingFaculty(faculty)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit Faculty
                     </DropdownMenuItem>
@@ -313,7 +344,10 @@ export default function FacultiesPage() {
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-red-600">
+                    <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => setDeletingFaculty(faculty)}
+                    >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete
                     </DropdownMenuItem>
@@ -345,6 +379,12 @@ export default function FacultiesPage() {
     useEffect(() => {
         loadFaculties();
     }, [currentPage, filters]);
+
+    // Load initial data
+    useEffect(() => {
+        loadRemainingStats();
+        loadInstitutions();
+    }, []);
 
     // Define table columns
     const columns = [
@@ -411,7 +451,7 @@ export default function FacultiesPage() {
                         Browse and explore academic faculties across institutions
                     </p>
                 </div>
-                <Button>
+                <Button onClick={() => setShowCreateModal(true)}>
                     <Plus className="mr-2 h-4 w-4" />
                     Add Faculty
                 </Button>
@@ -425,7 +465,15 @@ export default function FacultiesPage() {
                         <School className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalFaculties}</div>
+                        <div className="text-2xl font-bold">
+                            {statsLoading ? (
+                                <div className="flex items-center">
+                                    <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
+                                </div>
+                            ) : (
+                                stats.totalFaculties
+                            )}
+                        </div>
                         <p className="text-xs text-muted-foreground">Across all institutions</p>
                     </CardContent>
                 </Card>
@@ -436,7 +484,15 @@ export default function FacultiesPage() {
                         <BookOpen className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalDepartments}</div>
+                        <div className="text-2xl font-bold">
+                            {statsLoading ? (
+                                <div className="flex items-center">
+                                    <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
+                                </div>
+                            ) : (
+                                stats.totalDepartments
+                            )}
+                        </div>
                         <p className="text-xs text-muted-foreground">Within all faculties</p>
                     </CardContent>
                 </Card>
@@ -447,7 +503,15 @@ export default function FacultiesPage() {
                         <Building className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalInstitutions}</div>
+                        <div className="text-2xl font-bold">
+                            {statsLoading ? (
+                                <div className="flex items-center">
+                                    <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
+                                </div>
+                            ) : (
+                                stats.totalInstitutions
+                            )}
+                        </div>
                         <p className="text-xs text-muted-foreground">With faculties</p>
                     </CardContent>
                 </Card>
@@ -458,7 +522,15 @@ export default function FacultiesPage() {
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.averageDepartments}</div>
+                        <div className="text-2xl font-bold">
+                            {statsLoading ? (
+                                <div className="flex items-center">
+                                    <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
+                                </div>
+                            ) : (
+                                stats.averageDepartments
+                            )}
+                        </div>
                         <p className="text-xs text-muted-foreground">Per faculty</p>
                     </CardContent>
                 </Card>
@@ -503,9 +575,11 @@ export default function FacultiesPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Institutions</SelectItem>
-                                <SelectItem value="1">University of Nairobi</SelectItem>
-                                <SelectItem value="2">Strathmore University</SelectItem>
-                                <SelectItem value="3">Moi University</SelectItem>
+                                {institutions.map((institution) => (
+                                    <SelectItem key={institution.id} value={institution.id}>
+                                        {institution.name}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
@@ -533,6 +607,66 @@ export default function FacultiesPage() {
                     />
                 </LoadingOverlay>
             </Card>
+
+            {/* Create Faculty Modal */}
+            <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Create New Faculty</DialogTitle>
+                        <DialogDescription>
+                            Add a new faculty to the system. This will create a new academic faculty that can contain departments.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <FacultyForm
+                        mode="create"
+                        onSuccess={handleFormSuccess}
+                        onCancel={() => setShowCreateModal(false)}
+                        embedded={true}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Faculty Modal */}
+            <Dialog open={!!editingFaculty} onOpenChange={(open) => !open && setEditingFaculty(null)}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Edit Faculty</DialogTitle>
+                        <DialogDescription>
+                            Update the faculty information. Changes will be saved immediately.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {editingFaculty && (
+                        <FacultyForm
+                            mode="edit"
+                            faculty={editingFaculty}
+                            onSuccess={handleFormSuccess}
+                            onCancel={() => setEditingFaculty(null)}
+                            embedded={true}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={!!deletingFaculty} onOpenChange={(open) => !open && setDeletingFaculty(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Faculty</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete "{deletingFaculty?.name}"? This action cannot be undone and will remove all associated data.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => deletingFaculty && handleDeleteFaculty(deletingFaculty)}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Delete Faculty
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

@@ -161,11 +161,14 @@ const CoursesPage: React.FC<CoursesPageProps> = () => {
     const loadCourses = async () => {
         try {
             setLoading(true);
-            const response = await adminAPI.courses.list({
+            // Use the new search endpoint which supports multiple filtering options
+            const response = await adminAPI.courses.search({
+                q: searchTerm || undefined,
+                programme_id: selectedProgramme || undefined,
+                sort_by: 'name',
+                sort_order: 'asc',
                 skip: (currentPage - 1) * ITEMS_PER_PAGE,
                 limit: ITEMS_PER_PAGE,
-                search: searchTerm || undefined,
-                programme_id: selectedProgramme || undefined
             });
 
             if (response.data && response.data.data) {

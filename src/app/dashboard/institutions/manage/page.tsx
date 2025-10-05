@@ -58,10 +58,13 @@ import {
 import { LoadingSpinner, LoadingOverlay } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { AdminBreadcrumb } from '@/components/ui/breadcrumb';
+import { InstitutionForm } from '@/components/forms/institution-form';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/ui';
 import { adminAPI } from '@/lib/api-admin';
 import { formatDate } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 import type { components } from '@/types/generated/api';
 
 // Type definitions from API schema
@@ -160,15 +163,17 @@ const mockInstitutions: InstitutionRead[] = [
 export default function InstitutionsManagePage() {
     const { user } = useAuth();
     const { addNotification } = useUIStore();
+    const router = useRouter();
 
     // State management
-    const [institutions, setInstitutions] = useState<InstitutionRead[]>(mockInstitutions);
-    const [loading, setLoading] = useState(false);
+    const [institutions, setInstitutions] = useState<InstitutionRead[]>([]);
+    const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<InstitutionsStats>(mockStats);
     const [filters, setFilters] = useState<InstitutionsFilters>({});
     const [selectedInstitution, setSelectedInstitution] = useState<InstitutionRead | null>(null);
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [showEditDialog, setShowEditDialog] = useState(false);
+    const [deletingInstitution, setDeletingInstitution] = useState<InstitutionRead | null>(null);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalItems, setTotalItems] = useState(0);
@@ -389,7 +394,7 @@ export default function InstitutionsManagePage() {
                         Duplicate
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                        onClick={() => handleDeleteInstitution(institution.id)}
+                        onClick={() => setDeletingInstitution(institution)}
                         className="text-red-600"
                     >
                         <Trash2 className="mr-2 h-4 w-4" />
@@ -423,31 +428,39 @@ export default function InstitutionsManagePage() {
     };
 
     const handleViewInstitution = (institutionId: string) => {
-        window.open(`/dashboard/institutions/${institutionId}`, '_blank');
+        router.push(`/dashboard/institutions/${institutionId}`);
     };
 
-    const handleDeleteInstitution = async (institutionId: string) => {
-        if (!confirm('Are you sure you want to delete this institution? This action cannot be undone.')) return;
-
+    const handleDeleteInstitution = async (institution: InstitutionRead) => {
         try {
-            await adminAPI.institutions.delete(institutionId);
+            await adminAPI.institutions.delete(institution.id);
             addNotification({
                 type: 'success',
-                title: 'Institution Deleted',
-                message: 'Institution has been deleted successfully.',
+                title: 'Institution deleted',
+                message: `${institution.name} has been deleted successfully.`,
             });
             loadInstitutions();
-        } catch (error) {
+        } catch (error: any) {
+            console.error('Error deleting institution:', error);
             addNotification({
                 type: 'error',
-                title: 'Delete Failed',
-                message: 'Failed to delete the institution. Please try again.',
+                title: 'Failed to delete institution',
+                message: error.message || 'Please try again later.',
             });
         }
+        setDeletingInstitution(null);
+    };
+
+    // Handle form success
+    const handleFormSuccess = async () => {
+        setShowCreateDialog(false);
+        setShowEditDialog(false);
+        setSelectedInstitution(null);
+        await loadInstitutions();
     };
 
     const handleManageFaculties = (institutionId: string) => {
-        window.open(`/dashboard/institutions/faculties?institution_id=${institutionId}`, '_blank');
+        router.push(`/dashboard/institutions/faculties?institution_id=${institutionId}`);
     };
 
     const handleViewExamPapers = (institutionId: string) => {
@@ -708,6 +721,66 @@ export default function InstitutionsManagePage() {
                     />
                 </LoadingOverlay>
             </Card>
+
+            {/* Create Institution Modal */}
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>Create New Institution</DialogTitle>
+                        <DialogDescription>
+                            Add a new educational institution to the system.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <InstitutionForm
+                        mode="create"
+                        onSuccess={handleFormSuccess}
+                        onCancel={() => setShowCreateDialog(false)}
+                        embedded={true}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Institution Modal */}
+            <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+                <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>Edit Institution</DialogTitle>
+                        <DialogDescription>
+                            Update the institution information. Changes will be saved immediately.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedInstitution && (
+                        <InstitutionForm
+                            mode="edit"
+                            institution={selectedInstitution}
+                            onSuccess={handleFormSuccess}
+                            onCancel={() => setShowEditDialog(false)}
+                            embedded={true}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={!!deletingInstitution} onOpenChange={(open) => !open && setDeletingInstitution(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Institution</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete "{deletingInstitution?.name}"? This action cannot be undone and will remove all associated faculties, departments, and data.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => deletingInstitution && handleDeleteInstitution(deletingInstitution)}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Delete Institution
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

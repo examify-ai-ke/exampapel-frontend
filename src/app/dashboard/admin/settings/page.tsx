@@ -37,6 +37,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AdminBreadcrumb } from '@/components/ui/breadcrumb';
+import { AdminGuard } from '@/components/ui/permission-guard';
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/ui';
 import { adminAPI } from '@/lib/api-admin';
@@ -334,906 +335,908 @@ export default function SystemSettingsPage() {
     }
 
     return (
-        <div className="space-y-6">
-            {/* Breadcrumb */}
-            <AdminBreadcrumb currentPage="System Settings" />
+        <AdminGuard>
+            <div className="space-y-6">
+                {/* Breadcrumb */}
+                <AdminBreadcrumb currentPage="System Settings" />
 
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">System Settings</h1>
-                    <p className="text-muted-foreground">
-                        Configure system-wide settings and preferences
-                    </p>
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">System Settings</h1>
+                        <p className="text-muted-foreground">
+                            Configure system-wide settings and preferences
+                        </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => loadSettings()}
+                            disabled={loading}
+                        >
+                            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                            Refresh
+                        </Button>
+                        <Button
+                            onClick={createBackup}
+                            className="bg-blue-600 hover:bg-blue-700"
+                        >
+                            <Download className="h-4 w-4 mr-2" />
+                            Create Backup
+                        </Button>
+                    </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <Button
-                        variant="outline"
-                        onClick={() => loadSettings()}
-                        disabled={loading}
-                    >
-                        <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                        Refresh
-                    </Button>
-                    <Button
-                        onClick={createBackup}
-                        className="bg-blue-600 hover:bg-blue-700"
-                    >
-                        <Download className="h-4 w-4 mr-2" />
-                        Create Backup
-                    </Button>
-                </div>
-            </div>
 
-            {/* Settings Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
-                    <TabsTrigger value="general" className="flex items-center space-x-2">
-                        <Globe className="h-4 w-4" />
-                        <span className="hidden sm:inline">General</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="security" className="flex items-center space-x-2">
-                        <Shield className="h-4 w-4" />
-                        <span className="hidden sm:inline">Security</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="email" className="flex items-center space-x-2">
-                        <Mail className="h-4 w-4" />
-                        <span className="hidden sm:inline">Email</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="backup" className="flex items-center space-x-2">
-                        <Database className="h-4 w-4" />
-                        <span className="hidden sm:inline">Backup</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="system" className="flex items-center space-x-2">
-                        <Monitor className="h-4 w-4" />
-                        <span className="hidden sm:inline">System</span>
-                    </TabsTrigger>
-                </TabsList>
+                {/* Settings Tabs */}
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-5">
+                        <TabsTrigger value="general" className="flex items-center space-x-2">
+                            <Globe className="h-4 w-4" />
+                            <span className="hidden sm:inline">General</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="security" className="flex items-center space-x-2">
+                            <Shield className="h-4 w-4" />
+                            <span className="hidden sm:inline">Security</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="email" className="flex items-center space-x-2">
+                            <Mail className="h-4 w-4" />
+                            <span className="hidden sm:inline">Email</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="backup" className="flex items-center space-x-2">
+                            <Database className="h-4 w-4" />
+                            <span className="hidden sm:inline">Backup</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="system" className="flex items-center space-x-2">
+                            <Monitor className="h-4 w-4" />
+                            <span className="hidden sm:inline">System</span>
+                        </TabsTrigger>
+                    </TabsList>
 
-                {/* General Settings */}
-                <TabsContent value="general" className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center space-x-2">
-                                <Globe className="h-5 w-5" />
-                                <span>General Settings</span>
-                            </CardTitle>
-                            <CardDescription>
-                                Configure basic site information and preferences
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="siteName">Site Name</Label>
-                                    <Input
-                                        id="siteName"
-                                        value={generalSettings.siteName}
-                                        onChange={(e) => setGeneralSettings(prev => ({
-                                            ...prev,
-                                            siteName: e.target.value
-                                        }))}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="siteUrl">Site URL</Label>
-                                    <Input
-                                        id="siteUrl"
-                                        value={generalSettings.siteUrl}
-                                        onChange={(e) => setGeneralSettings(prev => ({
-                                            ...prev,
-                                            siteUrl: e.target.value
-                                        }))}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="siteDescription">Site Description</Label>
-                                <Textarea
-                                    id="siteDescription"
-                                    value={generalSettings.siteDescription}
-                                    onChange={(e) => setGeneralSettings(prev => ({
-                                        ...prev,
-                                        siteDescription: e.target.value
-                                    }))}
-                                    rows={3}
-                                />
-                            </div>
-
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="contactEmail">Contact Email</Label>
-                                    <Input
-                                        id="contactEmail"
-                                        type="email"
-                                        value={generalSettings.contactEmail}
-                                        onChange={(e) => setGeneralSettings(prev => ({
-                                            ...prev,
-                                            contactEmail: e.target.value
-                                        }))}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="supportEmail">Support Email</Label>
-                                    <Input
-                                        id="supportEmail"
-                                        type="email"
-                                        value={generalSettings.supportEmail}
-                                        onChange={(e) => setGeneralSettings(prev => ({
-                                            ...prev,
-                                            supportEmail: e.target.value
-                                        }))}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid gap-4 md:grid-cols-3">
-                                <div className="space-y-2">
-                                    <Label htmlFor="timezone">Timezone</Label>
-                                    <Select
-                                        value={generalSettings.timezone}
-                                        onValueChange={(value) => setGeneralSettings(prev => ({
-                                            ...prev,
-                                            timezone: value
-                                        }))}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="UTC">UTC</SelectItem>
-                                            <SelectItem value="America/New_York">Eastern Time</SelectItem>
-                                            <SelectItem value="America/Chicago">Central Time</SelectItem>
-                                            <SelectItem value="America/Denver">Mountain Time</SelectItem>
-                                            <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="language">Language</Label>
-                                    <Select
-                                        value={generalSettings.language}
-                                        onValueChange={(value) => setGeneralSettings(prev => ({
-                                            ...prev,
-                                            language: value
-                                        }))}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="en">English</SelectItem>
-                                            <SelectItem value="es">Spanish</SelectItem>
-                                            <SelectItem value="fr">French</SelectItem>
-                                            <SelectItem value="de">German</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="dateFormat">Date Format</Label>
-                                    <Select
-                                        value={generalSettings.dateFormat}
-                                        onValueChange={(value) => setGeneralSettings(prev => ({
-                                            ...prev,
-                                            dateFormat: value
-                                        }))}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
-                                            <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
-                                            <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            <Separator />
-
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-semibold">Access Control</h3>
-                                <div className="flex items-center justify-between">
-                                    <div className="space-y-1">
-                                        <Label>Enable User Registration</Label>
-                                        <p className="text-sm text-muted-foreground">
-                                            Allow new users to register accounts
-                                        </p>
-                                    </div>
-                                    <Switch
-                                        checked={generalSettings.enableRegistration}
-                                        onCheckedChange={(checked) => setGeneralSettings(prev => ({
-                                            ...prev,
-                                            enableRegistration: checked
-                                        }))}
-                                    />
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div className="space-y-1">
-                                        <Label>Enable Guest Access</Label>
-                                        <p className="text-sm text-muted-foreground">
-                                            Allow anonymous users to browse content
-                                        </p>
-                                    </div>
-                                    <Switch
-                                        checked={generalSettings.enableGuestAccess}
-                                        onCheckedChange={(checked) => setGeneralSettings(prev => ({
-                                            ...prev,
-                                            enableGuestAccess: checked
-                                        }))}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end">
-                                <Button
-                                    onClick={() => saveSettings('General', generalSettings)}
-                                    disabled={saving}
-                                    className="bg-blue-600 hover:bg-blue-700"
-                                >
-                                    {saving ? (
-                                        <>
-                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="h-4 w-4 mr-2" />
-                                            Save Changes
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* Security Settings */}
-                <TabsContent value="security" className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center space-x-2">
-                                <Shield className="h-5 w-5" />
-                                <span>Security Settings</span>
-                            </CardTitle>
-                            <CardDescription>
-                                Configure password policies and security measures
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-semibold">Password Policy</h3>
+                    {/* General Settings */}
+                    <TabsContent value="general" className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center space-x-2">
+                                    <Globe className="h-5 w-5" />
+                                    <span>General Settings</span>
+                                </CardTitle>
+                                <CardDescription>
+                                    Configure basic site information and preferences
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="passwordMinLength">Minimum Password Length</Label>
+                                        <Label htmlFor="siteName">Site Name</Label>
                                         <Input
-                                            id="passwordMinLength"
-                                            type="number"
-                                            min="6"
-                                            max="50"
-                                            value={securitySettings.passwordMinLength}
-                                            onChange={(e) => setSecuritySettings(prev => ({
+                                            id="siteName"
+                                            value={generalSettings.siteName}
+                                            onChange={(e) => setGeneralSettings(prev => ({
                                                 ...prev,
-                                                passwordMinLength: parseInt(e.target.value)
+                                                siteName: e.target.value
                                             }))}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
+                                        <Label htmlFor="siteUrl">Site URL</Label>
                                         <Input
-                                            id="sessionTimeout"
-                                            type="number"
-                                            min="5"
-                                            max="1440"
-                                            value={securitySettings.sessionTimeout}
-                                            onChange={(e) => setSecuritySettings(prev => ({
+                                            id="siteUrl"
+                                            value={generalSettings.siteUrl}
+                                            onChange={(e) => setGeneralSettings(prev => ({
                                                 ...prev,
-                                                sessionTimeout: parseInt(e.target.value)
+                                                siteUrl: e.target.value
                                             }))}
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <Label>Require Special Characters</Label>
-                                        <Switch
-                                            checked={securitySettings.passwordRequireSpecial}
-                                            onCheckedChange={(checked) => setSecuritySettings(prev => ({
-                                                ...prev,
-                                                passwordRequireSpecial: checked
-                                            }))}
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <Label>Require Numbers</Label>
-                                        <Switch
-                                            checked={securitySettings.passwordRequireNumbers}
-                                            onCheckedChange={(checked) => setSecuritySettings(prev => ({
-                                                ...prev,
-                                                passwordRequireNumbers: checked
-                                            }))}
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <Label>Require Uppercase Letters</Label>
-                                        <Switch
-                                            checked={securitySettings.passwordRequireUppercase}
-                                            onCheckedChange={(checked) => setSecuritySettings(prev => ({
-                                                ...prev,
-                                                passwordRequireUppercase: checked
-                                            }))}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <Separator />
-
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-semibold">Login Security</h3>
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="maxLoginAttempts">Max Login Attempts</Label>
-                                        <Input
-                                            id="maxLoginAttempts"
-                                            type="number"
-                                            min="3"
-                                            max="10"
-                                            value={securitySettings.maxLoginAttempts}
-                                            onChange={(e) => setSecuritySettings(prev => ({
-                                                ...prev,
-                                                maxLoginAttempts: parseInt(e.target.value)
-                                            }))}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="lockoutDuration">Lockout Duration (minutes)</Label>
-                                        <Input
-                                            id="lockoutDuration"
-                                            type="number"
-                                            min="1"
-                                            max="60"
-                                            value={securitySettings.lockoutDuration}
-                                            onChange={(e) => setSecuritySettings(prev => ({
-                                                ...prev,
-                                                lockoutDuration: parseInt(e.target.value)
-                                            }))}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="space-y-1">
-                                            <Label>Enable Two-Factor Authentication</Label>
-                                            <p className="text-sm text-muted-foreground">
-                                                Require 2FA for all admin accounts
-                                            </p>
-                                        </div>
-                                        <Switch
-                                            checked={securitySettings.enableTwoFactor}
-                                            onCheckedChange={(checked) => setSecuritySettings(prev => ({
-                                                ...prev,
-                                                enableTwoFactor: checked
-                                            }))}
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <Label>Allow Password Reset</Label>
-                                        <Switch
-                                            checked={securitySettings.allowPasswordReset}
-                                            onCheckedChange={(checked) => setSecuritySettings(prev => ({
-                                                ...prev,
-                                                allowPasswordReset: checked
-                                            }))}
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <Label>Require Email Verification</Label>
-                                        <Switch
-                                            checked={securitySettings.requireEmailVerification}
-                                            onCheckedChange={(checked) => setSecuritySettings(prev => ({
-                                                ...prev,
-                                                requireEmailVerification: checked
-                                            }))}
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <Label>Enable Audit Logging</Label>
-                                        <Switch
-                                            checked={securitySettings.enableAuditLog}
-                                            onCheckedChange={(checked) => setSecuritySettings(prev => ({
-                                                ...prev,
-                                                enableAuditLog: checked
-                                            }))}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end">
-                                <Button
-                                    onClick={() => saveSettings('Security', securitySettings)}
-                                    disabled={saving}
-                                    className="bg-blue-600 hover:bg-blue-700"
-                                >
-                                    {saving ? (
-                                        <>
-                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="h-4 w-4 mr-2" />
-                                            Save Changes
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* Email Settings */}
-                <TabsContent value="email" className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center space-x-2">
-                                <Mail className="h-5 w-5" />
-                                <span>Email Configuration</span>
-                            </CardTitle>
-                            <CardDescription>
-                                Configure SMTP settings and email templates
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-semibold">SMTP Configuration</h3>
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="smtpHost">SMTP Host</Label>
-                                        <Input
-                                            id="smtpHost"
-                                            value={emailSettings.smtpHost}
-                                            onChange={(e) => setEmailSettings(prev => ({
-                                                ...prev,
-                                                smtpHost: e.target.value
-                                            }))}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="smtpPort">SMTP Port</Label>
-                                        <Input
-                                            id="smtpPort"
-                                            type="number"
-                                            value={emailSettings.smtpPort}
-                                            onChange={(e) => setEmailSettings(prev => ({
-                                                ...prev,
-                                                smtpPort: parseInt(e.target.value)
-                                            }))}
-                                        />
-                                    </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="siteDescription">Site Description</Label>
+                                    <Textarea
+                                        id="siteDescription"
+                                        value={generalSettings.siteDescription}
+                                        onChange={(e) => setGeneralSettings(prev => ({
+                                            ...prev,
+                                            siteDescription: e.target.value
+                                        }))}
+                                        rows={3}
+                                    />
                                 </div>
 
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="smtpUsername">SMTP Username</Label>
+                                        <Label htmlFor="contactEmail">Contact Email</Label>
                                         <Input
-                                            id="smtpUsername"
-                                            value={emailSettings.smtpUsername}
-                                            onChange={(e) => setEmailSettings(prev => ({
+                                            id="contactEmail"
+                                            type="email"
+                                            value={generalSettings.contactEmail}
+                                            onChange={(e) => setGeneralSettings(prev => ({
                                                 ...prev,
-                                                smtpUsername: e.target.value
+                                                contactEmail: e.target.value
                                             }))}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="smtpPassword">SMTP Password</Label>
-                                        <div className="relative">
-                                            <Input
-                                                id="smtpPassword"
-                                                type={showPasswords ? 'text' : 'password'}
-                                                value={emailSettings.smtpPassword}
-                                                onChange={(e) => setEmailSettings(prev => ({
-                                                    ...prev,
-                                                    smtpPassword: e.target.value
-                                                }))}
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                className="absolute right-2 top-1/2 -translate-y-1/2"
-                                                onClick={() => setShowPasswords(!showPasswords)}
-                                            >
-                                                {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                            </Button>
-                                        </div>
+                                        <Label htmlFor="supportEmail">Support Email</Label>
+                                        <Input
+                                            id="supportEmail"
+                                            type="email"
+                                            value={generalSettings.supportEmail}
+                                            onChange={(e) => setGeneralSettings(prev => ({
+                                                ...prev,
+                                                supportEmail: e.target.value
+                                            }))}
+                                        />
                                     </div>
                                 </div>
 
                                 <div className="grid gap-4 md:grid-cols-3">
                                     <div className="space-y-2">
-                                        <Label htmlFor="smtpSecurity">Security</Label>
+                                        <Label htmlFor="timezone">Timezone</Label>
                                         <Select
-                                            value={emailSettings.smtpSecurity}
-                                            onValueChange={(value: 'none' | 'tls' | 'ssl') => setEmailSettings(prev => ({
+                                            value={generalSettings.timezone}
+                                            onValueChange={(value) => setGeneralSettings(prev => ({
                                                 ...prev,
-                                                smtpSecurity: value
+                                                timezone: value
                                             }))}
                                         >
                                             <SelectTrigger>
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="none">None</SelectItem>
-                                                <SelectItem value="tls">TLS</SelectItem>
-                                                <SelectItem value="ssl">SSL</SelectItem>
+                                                <SelectItem value="UTC">UTC</SelectItem>
+                                                <SelectItem value="America/New_York">Eastern Time</SelectItem>
+                                                <SelectItem value="America/Chicago">Central Time</SelectItem>
+                                                <SelectItem value="America/Denver">Mountain Time</SelectItem>
+                                                <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="fromEmail">From Email</Label>
-                                        <Input
-                                            id="fromEmail"
-                                            type="email"
-                                            value={emailSettings.fromEmail}
-                                            onChange={(e) => setEmailSettings(prev => ({
+                                        <Label htmlFor="language">Language</Label>
+                                        <Select
+                                            value={generalSettings.language}
+                                            onValueChange={(value) => setGeneralSettings(prev => ({
                                                 ...prev,
-                                                fromEmail: e.target.value
+                                                language: value
                                             }))}
-                                        />
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="en">English</SelectItem>
+                                                <SelectItem value="es">Spanish</SelectItem>
+                                                <SelectItem value="fr">French</SelectItem>
+                                                <SelectItem value="de">German</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="fromName">From Name</Label>
-                                        <Input
-                                            id="fromName"
-                                            value={emailSettings.fromName}
-                                            onChange={(e) => setEmailSettings(prev => ({
+                                        <Label htmlFor="dateFormat">Date Format</Label>
+                                        <Select
+                                            value={generalSettings.dateFormat}
+                                            onValueChange={(value) => setGeneralSettings(prev => ({
                                                 ...prev,
-                                                fromName: e.target.value
+                                                dateFormat: value
+                                            }))}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
+                                                <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
+                                                <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                <Separator />
+
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-semibold">Access Control</h3>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-1">
+                                            <Label>Enable User Registration</Label>
+                                            <p className="text-sm text-muted-foreground">
+                                                Allow new users to register accounts
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={generalSettings.enableRegistration}
+                                            onCheckedChange={(checked) => setGeneralSettings(prev => ({
+                                                ...prev,
+                                                enableRegistration: checked
+                                            }))}
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-1">
+                                            <Label>Enable Guest Access</Label>
+                                            <p className="text-sm text-muted-foreground">
+                                                Allow anonymous users to browse content
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={generalSettings.enableGuestAccess}
+                                            onCheckedChange={(checked) => setGeneralSettings(prev => ({
+                                                ...prev,
+                                                enableGuestAccess: checked
                                             }))}
                                         />
                                     </div>
                                 </div>
-                            </div>
 
-                            <Separator />
-
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-lg font-semibold">Email Notifications</h3>
+                                <div className="flex justify-end">
                                     <Button
-                                        variant="outline"
-                                        onClick={testEmailConfig}
-                                        className="flex items-center space-x-2"
+                                        onClick={() => saveSettings('General', generalSettings)}
+                                        disabled={saving}
+                                        className="bg-blue-600 hover:bg-blue-700"
                                     >
-                                        <Mail className="h-4 w-4" />
-                                        <span>Test Configuration</span>
+                                        {saving ? (
+                                            <>
+                                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save className="h-4 w-4 mr-2" />
+                                                Save Changes
+                                            </>
+                                        )}
                                     </Button>
                                 </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
 
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <Label>Enable Email Notifications</Label>
-                                        <Switch
-                                            checked={emailSettings.enableEmailNotifications}
-                                            onCheckedChange={(checked) => setEmailSettings(prev => ({
-                                                ...prev,
-                                                enableEmailNotifications: checked
-                                            }))}
-                                        />
+                    {/* Security Settings */}
+                    <TabsContent value="security" className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center space-x-2">
+                                    <Shield className="h-5 w-5" />
+                                    <span>Security Settings</span>
+                                </CardTitle>
+                                <CardDescription>
+                                    Configure password policies and security measures
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-semibold">Password Policy</h3>
+                                    <div className="grid gap-4 md:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="passwordMinLength">Minimum Password Length</Label>
+                                            <Input
+                                                id="passwordMinLength"
+                                                type="number"
+                                                min="6"
+                                                max="50"
+                                                value={securitySettings.passwordMinLength}
+                                                onChange={(e) => setSecuritySettings(prev => ({
+                                                    ...prev,
+                                                    passwordMinLength: parseInt(e.target.value)
+                                                }))}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
+                                            <Input
+                                                id="sessionTimeout"
+                                                type="number"
+                                                min="5"
+                                                max="1440"
+                                                value={securitySettings.sessionTimeout}
+                                                onChange={(e) => setSecuritySettings(prev => ({
+                                                    ...prev,
+                                                    sessionTimeout: parseInt(e.target.value)
+                                                }))}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="flex items-center justify-between">
-                                        <Label>Welcome Email</Label>
-                                        <Switch
-                                            checked={emailSettings.welcomeEmailEnabled}
-                                            onCheckedChange={(checked) => setEmailSettings(prev => ({
-                                                ...prev,
-                                                welcomeEmailEnabled: checked
-                                            }))}
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <Label>Password Reset Email</Label>
-                                        <Switch
-                                            checked={emailSettings.passwordResetEmailEnabled}
-                                            onCheckedChange={(checked) => setEmailSettings(prev => ({
-                                                ...prev,
-                                                passwordResetEmailEnabled: checked
-                                            }))}
-                                        />
+
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <Label>Require Special Characters</Label>
+                                            <Switch
+                                                checked={securitySettings.passwordRequireSpecial}
+                                                onCheckedChange={(checked) => setSecuritySettings(prev => ({
+                                                    ...prev,
+                                                    passwordRequireSpecial: checked
+                                                }))}
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <Label>Require Numbers</Label>
+                                            <Switch
+                                                checked={securitySettings.passwordRequireNumbers}
+                                                onCheckedChange={(checked) => setSecuritySettings(prev => ({
+                                                    ...prev,
+                                                    passwordRequireNumbers: checked
+                                                }))}
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <Label>Require Uppercase Letters</Label>
+                                            <Switch
+                                                checked={securitySettings.passwordRequireUppercase}
+                                                onCheckedChange={(checked) => setSecuritySettings(prev => ({
+                                                    ...prev,
+                                                    passwordRequireUppercase: checked
+                                                }))}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="flex justify-end">
-                                <Button
-                                    onClick={() => saveSettings('Email', emailSettings)}
-                                    disabled={saving}
-                                    className="bg-blue-600 hover:bg-blue-700"
-                                >
-                                    {saving ? (
-                                        <>
-                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="h-4 w-4 mr-2" />
-                                            Save Changes
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                                <Separator />
 
-                {/* Backup Settings */}
-                <TabsContent value="backup" className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center space-x-2">
-                                <Database className="h-5 w-5" />
-                                <span>Backup Configuration</span>
-                            </CardTitle>
-                            <CardDescription>
-                                Configure automatic backups and restore options
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="space-y-1">
-                                        <Label>Enable Automatic Backup</Label>
-                                        <p className="text-sm text-muted-foreground">
-                                            Automatically create system backups
-                                        </p>
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-semibold">Login Security</h3>
+                                    <div className="grid gap-4 md:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="maxLoginAttempts">Max Login Attempts</Label>
+                                            <Input
+                                                id="maxLoginAttempts"
+                                                type="number"
+                                                min="3"
+                                                max="10"
+                                                value={securitySettings.maxLoginAttempts}
+                                                onChange={(e) => setSecuritySettings(prev => ({
+                                                    ...prev,
+                                                    maxLoginAttempts: parseInt(e.target.value)
+                                                }))}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="lockoutDuration">Lockout Duration (minutes)</Label>
+                                            <Input
+                                                id="lockoutDuration"
+                                                type="number"
+                                                min="1"
+                                                max="60"
+                                                value={securitySettings.lockoutDuration}
+                                                onChange={(e) => setSecuritySettings(prev => ({
+                                                    ...prev,
+                                                    lockoutDuration: parseInt(e.target.value)
+                                                }))}
+                                            />
+                                        </div>
                                     </div>
-                                    <Switch
-                                        checked={backupSettings.enableAutoBackup}
-                                        onCheckedChange={(checked) => setBackupSettings(prev => ({
-                                            ...prev,
-                                            enableAutoBackup: checked
-                                        }))}
-                                    />
+
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="space-y-1">
+                                                <Label>Enable Two-Factor Authentication</Label>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Require 2FA for all admin accounts
+                                                </p>
+                                            </div>
+                                            <Switch
+                                                checked={securitySettings.enableTwoFactor}
+                                                onCheckedChange={(checked) => setSecuritySettings(prev => ({
+                                                    ...prev,
+                                                    enableTwoFactor: checked
+                                                }))}
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <Label>Allow Password Reset</Label>
+                                            <Switch
+                                                checked={securitySettings.allowPasswordReset}
+                                                onCheckedChange={(checked) => setSecuritySettings(prev => ({
+                                                    ...prev,
+                                                    allowPasswordReset: checked
+                                                }))}
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <Label>Require Email Verification</Label>
+                                            <Switch
+                                                checked={securitySettings.requireEmailVerification}
+                                                onCheckedChange={(checked) => setSecuritySettings(prev => ({
+                                                    ...prev,
+                                                    requireEmailVerification: checked
+                                                }))}
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <Label>Enable Audit Logging</Label>
+                                            <Switch
+                                                checked={securitySettings.enableAuditLog}
+                                                onCheckedChange={(checked) => setSecuritySettings(prev => ({
+                                                    ...prev,
+                                                    enableAuditLog: checked
+                                                }))}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
-                                {backupSettings.enableAutoBackup && (
-                                    <>
-                                        <div className="grid gap-4 md:grid-cols-3">
-                                            <div className="space-y-2">
-                                                <Label>Backup Frequency</Label>
-                                                <Select
-                                                    value={backupSettings.backupFrequency}
-                                                    onValueChange={(value: 'daily' | 'weekly' | 'monthly') => setBackupSettings(prev => ({
+                                <div className="flex justify-end">
+                                    <Button
+                                        onClick={() => saveSettings('Security', securitySettings)}
+                                        disabled={saving}
+                                        className="bg-blue-600 hover:bg-blue-700"
+                                    >
+                                        {saving ? (
+                                            <>
+                                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save className="h-4 w-4 mr-2" />
+                                                Save Changes
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* Email Settings */}
+                    <TabsContent value="email" className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center space-x-2">
+                                    <Mail className="h-5 w-5" />
+                                    <span>Email Configuration</span>
+                                </CardTitle>
+                                <CardDescription>
+                                    Configure SMTP settings and email templates
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-semibold">SMTP Configuration</h3>
+                                    <div className="grid gap-4 md:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="smtpHost">SMTP Host</Label>
+                                            <Input
+                                                id="smtpHost"
+                                                value={emailSettings.smtpHost}
+                                                onChange={(e) => setEmailSettings(prev => ({
+                                                    ...prev,
+                                                    smtpHost: e.target.value
+                                                }))}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="smtpPort">SMTP Port</Label>
+                                            <Input
+                                                id="smtpPort"
+                                                type="number"
+                                                value={emailSettings.smtpPort}
+                                                onChange={(e) => setEmailSettings(prev => ({
+                                                    ...prev,
+                                                    smtpPort: parseInt(e.target.value)
+                                                }))}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid gap-4 md:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="smtpUsername">SMTP Username</Label>
+                                            <Input
+                                                id="smtpUsername"
+                                                value={emailSettings.smtpUsername}
+                                                onChange={(e) => setEmailSettings(prev => ({
+                                                    ...prev,
+                                                    smtpUsername: e.target.value
+                                                }))}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="smtpPassword">SMTP Password</Label>
+                                            <div className="relative">
+                                                <Input
+                                                    id="smtpPassword"
+                                                    type={showPasswords ? 'text' : 'password'}
+                                                    value={emailSettings.smtpPassword}
+                                                    onChange={(e) => setEmailSettings(prev => ({
                                                         ...prev,
-                                                        backupFrequency: value
+                                                        smtpPassword: e.target.value
                                                     }))}
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                                                    onClick={() => setShowPasswords(!showPasswords)}
                                                 >
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="daily">Daily</SelectItem>
-                                                        <SelectItem value="weekly">Weekly</SelectItem>
-                                                        <SelectItem value="monthly">Monthly</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label>Backup Time</Label>
-                                                <Input
-                                                    type="time"
-                                                    value={backupSettings.backupTime}
-                                                    onChange={(e) => setBackupSettings(prev => ({
-                                                        ...prev,
-                                                        backupTime: e.target.value
-                                                    }))}
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label>Retention Days</Label>
-                                                <Input
-                                                    type="number"
-                                                    min="1"
-                                                    max="365"
-                                                    value={backupSettings.retentionDays}
-                                                    onChange={(e) => setBackupSettings(prev => ({
-                                                        ...prev,
-                                                        retentionDays: parseInt(e.target.value)
-                                                    }))}
-                                                />
+                                                    {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                </Button>
                                             </div>
                                         </div>
+                                    </div>
 
+                                    <div className="grid gap-4 md:grid-cols-3">
                                         <div className="space-y-2">
-                                            <Label>Backup Location</Label>
+                                            <Label htmlFor="smtpSecurity">Security</Label>
                                             <Select
-                                                value={backupSettings.backupLocation}
-                                                onValueChange={(value: 'local' | 's3' | 'ftp') => setBackupSettings(prev => ({
+                                                value={emailSettings.smtpSecurity}
+                                                onValueChange={(value: 'none' | 'tls' | 'ssl') => setEmailSettings(prev => ({
                                                     ...prev,
-                                                    backupLocation: value
+                                                    smtpSecurity: value
                                                 }))}
                                             >
                                                 <SelectTrigger>
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="local">Local Storage</SelectItem>
-                                                    <SelectItem value="s3">Amazon S3</SelectItem>
-                                                    <SelectItem value="ftp">FTP Server</SelectItem>
+                                                    <SelectItem value="none">None</SelectItem>
+                                                    <SelectItem value="tls">TLS</SelectItem>
+                                                    <SelectItem value="ssl">SSL</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                    </>
-                                )}
-                            </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="fromEmail">From Email</Label>
+                                            <Input
+                                                id="fromEmail"
+                                                type="email"
+                                                value={emailSettings.fromEmail}
+                                                onChange={(e) => setEmailSettings(prev => ({
+                                                    ...prev,
+                                                    fromEmail: e.target.value
+                                                }))}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="fromName">From Name</Label>
+                                            <Input
+                                                id="fromName"
+                                                value={emailSettings.fromName}
+                                                onChange={(e) => setEmailSettings(prev => ({
+                                                    ...prev,
+                                                    fromName: e.target.value
+                                                }))}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
 
-                            <div className="flex justify-end">
-                                <Button
-                                    onClick={() => saveSettings('Backup', backupSettings)}
-                                    disabled={saving}
-                                    className="bg-blue-600 hover:bg-blue-700"
-                                >
-                                    {saving ? (
+                                <Separator />
+
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-lg font-semibold">Email Notifications</h3>
+                                        <Button
+                                            variant="outline"
+                                            onClick={testEmailConfig}
+                                            className="flex items-center space-x-2"
+                                        >
+                                            <Mail className="h-4 w-4" />
+                                            <span>Test Configuration</span>
+                                        </Button>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <Label>Enable Email Notifications</Label>
+                                            <Switch
+                                                checked={emailSettings.enableEmailNotifications}
+                                                onCheckedChange={(checked) => setEmailSettings(prev => ({
+                                                    ...prev,
+                                                    enableEmailNotifications: checked
+                                                }))}
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <Label>Welcome Email</Label>
+                                            <Switch
+                                                checked={emailSettings.welcomeEmailEnabled}
+                                                onCheckedChange={(checked) => setEmailSettings(prev => ({
+                                                    ...prev,
+                                                    welcomeEmailEnabled: checked
+                                                }))}
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <Label>Password Reset Email</Label>
+                                            <Switch
+                                                checked={emailSettings.passwordResetEmailEnabled}
+                                                onCheckedChange={(checked) => setEmailSettings(prev => ({
+                                                    ...prev,
+                                                    passwordResetEmailEnabled: checked
+                                                }))}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end">
+                                    <Button
+                                        onClick={() => saveSettings('Email', emailSettings)}
+                                        disabled={saving}
+                                        className="bg-blue-600 hover:bg-blue-700"
+                                    >
+                                        {saving ? (
+                                            <>
+                                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save className="h-4 w-4 mr-2" />
+                                                Save Changes
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* Backup Settings */}
+                    <TabsContent value="backup" className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center space-x-2">
+                                    <Database className="h-5 w-5" />
+                                    <span>Backup Configuration</span>
+                                </CardTitle>
+                                <CardDescription>
+                                    Configure automatic backups and restore options
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-1">
+                                            <Label>Enable Automatic Backup</Label>
+                                            <p className="text-sm text-muted-foreground">
+                                                Automatically create system backups
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={backupSettings.enableAutoBackup}
+                                            onCheckedChange={(checked) => setBackupSettings(prev => ({
+                                                ...prev,
+                                                enableAutoBackup: checked
+                                            }))}
+                                        />
+                                    </div>
+
+                                    {backupSettings.enableAutoBackup && (
                                         <>
-                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="h-4 w-4 mr-2" />
-                                            Save Changes
+                                            <div className="grid gap-4 md:grid-cols-3">
+                                                <div className="space-y-2">
+                                                    <Label>Backup Frequency</Label>
+                                                    <Select
+                                                        value={backupSettings.backupFrequency}
+                                                        onValueChange={(value: 'daily' | 'weekly' | 'monthly') => setBackupSettings(prev => ({
+                                                            ...prev,
+                                                            backupFrequency: value
+                                                        }))}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="daily">Daily</SelectItem>
+                                                            <SelectItem value="weekly">Weekly</SelectItem>
+                                                            <SelectItem value="monthly">Monthly</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Backup Time</Label>
+                                                    <Input
+                                                        type="time"
+                                                        value={backupSettings.backupTime}
+                                                        onChange={(e) => setBackupSettings(prev => ({
+                                                            ...prev,
+                                                            backupTime: e.target.value
+                                                        }))}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Retention Days</Label>
+                                                    <Input
+                                                        type="number"
+                                                        min="1"
+                                                        max="365"
+                                                        value={backupSettings.retentionDays}
+                                                        onChange={(e) => setBackupSettings(prev => ({
+                                                            ...prev,
+                                                            retentionDays: parseInt(e.target.value)
+                                                        }))}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label>Backup Location</Label>
+                                                <Select
+                                                    value={backupSettings.backupLocation}
+                                                    onValueChange={(value: 'local' | 's3' | 'ftp') => setBackupSettings(prev => ({
+                                                        ...prev,
+                                                        backupLocation: value
+                                                    }))}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="local">Local Storage</SelectItem>
+                                                        <SelectItem value="s3">Amazon S3</SelectItem>
+                                                        <SelectItem value="ftp">FTP Server</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
                                         </>
                                     )}
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                                </div>
 
-                {/* System Information */}
-                <TabsContent value="system" className="space-y-6">
-                    <div className="grid gap-6 md:grid-cols-2">
-                        {/* System Stats */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center space-x-2">
-                                    <Monitor className="h-5 w-5" />
-                                    <span>System Information</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-3">
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-muted-foreground">Version</span>
-                                        <Badge variant="secondary">{systemInfo.version}</Badge>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-muted-foreground">Uptime</span>
-                                        <span className="text-sm font-medium">{systemInfo.uptime}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-muted-foreground">Last Backup</span>
-                                        <span className="text-sm font-medium">{systemInfo.lastBackup}</span>
-                                    </div>
+                                <div className="flex justify-end">
+                                    <Button
+                                        onClick={() => saveSettings('Backup', backupSettings)}
+                                        disabled={saving}
+                                        className="bg-blue-600 hover:bg-blue-700"
+                                    >
+                                        {saving ? (
+                                            <>
+                                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save className="h-4 w-4 mr-2" />
+                                                Save Changes
+                                            </>
+                                        )}
+                                    </Button>
                                 </div>
                             </CardContent>
                         </Card>
+                    </TabsContent>
 
-                        {/* Performance Stats */}
+                    {/* System Information */}
+                    <TabsContent value="system" className="space-y-6">
+                        <div className="grid gap-6 md:grid-cols-2">
+                            {/* System Stats */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center space-x-2">
+                                        <Monitor className="h-5 w-5" />
+                                        <span>System Information</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-muted-foreground">Version</span>
+                                            <Badge variant="secondary">{systemInfo.version}</Badge>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-muted-foreground">Uptime</span>
+                                            <span className="text-sm font-medium">{systemInfo.uptime}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-muted-foreground">Last Backup</span>
+                                            <span className="text-sm font-medium">{systemInfo.lastBackup}</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Performance Stats */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center space-x-2">
+                                        <Server className="h-5 w-5" />
+                                        <span>Performance</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-muted-foreground">Memory Usage</span>
+                                            <span className="text-sm font-medium">{systemInfo.memoryUsage}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-muted-foreground">CPU Usage</span>
+                                            <span className="text-sm font-medium">{systemInfo.cpuUsage}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-muted-foreground">Database Size</span>
+                                            <span className="text-sm font-medium">{systemInfo.databaseSize}</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Storage Stats */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center space-x-2">
+                                        <HardDrive className="h-5 w-5" />
+                                        <span>Storage</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-muted-foreground">Used</span>
+                                            <span className="text-sm font-medium">{systemInfo.storageUsed}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-muted-foreground">Total</span>
+                                            <span className="text-sm font-medium">{systemInfo.storageTotal}</span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-2">
+                                            <div
+                                                className="bg-blue-600 h-2 rounded-full"
+                                                style={{ width: '24%' }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* User Stats */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center space-x-2">
+                                        <Users className="h-5 w-5" />
+                                        <span>Users</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-muted-foreground">Active Users</span>
+                                            <span className="text-sm font-medium">{systemInfo.activeUsers.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-muted-foreground">Total Users</span>
+                                            <span className="text-sm font-medium">{systemInfo.totalUsers.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* System Actions */}
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center space-x-2">
-                                    <Server className="h-5 w-5" />
-                                    <span>Performance</span>
-                                </CardTitle>
+                                <CardTitle>System Actions</CardTitle>
+                                <CardDescription>
+                                    Perform system maintenance and administrative tasks
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="space-y-3">
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-muted-foreground">Memory Usage</span>
-                                        <span className="text-sm font-medium">{systemInfo.memoryUsage}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-muted-foreground">CPU Usage</span>
-                                        <span className="text-sm font-medium">{systemInfo.cpuUsage}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-muted-foreground">Database Size</span>
-                                        <span className="text-sm font-medium">{systemInfo.databaseSize}</span>
-                                    </div>
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                                    <Button variant="outline" className="flex items-center space-x-2">
+                                        <Download className="h-4 w-4" />
+                                        <span>Export Data</span>
+                                    </Button>
+                                    <Button variant="outline" className="flex items-center space-x-2">
+                                        <Upload className="h-4 w-4" />
+                                        <span>Import Data</span>
+                                    </Button>
+                                    <Button variant="outline" className="flex items-center space-x-2">
+                                        <RefreshCw className="h-4 w-4" />
+                                        <span>Clear Cache</span>
+                                    </Button>
+                                    <Button variant="destructive" className="flex items-center space-x-2">
+                                        <AlertTriangle className="h-4 w-4" />
+                                        <span>Reset System</span>
+                                    </Button>
                                 </div>
                             </CardContent>
                         </Card>
-
-                        {/* Storage Stats */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center space-x-2">
-                                    <HardDrive className="h-5 w-5" />
-                                    <span>Storage</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-3">
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-muted-foreground">Used</span>
-                                        <span className="text-sm font-medium">{systemInfo.storageUsed}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-muted-foreground">Total</span>
-                                        <span className="text-sm font-medium">{systemInfo.storageTotal}</span>
-                                    </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-2">
-                                        <div
-                                            className="bg-blue-600 h-2 rounded-full"
-                                            style={{ width: '24%' }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* User Stats */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center space-x-2">
-                                    <Users className="h-5 w-5" />
-                                    <span>Users</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-3">
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-muted-foreground">Active Users</span>
-                                        <span className="text-sm font-medium">{systemInfo.activeUsers.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-muted-foreground">Total Users</span>
-                                        <span className="text-sm font-medium">{systemInfo.totalUsers.toLocaleString()}</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* System Actions */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>System Actions</CardTitle>
-                            <CardDescription>
-                                Perform system maintenance and administrative tasks
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                                <Button variant="outline" className="flex items-center space-x-2">
-                                    <Download className="h-4 w-4" />
-                                    <span>Export Data</span>
-                                </Button>
-                                <Button variant="outline" className="flex items-center space-x-2">
-                                    <Upload className="h-4 w-4" />
-                                    <span>Import Data</span>
-                                </Button>
-                                <Button variant="outline" className="flex items-center space-x-2">
-                                    <RefreshCw className="h-4 w-4" />
-                                    <span>Clear Cache</span>
-                                </Button>
-                                <Button variant="destructive" className="flex items-center space-x-2">
-                                    <AlertTriangle className="h-4 w-4" />
-                                    <span>Reset System</span>
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
-        </div>
+                    </TabsContent>
+                </Tabs>
+            </div>
+        </AdminGuard>
     );
 }

@@ -360,6 +360,21 @@ const adminAPI = {
             });
         },
 
+        async search(params: {
+            q?: string;
+            institution_id?: string;
+            sort_by?: string;
+            sort_order?: string;
+            skip?: number;
+            limit?: number;
+        }) {
+            return api.GET('/faculty/search', {
+                params: {
+                    query: params
+                }
+            });
+        },
+
         async getById(facultyId: string) {
             return api.GET('/faculty/get_by_id/{faculty_id}', {
                 params: {
@@ -419,6 +434,88 @@ const adminAPI = {
                 }
             });
         },
+
+        async getStats() {
+            try {
+                console.log('Getting faculty statistics from paginated responses...');
+
+                // Get all counts from paginated responses (much more efficient)
+                const [facultiesResponse, departmentsResponse, institutionsResponse] = await Promise.all([
+                    api.GET('/faculty', { params: { query: { limit: 1 } } }), // Only need count, not data
+                    api.GET('/department', { params: { query: { limit: 1 } } }),
+                    api.GET('/institution', { params: { query: { limit: 1 } } })
+                ]);
+
+                // Extract totals from paginated responses
+                const totalFaculties = facultiesResponse.data?.data?.total || 0;
+                const totalDepartments = departmentsResponse.data?.data?.total || 0;
+                const totalInstitutions = institutionsResponse.data?.data?.total || 0;
+                const averageDepartments = totalFaculties > 0 ?
+                    Number((totalDepartments / totalFaculties).toFixed(1)) : 0;
+
+                console.log('Faculty Statistics from API totals:', {
+                    totalFaculties,
+                    totalDepartments,
+                    totalInstitutions,
+                    averageDepartments,
+                });
+
+                return {
+                    data: {
+                        totalFaculties,
+                        totalDepartments,
+                        totalInstitutions,
+                        averageDepartments,
+                    }
+                };
+            } catch (error) {
+                console.error('Error getting faculty statistics from paginated responses:', error);
+                // Return fallback statistics
+                return {
+                    data: {
+                        totalFaculties: 0,
+                        totalDepartments: 0,
+                        totalInstitutions: 0,
+                        averageDepartments: 0,
+                    }
+                };
+            }
+        },
+
+        async getPartialStats() {
+            try {
+                console.log('Getting partial statistics (departments and institutions only)...');
+
+                // Only get departments and institutions count - faculty count comes from main search
+                const [departmentsResponse, institutionsResponse] = await Promise.all([
+                    api.GET('/department', { params: { query: { limit: 1 } } }),
+                    api.GET('/institution', { params: { query: { limit: 1 } } })
+                ]);
+
+                const totalDepartments = departmentsResponse.data?.data?.total || 0;
+                const totalInstitutions = institutionsResponse.data?.data?.total || 0;
+
+                console.log('Partial statistics loaded:', {
+                    totalDepartments,
+                    totalInstitutions,
+                });
+
+                return {
+                    data: {
+                        totalDepartments,
+                        totalInstitutions,
+                    }
+                };
+            } catch (error) {
+                console.error('Error getting partial statistics:', error);
+                return {
+                    data: {
+                        totalDepartments: 0,
+                        totalInstitutions: 0,
+                    }
+                };
+            }
+        },
     },
 
     /**
@@ -432,6 +529,22 @@ const adminAPI = {
             faculty_id?: string;
         }) {
             return api.GET('/department', {
+                params: {
+                    query: params
+                }
+            });
+        },
+
+        async search(params: {
+            q?: string;
+            faculty_id?: string;
+            institution_id?: string;
+            sort_by?: string;
+            sort_order?: string;
+            skip?: number;
+            limit?: number;
+        }) {
+            return api.GET('/department/search', {
                 params: {
                     query: params
                 }
@@ -497,6 +610,53 @@ const adminAPI = {
             });
         },
 
+        async getStats() {
+            try {
+                console.log('Getting department statistics from paginated responses...');
+
+                // Get all counts from paginated responses (much more efficient)
+                const [departmentsResponse, programmesResponse, facultiesResponse] = await Promise.all([
+                    api.GET('/department', { params: { query: { limit: 1 } } }), // Only need count, not data
+                    api.GET('/programme', { params: { query: { limit: 1 } } }),
+                    api.GET('/faculty', { params: { query: { limit: 1 } } })
+                ]);
+
+                // Extract totals from paginated responses
+                const totalDepartments = departmentsResponse.data?.data?.total || 0;
+                const totalProgrammes = programmesResponse.data?.data?.total || 0;
+                const totalFaculties = facultiesResponse.data?.data?.total || 0;
+                const averageProgrammes = totalDepartments > 0 ?
+                    Number((totalProgrammes / totalDepartments).toFixed(1)) : 0;
+
+                console.log('Department Statistics from API totals:', {
+                    totalDepartments,
+                    totalProgrammes,
+                    totalFaculties,
+                    averageProgrammes,
+                });
+
+                return {
+                    data: {
+                        totalDepartments,
+                        totalProgrammes,
+                        totalFaculties,
+                        averageProgrammes,
+                    }
+                };
+            } catch (error) {
+                console.error('Error getting department statistics from paginated responses:', error);
+                // Return fallback statistics
+                return {
+                    data: {
+                        totalDepartments: 0,
+                        totalProgrammes: 0,
+                        totalFaculties: 0,
+                        averageProgrammes: 0,
+                    }
+                };
+            }
+        },
+
         async addProgramme(departmentId: string, programmeId: string) {
             return api.POST('/department/{department_id}/programmes/{programme_id}', {
                 params: {
@@ -520,6 +680,24 @@ const adminAPI = {
             programme_id?: string;
         }) {
             return api.GET('/course', {
+                params: {
+                    query: params
+                }
+            });
+        },
+
+        async search(params: {
+            q?: string;
+            programme_id?: string;
+            department_id?: string;
+            institution_id?: string;
+            course_acronym?: string;
+            sort_by?: string;
+            sort_order?: string;
+            skip?: number;
+            limit?: number;
+        }) {
+            return api.GET('/course/search', {
                 params: {
                     query: params
                 }

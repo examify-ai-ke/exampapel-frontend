@@ -40,6 +40,9 @@ import {
 import { LoadingSpinner, LoadingOverlay } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { AdminBreadcrumb } from '@/components/ui/breadcrumb';
+import { DepartmentForm } from '@/components/forms/department-form';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/ui';
 import { adminAPI } from '@/lib/api-admin';
@@ -74,87 +77,27 @@ interface DepartmentsFilters {
     has_programmes?: 'yes' | 'no';
 }
 
-// Mock data
-const mockStats: DepartmentsStats = {
-    totalDepartments: 1247,
-    totalProgrammes: 3891,
-    totalFaculties: 156,
-    averageProgrammes: 3.1,
+// Initial empty state - data will be loaded from API
+const initialStats: DepartmentsStats = {
+    totalDepartments: 0,
+    totalProgrammes: 0,
+    totalFaculties: 0,
+    averageProgrammes: 0,
 };
-
-const mockDepartments: DepartmentRead[] = [
-    {
-        id: '1',
-        name: 'Computer Science',
-        description: 'Leading department in computer science education and research',
-        faculty: {
-            id: 'f1',
-            name: 'Faculty of Engineering',
-            institution: { id: 'i1', name: 'University of Nairobi' }
-        },
-        programmes: [
-            { id: 'p1', name: 'Bachelor of Computer Science', department_id: '1' },
-            { id: 'p2', name: 'Master of Computer Science', department_id: '1' },
-            { id: 'p3', name: 'PhD in Computer Science', department_id: '1' },
-        ],
-        programmes_count: 3,
-    },
-    {
-        id: '2',
-        name: 'Electrical Engineering',
-        description: 'Excellence in electrical and electronic engineering education',
-        faculty: {
-            id: 'f1',
-            name: 'Faculty of Engineering',
-            institution: { id: 'i1', name: 'University of Nairobi' }
-        },
-        programmes: [
-            { id: 'p4', name: 'Bachelor of Electrical Engineering', department_id: '2' },
-            { id: 'p5', name: 'Master of Electrical Engineering', department_id: '2' },
-        ],
-        programmes_count: 2,
-    },
-    {
-        id: '3',
-        name: 'Internal Medicine',
-        description: 'Comprehensive medical education and clinical training',
-        faculty: {
-            id: 'f2',
-            name: 'Faculty of Medicine',
-            institution: { id: 'i1', name: 'University of Nairobi' }
-        },
-        programmes: [
-            { id: 'p6', name: 'Bachelor of Medicine', department_id: '3' },
-            { id: 'p7', name: 'Master of Internal Medicine', department_id: '3' },
-            { id: 'p8', name: 'Diploma in Clinical Medicine', department_id: '3' },
-        ],
-        programmes_count: 3,
-    },
-    {
-        id: '4',
-        name: 'Business Administration',
-        description: 'Modern business education and management training',
-        faculty: {
-            id: 'f3',
-            name: 'Faculty of Business',
-            institution: { id: 'i2', name: 'Strathmore University' }
-        },
-        programmes: [
-            { id: 'p9', name: 'Bachelor of Business Administration', department_id: '4' },
-            { id: 'p10', name: 'MBA', department_id: '4' },
-        ],
-        programmes_count: 2,
-    },
-];
 
 export default function DepartmentsPage() {
     const { user } = useAuth();
     const { addNotification } = useUIStore();
 
     // State management
-    const [departments, setDepartments] = useState<DepartmentRead[]>(mockDepartments);
-    const [loading, setLoading] = useState(false);
-    const [stats, setStats] = useState<DepartmentsStats>(mockStats);
+    const [departments, setDepartments] = useState<DepartmentRead[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [statsLoading, setStatsLoading] = useState(true);
+    const [stats, setStats] = useState<DepartmentsStats>(initialStats);
+    const [faculties, setFaculties] = useState<{ id: string; name: string }[]>([]);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [editingDepartment, setEditingDepartment] = useState<DepartmentRead | null>(null);
+    const [deletingDepartment, setDeletingDepartment] = useState<DepartmentRead | null>(null);
     const [filters, setFilters] = useState<DepartmentsFilters>({});
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -167,15 +110,17 @@ export default function DepartmentsPage() {
         try {
             setLoading(true);
 
-            // Connect to real backend API
-            const response = await adminAPI.departments.list({
+            // Use the new search endpoint which supports faculty_id and institution_id filtering
+            const response = await adminAPI.departments.search({
+                q: filters.search,
+                faculty_id: filters.faculty_id,
+                sort_by: 'name',
+                sort_order: 'asc',
                 skip: currentPage * ITEMS_PER_PAGE,
                 limit: ITEMS_PER_PAGE,
-                search: filters.search,
-                faculty_id: filters.faculty_id,
             });
 
-            if (response.data && response.data.data) {
+            if (response.data?.data) {
                 const responseData = response.data.data;
                 // Handle paginated response structure
                 if (responseData && typeof responseData === 'object' && 'items' in responseData) {
@@ -189,29 +134,16 @@ export default function DepartmentsPage() {
                     setTotalItems(responseData.length);
                     setTotalPages(Math.ceil(responseData.length / ITEMS_PER_PAGE));
                 } else {
-                    // Invalid response, use mock data
-                    console.log('Invalid API response structure, using mock data');
-                    setDepartments(mockDepartments);
-                    setTotalItems(mockDepartments.length);
-                    setTotalPages(Math.ceil(mockDepartments.length / ITEMS_PER_PAGE));
+                    // Empty response
+                    setDepartments([]);
+                    setTotalItems(0);
+                    setTotalPages(0);
                 }
             } else {
-                // Fallback to mock data if API returns no data
-                console.log('Using mock data - no API data available');
-                const filteredData = mockDepartments.filter(department => {
-                    if (filters.search && !department.name.toLowerCase().includes(filters.search.toLowerCase())) {
-                        return false;
-                    }
-                    if (filters.has_programmes === 'yes' && (!department.programmes || department.programmes.length === 0)) {
-                        return false;
-                    }
-                    if (filters.has_programmes === 'no' && department.programmes && department.programmes.length > 0) {
-                        return false;
-                    }
-                    return true;
-                });
-                setDepartments(filteredData);
-                setTotalItems(filteredData.length);
+                // Empty response
+                setDepartments([]);
+                setTotalItems(0);
+                setTotalPages(0);
             }
         } catch (error) {
             console.error('Error loading departments:', error);
@@ -220,12 +152,80 @@ export default function DepartmentsPage() {
                 title: 'Failed to load departments',
                 message: 'Please try again later.',
             });
-            // Fallback to mock data on error
-            setDepartments(mockDepartments);
-            setTotalItems(mockDepartments.length);
+            // Set empty state on error
+            setDepartments([]);
+            setTotalItems(0);
+            setTotalPages(0);
         } finally {
             setLoading(false);
         }
+    };
+
+    // Load statistics
+    const loadStats = async () => {
+        try {
+            setStatsLoading(true);
+            console.log('Loading department statistics...');
+
+            // Use the clean API method instead of direct API calls
+            const response = await adminAPI.departments.getStats();
+
+            if (response.data) {
+                console.log('Setting department stats:', response.data);
+                setStats(response.data);
+            } else {
+                console.warn('No department statistics data received');
+            }
+        } catch (error) {
+            console.error('Error loading department statistics:', error);
+        } finally {
+            setStatsLoading(false);
+        }
+    };
+
+    // Load faculties for filter dropdown
+    const loadFaculties = async () => {
+        try {
+            const response = await adminAPI.faculties.list({ limit: 100 });
+            if (response.data?.data) {
+                const facultiesData = Array.isArray(response.data.data)
+                    ? response.data.data
+                    : response.data.data.items || [];
+                setFaculties(facultiesData.map(faculty => ({ id: faculty.id, name: faculty.name })));
+            }
+        } catch (error) {
+            console.error('Error loading faculties:', error);
+        }
+    };
+
+    // Delete department
+    const handleDeleteDepartment = async (department: DepartmentRead) => {
+        try {
+            await adminAPI.departments.delete(department.id!);
+            addNotification({
+                type: 'success',
+                title: 'Department deleted',
+                message: `${department.name} has been deleted successfully.`,
+            });
+            loadDepartments();
+            loadStats();
+        } catch (error: any) {
+            console.error('Error deleting department:', error);
+            addNotification({
+                type: 'error',
+                title: 'Failed to delete department',
+                message: error.message || 'Please try again later.',
+            });
+        }
+        setDeletingDepartment(null);
+    };
+
+    // Handle form success
+    const handleFormSuccess = () => {
+        setShowCreateModal(false);
+        setEditingDepartment(null);
+        loadDepartments();
+        loadStats();
     };
 
     // Transform department data for table display
@@ -299,7 +299,7 @@ export default function DepartmentsPage() {
                             View Details
                         </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setEditingDepartment(department)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit Department
                     </DropdownMenuItem>
@@ -310,7 +310,10 @@ export default function DepartmentsPage() {
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-red-600">
+                    <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => setDeletingDepartment(department)}
+                    >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete
                     </DropdownMenuItem>
@@ -342,6 +345,12 @@ export default function DepartmentsPage() {
     useEffect(() => {
         loadDepartments();
     }, [currentPage, filters]);
+
+    // Load initial data
+    useEffect(() => {
+        loadStats();
+        loadFaculties();
+    }, []);
 
     // Define table columns
     const columns = [
@@ -408,7 +417,7 @@ export default function DepartmentsPage() {
                         Browse and explore academic departments across faculties
                     </p>
                 </div>
-                <Button>
+                <Button onClick={() => setShowCreateModal(true)}>
                     <Plus className="mr-2 h-4 w-4" />
                     Add Department
                 </Button>
@@ -500,9 +509,11 @@ export default function DepartmentsPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Faculties</SelectItem>
-                                <SelectItem value="f1">Faculty of Engineering</SelectItem>
-                                <SelectItem value="f2">Faculty of Medicine</SelectItem>
-                                <SelectItem value="f3">Faculty of Business</SelectItem>
+                                {faculties.map((faculty) => (
+                                    <SelectItem key={faculty.id} value={faculty.id}>
+                                        {faculty.name}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
@@ -530,6 +541,64 @@ export default function DepartmentsPage() {
                     />
                 </LoadingOverlay>
             </Card>
+
+            {/* Create Department Modal */}
+            <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Create New Department</DialogTitle>
+                        <DialogDescription>
+                            Add a new department to a faculty. This will create a new academic department that can contain programmes.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DepartmentForm
+                        mode="create"
+                        onSuccess={handleFormSuccess}
+                        onCancel={() => setShowCreateModal(false)}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Department Modal */}
+            <Dialog open={!!editingDepartment} onOpenChange={(open) => !open && setEditingDepartment(null)}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Edit Department</DialogTitle>
+                        <DialogDescription>
+                            Update the department information. Changes will be saved immediately.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {editingDepartment && (
+                        <DepartmentForm
+                            mode="edit"
+                            department={editingDepartment}
+                            onSuccess={handleFormSuccess}
+                            onCancel={() => setEditingDepartment(null)}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={!!deletingDepartment} onOpenChange={(open) => !open && setDeletingDepartment(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Department</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete "{deletingDepartment?.name}"? This action cannot be undone and will remove all associated data.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => deletingDepartment && handleDeleteDepartment(deletingDepartment)}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Delete Department
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

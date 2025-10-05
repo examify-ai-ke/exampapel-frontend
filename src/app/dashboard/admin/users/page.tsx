@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { UserForm } from '@/components/forms/user-form';
 import { DataTable } from '@/components/ui/data-table';
 import { AdminBreadcrumb } from '@/components/ui/breadcrumb';
+import { AdminGuard } from '@/components/ui/permission-guard';
 import { SearchBar } from '@/components/ui/search-bar';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import {
@@ -35,6 +36,7 @@ import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/utils';
 import { adminAPI, type UserRead } from '@/lib/api-admin';
 import { useUIStore } from '@/stores/ui';
+import { hasPermission } from '@/lib/permissions';
 
 // User management interfaces
 interface UserTableData extends UserRead {
@@ -468,10 +470,8 @@ export default function UsersManagementPage() {
         },
     ];
 
-    // Check if user has admin role (role can be string or object)
-    const isAdmin = typeof currentUser?.role === 'string'
-        ? (currentUser?.role === 'admin' || currentUser?.role === 'Admin')
-        : (currentUser?.role?.name === 'admin' || currentUser?.role?.name === 'Admin');
+    // Check if user has admin role (using new permission system)
+    const isAdmin = hasPermission(user, 'canManageUsers');
 
     // Debug logging
     console.log('User Management Access Check:', {

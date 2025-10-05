@@ -29,6 +29,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -40,6 +42,8 @@ import {
 import { LoadingSpinner, LoadingOverlay } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { AdminBreadcrumb } from '@/components/ui/breadcrumb';
+import { FacultyForm } from '@/components/forms/faculty-form';
+import { DepartmentForm } from '@/components/forms/department-form';
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/ui';
 import { adminAPI } from '@/lib/api-admin';
@@ -104,36 +108,43 @@ export default function FacultyDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // Modal states
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showAddDepartmentModal, setShowAddDepartmentModal] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
     // Load faculty data
     const loadFaculty = async () => {
         try {
             setLoading(true);
             setError(null);
 
+            console.log('Loading faculty with ID:', facultyId);
             const response = await adminAPI.faculties.getById(facultyId);
+            console.log('Faculty API response:', response);
 
-            if (response.data && response.data.data) {
+            if (response.data?.data) {
                 const facultyData = response.data.data;
+                console.log('Faculty data received:', facultyData);
                 setFaculty(facultyData);
-                
+
                 // Calculate stats from faculty data
-                const totalProgrammes = facultyData.departments?.reduce((acc, dept) => 
+                const totalProgrammes = facultyData.departments?.reduce((acc, dept) =>
                     acc + (dept.programmes?.length || 0), 0) || 0;
-                
+
                 setStats({
-                    totalDepartments: facultyData.department_count || 0,
-                    totalInstitutions: facultyData.institution_count || 0,
+                    totalDepartments: facultyData.department_count || facultyData.departments?.length || 0,
+                    totalInstitutions: facultyData.institution_count || facultyData.institutions?.length || 0,
                     totalProgrammes,
-                    totalStudents: Math.floor(Math.random() * 2000) + 500, // Mock data
-                    averageProgrammesPerDepartment: facultyData.departments && facultyData.departments.length > 0 
-                        ? Math.round(totalProgrammes / facultyData.departments.length * 10) / 10 
+                    totalStudents: Math.floor(Math.random() * 2000) + 500, // Mock data - TODO: get from API
+                    averageProgrammesPerDepartment: facultyData.departments && facultyData.departments.length > 0
+                        ? Math.round(totalProgrammes / facultyData.departments.length * 10) / 10
                         : 0,
                 });
+                console.log('Faculty loaded successfully:', facultyData.name);
             } else {
-                // Fallback to mock data
-                console.log('Using mock data - no API data available');
-                setFaculty(mockFaculty);
-                setStats(mockStats);
+                console.warn('No faculty data in response:', response);
+                throw new Error('No faculty data received from API');
             }
         } catch (error) {
             console.error('Error loading faculty:', error);
@@ -141,11 +152,11 @@ export default function FacultyDetailsPage() {
             addNotification({
                 type: 'error',
                 title: 'Failed to load faculty',
-                message: 'Please try again later.',
+                message: error instanceof Error ? error.message : 'Please try again later.',
             });
-            // Fallback to mock data on error
-            setFaculty(mockFaculty);
-            setStats(mockStats);
+
+            // Don't fallback to mock data - show error state instead
+            setFaculty(null);
         } finally {
             setLoading(false);
         }
@@ -157,6 +168,36 @@ export default function FacultyDetailsPage() {
             loadFaculty();
         }
     }, [facultyId]);
+
+    // Handle form success
+    const handleFormSuccess = async () => {
+        setShowEditModal(false);
+        setShowAddDepartmentModal(false);
+        await loadFaculty(); // Reload faculty data
+    };
+
+    // Handle delete faculty
+    const handleDeleteFaculty = async () => {
+        if (!faculty) return;
+
+        try {
+            await adminAPI.faculties.delete(faculty.id);
+            addNotification({
+                type: 'success',
+                title: 'Faculty deleted',
+                message: `${faculty.name} has been deleted successfully.`,
+            });
+            router.push('/dashboard/institutions/faculties');
+        } catch (error: any) {
+            console.error('Error deleting faculty:', error);
+            addNotification({
+                type: 'error',
+                title: 'Failed to delete faculty',
+                message: error.message || 'Please try again later.',
+            });
+        }
+        setShowDeleteDialog(false);
+    };
 
     if (loading) {
         return (
@@ -186,7 +227,27 @@ export default function FacultyDetailsPage() {
     }
 
     if (!faculty) {
-        return null;
+        return (
+            <div className="space-y-6 p-6">
+                <AdminBreadcrumb currentPage="Faculty Details" />
+                <EmptyState
+                    icon={School}
+                    title="Faculty Not Found"
+                    description="The requested faculty could not be found or does not exist."
+                    action={
+                        <div className="flex gap-4">
+                            <Button onClick={() => router.back()} variant="outline">
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Go Back
+                            </Button>
+                            <Button onClick={() => loadFaculty()}>
+                                Try Again
+                            </Button>
+                        </div>
+                    }
+                />
+            </div>
+        );
     }
 
     return (
@@ -195,7 +256,7 @@ export default function FacultyDetailsPage() {
             <div className="relative bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700">
                 {/* Background Pattern */}
                 <div className="absolute inset-0 bg-black/10">
-                    <div 
+                    <div
                         className="absolute inset-0 opacity-20"
                         style={{
                             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
@@ -207,7 +268,7 @@ export default function FacultyDetailsPage() {
                     <div className="max-w-7xl mx-auto">
                         {/* Breadcrumb */}
                         <div className="mb-8">
-                            <AdminBreadcrumb 
+                            <AdminBreadcrumb
                                 currentPage={faculty.name}
                                 items={[
                                     { label: 'Institutions', href: '/dashboard/institutions' },
@@ -279,11 +340,20 @@ export default function FacultyDetailsPage() {
 
                                 {/* Action Buttons */}
                                 <div className="flex flex-wrap gap-3">
-                                    <Button size="lg" className="bg-white text-purple-600 hover:bg-white/90">
+                                    <Button
+                                        size="lg"
+                                        className="bg-white text-purple-600 hover:bg-white/90"
+                                        onClick={() => setShowEditModal(true)}
+                                    >
                                         <Edit className="mr-2 h-4 w-4" />
                                         Edit Faculty
                                     </Button>
-                                    <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        className="border-white/30 text-white hover:bg-white/10"
+                                        onClick={() => setShowAddDepartmentModal(true)}
+                                    >
                                         <Plus className="mr-2 h-4 w-4" />
                                         Add Department
                                     </Button>
@@ -305,7 +375,10 @@ export default function FacultyDetailsPage() {
                                                 Manage Staff
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem className="text-red-600">
+                                            <DropdownMenuItem
+                                                className="text-red-600"
+                                                onClick={() => setShowDeleteDialog(true)}
+                                            >
                                                 <Trash2 className="mr-2 h-4 w-4" />
                                                 Delete Faculty
                                             </DropdownMenuItem>
@@ -411,15 +484,33 @@ export default function FacultyDetailsPage() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2">
+                                        <Button
+                                            variant="outline"
+                                            className="h-auto p-4 flex flex-col items-center space-y-2"
+                                            onClick={() => setShowAddDepartmentModal(true)}
+                                        >
                                             <Plus className="h-6 w-6" />
                                             <span>Add Department</span>
                                         </Button>
-                                        <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2">
+                                        <Button
+                                            variant="outline"
+                                            className="h-auto p-4 flex flex-col items-center space-y-2"
+                                            onClick={() => {
+                                                // TODO: Implement manage staff functionality
+                                                alert('Manage Staff functionality coming soon!');
+                                            }}
+                                        >
                                             <Users className="h-6 w-6" />
                                             <span>Manage Staff</span>
                                         </Button>
-                                        <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2">
+                                        <Button
+                                            variant="outline"
+                                            className="h-auto p-4 flex flex-col items-center space-y-2"
+                                            onClick={() => {
+                                                // Navigate to programmes view
+                                                router.push(`/dashboard/institutions/programmes?faculty=${faculty?.id}`);
+                                            }}
+                                        >
                                             <BookOpen className="h-6 w-6" />
                                             <span>View Programmes</span>
                                         </Button>
@@ -433,7 +524,10 @@ export default function FacultyDetailsPage() {
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
                                         <CardTitle>Departments</CardTitle>
-                                        <Button size="sm">
+                                        <Button
+                                            size="sm"
+                                            onClick={() => setShowAddDepartmentModal(true)}
+                                        >
                                             <Plus className="mr-2 h-4 w-4" />
                                             Add Department
                                         </Button>
@@ -443,7 +537,11 @@ export default function FacultyDetailsPage() {
                                     {faculty.departments && faculty.departments.length > 0 ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                             {faculty.departments.map((department) => (
-                                                <Card key={department.id} className="hover:shadow-md transition-shadow">
+                                                <Card
+                                                    key={department.id}
+                                                    className="hover:shadow-md transition-shadow cursor-pointer"
+                                                    onClick={() => router.push(`/dashboard/institutions/departments/${department.id}`)}
+                                                >
                                                     <CardContent className="p-4">
                                                         <div className="flex items-center space-x-3">
                                                             <div className="flex-shrink-0">
@@ -468,7 +566,7 @@ export default function FacultyDetailsPage() {
                                             title="No Departments"
                                             description="This faculty doesn't have any departments yet."
                                             action={
-                                                <Button>
+                                                <Button onClick={() => setShowAddDepartmentModal(true)}>
                                                     <Plus className="mr-2 h-4 w-4" />
                                                     Add First Department
                                                 </Button>
@@ -502,7 +600,11 @@ export default function FacultyDetailsPage() {
                                                                     Primary institution
                                                                 </p>
                                                             </div>
-                                                            <Button variant="outline" size="sm">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => router.push(`/dashboard/institutions/${institution.id}`)}
+                                                            >
                                                                 <ExternalLink className="mr-2 h-4 w-4" />
                                                                 View
                                                             </Button>
@@ -576,6 +678,73 @@ export default function FacultyDetailsPage() {
                     </Tabs>
                 </div>
             </div>
+
+            {/* Edit Faculty Modal */}
+            <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Edit Faculty</DialogTitle>
+                        <DialogDescription>
+                            Update the faculty information. Changes will be saved immediately.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {faculty && (
+                        <FacultyForm
+                            mode="edit"
+                            faculty={faculty}
+                            onSuccess={handleFormSuccess}
+                            onCancel={() => setShowEditModal(false)}
+                            embedded={true}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Add Department Modal */}
+            <Dialog open={showAddDepartmentModal} onOpenChange={setShowAddDepartmentModal}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Add New Department</DialogTitle>
+                        <DialogDescription>
+                            Create a new department within this faculty.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {faculty ? (
+                        <DepartmentForm
+                            mode="create"
+                            defaultFacultyId={faculty.id}
+                            onSuccess={handleFormSuccess}
+                            onCancel={() => setShowAddDepartmentModal(false)}
+                            embedded={true}
+                        />
+                    ) : (
+                        <div className="p-4 text-center">
+                            <p>Loading faculty information...</p>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Faculty</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete "{faculty?.name}"? This action cannot be undone and will remove all associated departments and data.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDeleteFaculty}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Delete Faculty
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 } 
