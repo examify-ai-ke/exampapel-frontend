@@ -152,10 +152,15 @@ const CoursesPage: React.FC<CoursesPageProps> = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedProgramme, setSelectedProgramme] = useState<string>('');
-    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedDepartment, setSelectedDepartment] = useState<string>('');
+    const [selectedInstitution, setSelectedInstitution] = useState<string>('');
+    const [currentPage, setCurrentPage] = useState(0);
+    const [pageSize, setPageSize] = useState(25);
     const [totalItems, setTotalItems] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [programmes, setProgrammes] = useState<Array<{ id: string; name: string }>>([]);
+    const [departments, setDepartments] = useState<Array<{ id: string; name: string }>>([]);
+    const [institutions, setInstitutions] = useState<Array<{ id: string; name: string }>>([]);
 
     // Load courses from API
     const loadCourses = async () => {
@@ -165,10 +170,12 @@ const CoursesPage: React.FC<CoursesPageProps> = () => {
             const response = await adminAPI.courses.search({
                 q: searchTerm || undefined,
                 programme_id: selectedProgramme || undefined,
+                department_id: selectedDepartment || undefined,
+                institution_id: selectedInstitution || undefined,
                 sort_by: 'name',
                 sort_order: 'asc',
-                skip: (currentPage - 1) * ITEMS_PER_PAGE,
-                limit: ITEMS_PER_PAGE,
+                skip: currentPage * pageSize,
+                limit: pageSize,
             });
 
             if (response.data && response.data.data) {
@@ -176,11 +183,11 @@ const CoursesPage: React.FC<CoursesPageProps> = () => {
                 if (responseData && typeof responseData === 'object' && 'items' in responseData) {
                     setCourses(responseData.items || []);
                     setTotalItems(responseData.total || 0);
-                    setTotalPages(Math.ceil((responseData.total || 0) / ITEMS_PER_PAGE));
+                    setTotalPages(Math.ceil((responseData.total || 0) / pageSize));
                 } else if (Array.isArray(responseData)) {
                     setCourses(responseData);
                     setTotalItems(responseData.length);
-                    setTotalPages(Math.ceil(responseData.length / ITEMS_PER_PAGE));
+                    setTotalPages(Math.ceil(responseData.length / pageSize));
                 } else {
                     console.log('Invalid API response structure, using mock data');
                     setCourses(mockCourses);

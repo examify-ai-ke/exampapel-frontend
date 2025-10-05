@@ -42,6 +42,9 @@ import {
 import { LoadingSpinner, LoadingOverlay } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { AdminBreadcrumb } from '@/components/ui/breadcrumb';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { DepartmentForm } from '@/components/forms/department-form';
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/ui';
 import { adminAPI } from '@/lib/api-admin';
@@ -103,6 +106,9 @@ export default function DepartmentDetailsPage() {
     const [stats, setStats] = useState<DepartmentStats>(mockStats);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showAddProgrammeModal, setShowAddProgrammeModal] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     // Load department data
     const loadDepartment = async () => {
@@ -148,6 +154,33 @@ export default function DepartmentDetailsPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Handle form success
+    const handleFormSuccess = async () => {
+        setShowEditModal(false);
+        await loadDepartment();
+    };
+
+    // Handle delete department
+    const handleDeleteDepartment = async () => {
+        try {
+            await adminAPI.departments.delete(departmentId);
+            addNotification({
+                type: 'success',
+                title: 'Department deleted',
+                message: 'The department has been deleted successfully.',
+            });
+            router.push('/dashboard/institutions/departments');
+        } catch (error: any) {
+            console.error('Error deleting department:', error);
+            addNotification({
+                type: 'error',
+                title: 'Failed to delete department',
+                message: error.message || 'Please try again later.',
+            });
+        }
+        setShowDeleteDialog(false);
     };
 
     // Load data on mount
@@ -242,7 +275,7 @@ export default function DepartmentDetailsPage() {
                         </div>
 
                         <div className="flex gap-2">
-                            <Button variant="secondary" size="sm">
+                            <Button variant="secondary" size="sm" onClick={() => setShowEditModal(true)}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit Department
                             </Button>
@@ -254,20 +287,20 @@ export default function DepartmentDetailsPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setShowAddProgrammeModal(true)}>
                                         <Plus className="mr-2 h-4 w-4" />
                                         Add Programme
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => alert('Generate Report functionality coming soon!')}>
                                         <FileText className="mr-2 h-4 w-4" />
                                         Generate Report
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => alert('Public page functionality coming soon!')}>
                                         <ExternalLink className="mr-2 h-4 w-4" />
                                         View Public Page
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="text-red-600">
+                                    <DropdownMenuItem className="text-red-600" onClick={() => setShowDeleteDialog(true)}>
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Delete Department
                                     </DropdownMenuItem>
@@ -422,7 +455,7 @@ export default function DepartmentDetailsPage() {
                                 <BookOpen className="h-5 w-5" />
                                 Programmes ({department?.programmes?.length || 0})
                             </CardTitle>
-                            <Button size="sm">
+                            <Button size="sm" onClick={() => setShowAddProgrammeModal(true)}>
                                 <Plus className="mr-2 h-4 w-4" />
                                 Add Programme
                             </Button>
@@ -431,7 +464,11 @@ export default function DepartmentDetailsPage() {
                             {department?.programmes && department.programmes.length > 0 ? (
                                 <div className="space-y-4">
                                     {department.programmes.map((programme, index) => (
-                                        <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                                        <div
+                                            key={index}
+                                            className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                                            onClick={() => router.push(`/dashboard/institutions/courses/${programme.id}`)}
+                                        >
                                             <div className="flex items-center gap-3">
                                                 <div className="p-2 bg-blue-100 rounded">
                                                     <GraduationCap className="h-4 w-4 text-blue-600" />
@@ -443,7 +480,14 @@ export default function DepartmentDetailsPage() {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <Badge variant="outline">Active</Badge>
-                                                <Button variant="ghost" size="sm">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        router.push(`/dashboard/institutions/courses/${programme.id}`);
+                                                    }}
+                                                >
                                                     <Eye className="h-4 w-4" />
                                                 </Button>
                                             </div>
@@ -456,7 +500,7 @@ export default function DepartmentDetailsPage() {
                                     title="No Programmes"
                                     description="This department doesn't have any programmes yet."
                                     action={
-                                        <Button>
+                                        <Button onClick={() => setShowAddProgrammeModal(true)}>
                                             <Plus className="mr-2 h-4 w-4" />
                                             Add First Programme
                                         </Button>
@@ -542,6 +586,69 @@ export default function DepartmentDetailsPage() {
                     </div>
                 </TabsContent>
             </Tabs>
+
+            {/* Edit Department Modal */}
+            <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Edit Department</DialogTitle>
+                        <DialogDescription>
+                            Update the department information below.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DepartmentForm
+                        department={department || undefined}
+                        mode="edit"
+                        onSuccess={handleFormSuccess}
+                        onCancel={() => setShowEditModal(false)}
+                        embedded={true}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            {/* Add Programme Modal (Placeholder) */}
+            <Dialog open={showAddProgrammeModal} onOpenChange={setShowAddProgrammeModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add Programme</DialogTitle>
+                        <DialogDescription>
+                            Programme creation functionality coming soon!
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-6 text-center text-muted-foreground">
+                        <p>Programme form will be implemented here.</p>
+                        <Button
+                            variant="outline"
+                            className="mt-4"
+                            onClick={() => setShowAddProgrammeModal(false)}
+                        >
+                            Close
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Department Confirmation */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the department "{department?.name}".
+                            This action cannot be undone. All associated programmes and data will be affected.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDeleteDepartment}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Delete Department
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

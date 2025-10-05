@@ -74,7 +74,7 @@ interface DepartmentsStats {
 interface DepartmentsFilters {
     search?: string;
     faculty_id?: string;
-    has_programmes?: 'yes' | 'no';
+    institution_id?: string;
 }
 
 // Initial empty state - data will be loaded from API
@@ -95,6 +95,7 @@ export default function DepartmentsPage() {
     const [statsLoading, setStatsLoading] = useState(true);
     const [stats, setStats] = useState<DepartmentsStats>(initialStats);
     const [faculties, setFaculties] = useState<{ id: string; name: string }[]>([]);
+    const [institutions, setInstitutions] = useState<{ id: string; name: string }[]>([]);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingDepartment, setEditingDepartment] = useState<DepartmentRead | null>(null);
     const [deletingDepartment, setDeletingDepartment] = useState<DepartmentRead | null>(null);
@@ -102,8 +103,7 @@ export default function DepartmentsPage() {
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalItems, setTotalItems] = useState(0);
-
-    const ITEMS_PER_PAGE = 20;
+    const [pageSize, setPageSize] = useState(25);
 
     // Load departments data
     const loadDepartments = async () => {
@@ -114,10 +114,11 @@ export default function DepartmentsPage() {
             const response = await adminAPI.departments.search({
                 q: filters.search,
                 faculty_id: filters.faculty_id,
+                institution_id: filters.institution_id,
                 sort_by: 'name',
                 sort_order: 'asc',
-                skip: currentPage * ITEMS_PER_PAGE,
-                limit: ITEMS_PER_PAGE,
+                skip: currentPage * pageSize,
+                limit: pageSize,
             });
 
             if (response.data?.data) {
@@ -127,12 +128,12 @@ export default function DepartmentsPage() {
                     // Paginated response
                     setDepartments(responseData.items || []);
                     setTotalItems(responseData.total || 0);
-                    setTotalPages(Math.ceil((responseData.total || 0) / ITEMS_PER_PAGE));
+                    setTotalPages(Math.ceil((responseData.total || 0) / pageSize));
                 } else if (Array.isArray(responseData)) {
                     // Direct array response
                     setDepartments(responseData);
                     setTotalItems(responseData.length);
-                    setTotalPages(Math.ceil(responseData.length / ITEMS_PER_PAGE));
+                    setTotalPages(Math.ceil(responseData.length / pageSize));
                 } else {
                     // Empty response
                     setDepartments([]);
@@ -191,10 +192,25 @@ export default function DepartmentsPage() {
                 const facultiesData = Array.isArray(response.data.data)
                     ? response.data.data
                     : response.data.data.items || [];
-                setFaculties(facultiesData.map(faculty => ({ id: faculty.id, name: faculty.name })));
+                setFaculties(facultiesData.map((faculty: any) => ({ id: faculty.id, name: faculty.name })));
             }
         } catch (error) {
             console.error('Error loading faculties:', error);
+        }
+    };
+
+    // Load institutions for filter dropdown
+    const loadInstitutions = async () => {
+        try {
+            const response = await adminAPI.institutions.list({ limit: 100 });
+            if (response.data?.data) {
+                const institutionsData = Array.isArray(response.data.data)
+                    ? response.data.data
+                    : response.data.data.items || [];
+                setInstitutions(institutionsData.map((inst: any) => ({ id: inst.id, name: inst.name })));
+            }
+        } catch (error) {
+            console.error('Error loading institutions:', error);
         }
     };
 
@@ -341,15 +357,22 @@ export default function DepartmentsPage() {
         setCurrentPage(0);
     };
 
-    // Load data on mount and when filters change
+    // Handle page size change
+    const handlePageSizeChange = (newPageSize: number) => {
+        setPageSize(newPageSize);
+        setCurrentPage(0); // Reset to first page when changing page size
+    };
+
+    // Load data on mount and when filters, page, or page size changes
     useEffect(() => {
         loadDepartments();
-    }, [currentPage, filters]);
+    }, [currentPage, filters, pageSize]);
 
     // Load initial data
     useEffect(() => {
         loadStats();
         loadFaculties();
+        loadInstitutions();
     }, []);
 
     // Define table columns
@@ -473,12 +496,16 @@ export default function DepartmentsPage() {
             {/* Filters and Search */}
             <Card>
                 <CardContent className="pt-6">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="flex-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* Search Input */}
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                Search Departments
+                            </label>
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <Input
-                                    placeholder="Search departments by name..."
+                                    placeholder="Search by name..."
                                     className="pl-10"
                                     value={filters.search || ''}
                                     onChange={(e) => handleSearch(e.target.value)}
@@ -486,36 +513,81 @@ export default function DepartmentsPage() {
                             </div>
                         </div>
 
-                        <Select
-                            value={filters.has_programmes || 'all'}
-                            onValueChange={(value) => handleFilterChange('has_programmes', value)}
-                        >
-                            <SelectTrigger className="w-full sm:w-[200px]">
-                                <SelectValue placeholder="Filter by programmes" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Departments</SelectItem>
-                                <SelectItem value="yes">With Programmes</SelectItem>
-                                <SelectItem value="no">Without Programmes</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        {/* Filter by Faculty */}
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                Filter by Faculty
+                            </label>
+                            <Select
+                                value={filters.faculty_id || 'all'}
+                                onValueChange={(value) => handleFilterChange('faculty_id', value)}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="All Faculties" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Faculties</SelectItem>
+                                    {faculties.map((faculty) => (
+                                        <SelectItem key={faculty.id} value={faculty.id}>
+                                            {faculty.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                        <Select
-                            value={filters.faculty_id || 'all'}
-                            onValueChange={(value) => handleFilterChange('faculty_id', value)}
-                        >
-                            <SelectTrigger className="w-full sm:w-[200px]">
-                                <SelectValue placeholder="Filter by faculty" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Faculties</SelectItem>
-                                {faculties.map((faculty) => (
-                                    <SelectItem key={faculty.id} value={faculty.id}>
-                                        {faculty.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        {/* Filter by Institution */}
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                Filter by Institution
+                            </label>
+                            <Select
+                                value={filters.institution_id || 'all'}
+                                onValueChange={(value) => handleFilterChange('institution_id', value)}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="All Institutions" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Institutions</SelectItem>
+                                    {institutions.map((institution) => (
+                                        <SelectItem key={institution.id} value={institution.id}>
+                                            {institution.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Active Filters Info */}
+                        <div className="flex items-end">
+                            <div className="text-sm text-muted-foreground">
+                                {filters.search && (
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Badge variant="secondary">
+                                            Search: {filters.search}
+                                        </Badge>
+                                    </div>
+                                )}
+                                {filters.faculty_id && filters.faculty_id !== 'all' && (
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Badge variant="secondary">
+                                            Faculty: {faculties.find(f => f.id === filters.faculty_id)?.name || 'Selected'}
+                                        </Badge>
+                                    </div>
+                                )}
+                                {filters.institution_id && filters.institution_id !== 'all' && (
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="secondary">
+                                            Institution: {institutions.find(i => i.id === filters.institution_id)?.name || 'Selected'}
+                                        </Badge>
+                                    </div>
+                                )}
+                                {!filters.search && !filters.faculty_id && !filters.institution_id && (
+                                    <span className="text-gray-500">Showing all departments</span>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -533,8 +605,9 @@ export default function DepartmentsPage() {
                             currentPage,
                             totalPages,
                             totalItems,
-                            pageSize: ITEMS_PER_PAGE,
+                            pageSize,
                             onPageChange: setCurrentPage,
+                            onPageSizeChange: handlePageSizeChange,
                         }}
                         emptyMessage="No departments found. Try adjusting your search criteria."
                         loading={loading}

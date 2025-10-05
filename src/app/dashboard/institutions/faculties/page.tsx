@@ -73,7 +73,6 @@ interface FacultiesStats {
 interface FacultiesFilters {
     search?: string;
     institution_id?: string;
-    has_departments?: 'yes' | 'no';
 }
 
 // Initial empty state - data will be loaded from API
@@ -101,8 +100,7 @@ export default function FacultiesPage() {
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalItems, setTotalItems] = useState(0);
-
-    const ITEMS_PER_PAGE = 20;
+    const [pageSize, setPageSize] = useState(25);
 
     // Load faculties data
     const loadFaculties = async () => {
@@ -115,8 +113,8 @@ export default function FacultiesPage() {
                 institution_id: filters.institution_id,
                 sort_by: 'name',
                 sort_order: 'asc',
-                skip: currentPage * ITEMS_PER_PAGE,
-                limit: ITEMS_PER_PAGE,
+                skip: currentPage * pageSize,
+                limit: pageSize,
             });
 
             if (response.data?.data) {
@@ -124,20 +122,21 @@ export default function FacultiesPage() {
                 // Handle paginated response structure
                 if (responseData && typeof responseData === 'object' && 'items' in responseData) {
                     // Paginated response
-                    setFaculties(responseData.items || []);
-                    setTotalItems(responseData.total || 0);
-                    setTotalPages(Math.ceil((responseData.total || 0) / ITEMS_PER_PAGE));
+                    const items = responseData.items || [];
 
-                    // Update statistics with the total from this response (much simpler!)
+                    setFaculties(items);
+                    setTotalItems(responseData.total || 0);
+                    setTotalPages(Math.ceil((responseData.total || 0) / pageSize));
+
+                    // Update statistics with the total from this response
                     if (!filters.search && !filters.institution_id && currentPage === 0) {
-                        // Only update stats when showing all faculties (no filters, first page)
                         setStats(prev => ({ ...prev, totalFaculties: responseData.total || 0 }));
                     }
                 } else if (Array.isArray(responseData)) {
                     // Direct array response
                     setFaculties(responseData);
                     setTotalItems(responseData.length);
-                    setTotalPages(Math.ceil(responseData.length / ITEMS_PER_PAGE));
+                    setTotalPages(Math.ceil(responseData.length / pageSize));
 
                     // Update stats for array response
                     if (!filters.search && !filters.institution_id) {
@@ -247,13 +246,27 @@ export default function FacultiesPage() {
 
     // Handle form success
     const handleFormSuccess = async () => {
-        // Reset form state first
-        setShowCreateModal(false);
-        setEditingFaculty(null);
+        try {
+            // Close modal first to prevent user from clicking while reloading
+            setShowCreateModal(false);
+            setEditingFaculty(null);
 
-        // Reload data
-        await loadFaculties();
-        await loadRemainingStats();
+            // Show loading state
+            setLoading(true);
+
+            // Reload data
+            await loadFaculties();
+            await loadRemainingStats();
+        } catch (error) {
+            console.error('Error reloading data after form success:', error);
+            addNotification({
+                type: 'error',
+                title: 'Failed to reload data',
+                message: 'Please refresh the page to see the latest changes.',
+            });
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Transform faculty data for table display
@@ -261,40 +274,52 @@ export default function FacultiesPage() {
         const displayName = faculty.name;
 
         const institutionsDisplay = (
-            <div className="space-y-1">
+            <div className="flex flex-wrap gap-1 max-w-xs">
                 {faculty.institutions && faculty.institutions.length > 0 ? (
-                    faculty.institutions.slice(0, 2).map((institution, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                            <Building className="mr-1 h-3 w-3" />
-                            {institution.name}
-                        </Badge>
-                    ))
+                    <>
+                        {faculty.institutions.slice(0, 2).map((institution, index) => (
+                            <Badge
+                                key={index}
+                                variant="outline"
+                                className="text-xs whitespace-normal break-words max-w-full"
+                            >
+                                <Building className="mr-1 h-3 w-3 flex-shrink-0" />
+                                <span className="truncate">{institution.name}</span>
+                            </Badge>
+                        ))}
+                        {faculty.institutions.length > 2 && (
+                            <Badge variant="secondary" className="text-xs">
+                                +{faculty.institutions.length - 2}
+                            </Badge>
+                        )}
+                    </>
                 ) : (
-                    <span className="text-gray-500 text-sm">No institutions</span>
-                )}
-                {faculty.institutions && faculty.institutions.length > 2 && (
-                    <div className="text-xs text-gray-500">
-                        +{faculty.institutions.length - 2} more
-                    </div>
+                    <span className="text-gray-500 text-sm italic">No institutions</span>
                 )}
             </div>
         );
 
         const departmentsDisplay = (
-            <div className="space-y-1">
+            <div className="space-y-1 max-w-xs">
                 {faculty.departments && faculty.departments.length > 0 ? (
-                    faculty.departments.slice(0, 3).map((department, index) => (
-                        <div key={index} className="text-sm text-gray-600">
-                            {department.name}
-                        </div>
-                    ))
+                    <>
+                        {faculty.departments.slice(0, 2).map((department, index) => (
+                            <div
+                                key={index}
+                                className="text-sm text-gray-700 truncate"
+                                title={department.name}
+                            >
+                                • {department.name}
+                            </div>
+                        ))}
+                        {faculty.departments.length > 2 && (
+                            <div className="text-xs text-gray-500 italic">
+                                +{faculty.departments.length - 2} more
+                            </div>
+                        )}
+                    </>
                 ) : (
-                    <span className="text-gray-500 text-sm">No departments</span>
-                )}
-                {faculty.departments && faculty.departments.length > 3 && (
-                    <div className="text-xs text-gray-500">
-                        +{faculty.departments.length - 3} more
-                    </div>
+                    <span className="text-gray-500 text-sm italic">No departments</span>
                 )}
             </div>
         );
@@ -375,10 +400,16 @@ export default function FacultiesPage() {
         setCurrentPage(0);
     };
 
-    // Load data on mount and when filters change
+    // Handle page size change
+    const handlePageSizeChange = (newPageSize: number) => {
+        setPageSize(newPageSize);
+        setCurrentPage(0); // Reset to first page when changing page size
+    };
+
+    // Load data on mount and when filters, page, or page size changes
     useEffect(() => {
         loadFaculties();
-    }, [currentPage, filters]);
+    }, [currentPage, filters, pageSize]);
 
     // Load initial data
     useEffect(() => {
@@ -539,12 +570,16 @@ export default function FacultiesPage() {
             {/* Filters and Search */}
             <Card>
                 <CardContent className="pt-6">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="flex-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {/* Search Input */}
+                        <div className="lg:col-span-1">
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                Search Faculties
+                            </label>
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <Input
-                                    placeholder="Search faculties by name..."
+                                    placeholder="Search by name..."
                                     className="pl-10"
                                     value={filters.search || ''}
                                     onChange={(e) => handleSearch(e.target.value)}
@@ -552,36 +587,51 @@ export default function FacultiesPage() {
                             </div>
                         </div>
 
-                        <Select
-                            value={filters.has_departments || 'all'}
-                            onValueChange={(value) => handleFilterChange('has_departments', value)}
-                        >
-                            <SelectTrigger className="w-full sm:w-[200px]">
-                                <SelectValue placeholder="Filter by departments" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Faculties</SelectItem>
-                                <SelectItem value="yes">With Departments</SelectItem>
-                                <SelectItem value="no">Without Departments</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        {/* Filter by Institution */}
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                Filter by Institution
+                            </label>
+                            <Select
+                                value={filters.institution_id || 'all'}
+                                onValueChange={(value) => handleFilterChange('institution_id', value)}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="All Institutions" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Institutions</SelectItem>
+                                    {institutions.map((institution) => (
+                                        <SelectItem key={institution.id} value={institution.id}>
+                                            {institution.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                        <Select
-                            value={filters.institution_id || 'all'}
-                            onValueChange={(value) => handleFilterChange('institution_id', value)}
-                        >
-                            <SelectTrigger className="w-full sm:w-[200px]">
-                                <SelectValue placeholder="Filter by institution" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Institutions</SelectItem>
-                                {institutions.map((institution) => (
-                                    <SelectItem key={institution.id} value={institution.id}>
-                                        {institution.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        {/* Active Filters Info */}
+                        <div className="flex items-end">
+                            <div className="text-sm text-muted-foreground">
+                                {filters.search && (
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Badge variant="secondary">
+                                            Search: {filters.search}
+                                        </Badge>
+                                    </div>
+                                )}
+                                {filters.institution_id && filters.institution_id !== 'all' && (
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="secondary">
+                                            Institution: {institutions.find(i => i.id === filters.institution_id)?.name || 'Selected'}
+                                        </Badge>
+                                    </div>
+                                )}
+                                {!filters.search && !filters.institution_id && (
+                                    <span className="text-gray-500">Showing all faculties</span>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -599,8 +649,9 @@ export default function FacultiesPage() {
                             currentPage,
                             totalPages,
                             totalItems,
-                            pageSize: ITEMS_PER_PAGE,
+                            pageSize,
                             onPageChange: setCurrentPage,
+                            onPageSizeChange: handlePageSizeChange,
                         }}
                         emptyMessage="No faculties found. Try adjusting your search criteria."
                         loading={loading}

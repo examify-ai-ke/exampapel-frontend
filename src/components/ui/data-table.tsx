@@ -41,13 +41,22 @@ interface Column<T> {
   width?: string;
 }
 
+interface ServerPagination {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+}
+
 interface DataTableProps<T> {
   data: T[];
   columns: Column<T>[];
   title?: string;
   searchable?: boolean;
   filterable?: boolean;
-  pagination?: boolean;
+  pagination?: boolean | ServerPagination;
   pageSize?: number;
   actions?: {
     label: string;
@@ -75,9 +84,15 @@ export function DataTable<T extends Record<string, any>>({
   emptyMessage = 'No data available',
   loading = false,
 }: DataTableProps<T>) {
+  // Check if server-side pagination is enabled
+  const isServerPagination = typeof pagination === 'object' && pagination !== null;
+  const serverPagination = isServerPagination ? pagination as ServerPagination : null;
+
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedPageSize, setSelectedPageSize] = useState(pageSize);
+  const [selectedPageSize, setSelectedPageSize] = useState(
+    serverPagination?.pageSize || pageSize
+  );
   const [sortColumn, setSortColumn] = useState<keyof T | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [selectedItems, setSelectedItems] = useState<T[]>([]);
@@ -112,10 +127,26 @@ export function DataTable<T extends Record<string, any>>({
   }, [data, searchTerm, sortColumn, sortDirection, columns]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredData.length / selectedPageSize);
-  const startIndex = (currentPage - 1) * selectedPageSize;
-  const endIndex = startIndex + selectedPageSize;
-  const paginatedData = pagination ? filteredData.slice(startIndex, endIndex) : filteredData;
+  const actualTotalPages = isServerPagination
+    ? serverPagination!.totalPages
+    : Math.ceil(filteredData.length / selectedPageSize);
+  const actualCurrentPage = isServerPagination
+    ? serverPagination!.currentPage
+    : currentPage;
+  const actualTotalItems = isServerPagination
+    ? serverPagination!.totalItems
+    : filteredData.length;
+
+  // For server-side pagination, data is already paginated by the server
+  const startIndex = isServerPagination
+    ? (serverPagination!.currentPage * serverPagination!.pageSize)
+    : (currentPage - 1) * selectedPageSize;
+  const endIndex = isServerPagination
+    ? startIndex + data.length
+    : startIndex + selectedPageSize;
+  const paginatedData = isServerPagination
+    ? data // Server already paginated
+    : (pagination ? filteredData.slice(startIndex, endIndex) : filteredData);
 
   // Handle sorting
   const handleSort = (column: keyof T) => {
@@ -182,38 +213,46 @@ export function DataTable<T extends Record<string, any>>({
         </div>
 
         {/* Search and filters */}
-        <div className="flex items-center space-x-4">
-          {searchable && (
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          )}
+        <div className="flex items-center justify-between space-x-4">
+          <div className="flex items-center gap-4 flex-1">
+            {searchable && (
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            )}
+          </div>
 
+          {/* Page Size Selector - Show for both client and server pagination */}
           {pagination && (
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-muted-foreground">Show:</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-200 bg-gray-50">
+              <span className="text-sm font-medium text-gray-700">Items per page:</span>
               <Select
-                value={selectedPageSize.toString()}
+                value={String(selectedPageSize)}
                 onValueChange={(value) => {
-                  setSelectedPageSize(Number(value));
-                  setCurrentPage(1);
+                  const newSize = Number(value);
+                  setSelectedPageSize(newSize);
+                  if (isServerPagination && serverPagination?.onPageSizeChange) {
+                    serverPagination.onPageSizeChange(newSize);
+                  }
+                  if (!isServerPagination) {
+                    setCurrentPage(1); // Reset to first page
+                  }
                 }}
               >
-                <SelectTrigger className="w-20">
-                  <SelectValue />
+                <SelectTrigger className="w-[80px] h-8 border-gray-300 bg-white">
+                  <SelectValue placeholder="Size" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PAGINATION_CONFIG.pageSizeOptions.map((size) => (
-                    <SelectItem key={size} value={size.toString()}>
-                      {size}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -309,58 +348,70 @@ export function DataTable<T extends Record<string, any>>({
         </div>
 
         {/* Pagination */}
-        {pagination && totalPages > 1 && (
-          <div className="flex items-center justify-between space-x-2 py-4">
+        {pagination && actualTotalPages > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
             <div className="text-sm text-muted-foreground">
-              Showing {startIndex + 1} to {Math.min(endIndex, filteredData.length)} of{' '}
-              {filteredData.length} results
+              Showing {startIndex + 1} to {Math.min(endIndex, actualTotalItems)} of{' '}
+              {actualTotalItems} results
             </div>
+
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
+                onClick={() => {
+                  if (isServerPagination) {
+                    serverPagination!.onPageChange(0);
+                  } else {
+                    setCurrentPage(1);
+                  }
+                }}
+                disabled={actualCurrentPage === (isServerPagination ? 0 : 1)}
               >
                 <ChevronsLeft className="h-4 w-4" />
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={currentPage === 1}
+                onClick={() => {
+                  if (isServerPagination) {
+                    serverPagination!.onPageChange(actualCurrentPage - 1);
+                  } else {
+                    setCurrentPage(currentPage - 1);
+                  }
+                }}
+                disabled={actualCurrentPage === (isServerPagination ? 0 : 1)}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <div className="flex items-center space-x-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const page = i + 1;
-                  return (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setCurrentPage(page)}
-                      className="w-8 h-8 p-0"
-                    >
-                      {page}
-                    </Button>
-                  );
-                })}
+              <div className="text-sm">
+                Page {isServerPagination ? actualCurrentPage + 1 : actualCurrentPage} of {actualTotalPages}
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                onClick={() => {
+                  if (isServerPagination) {
+                    serverPagination!.onPageChange(actualCurrentPage + 1);
+                  } else {
+                    setCurrentPage(currentPage + 1);
+                  }
+                }}
+                disabled={actualCurrentPage === (isServerPagination ? actualTotalPages - 1 : actualTotalPages)}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
+                onClick={() => {
+                  if (isServerPagination) {
+                    serverPagination!.onPageChange(actualTotalPages - 1);
+                  } else {
+                    setCurrentPage(actualTotalPages);
+                  }
+                }}
+                disabled={actualCurrentPage === (isServerPagination ? actualTotalPages - 1 : actualTotalPages)}
               >
                 <ChevronsRight className="h-4 w-4" />
               </Button>
