@@ -119,48 +119,11 @@ export default function ExamPaperDetailsPage() {
         return text.substring(0, maxLength) + '...'
     }
 
-    // Helper function to check network connectivity
-    const checkNetworkConnectivity = async () => {
-        try {
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-            console.log('🌐 Testing network connectivity to:', baseUrl)
-
-            // Try to fetch the health endpoint
-            const response = await fetch(`${baseUrl}/api/v1/health`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                }
-            })
-
-            if (response.ok) {
-                console.log('✅ Network connectivity: OK')
-                return true
-            } else {
-                console.log('⚠️ Network connectivity: Server responded with', response.status)
-                return false
-            }
-        } catch (error) {
-            console.log('❌ Network connectivity: Failed', error)
-            return false
-        }
-    }
-
     // Load exam paper data
     const loadExamPaper = async () => {
         try {
             setLoading(true)
-
-            console.log('🔄 Loading exam paper with ID:', examPaperId)
-            console.log('🔧 API Base URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000')
-            console.log('🔑 Auth Token:', localStorage.getItem('auth-token') ? 'Present' : 'Missing')
-
-            // Test network connectivity first
-            const isConnected = await checkNetworkConnectivity()
-            if (!isConnected) {
-                throw new Error('Network connectivity test failed. Backend server may not be running.')
-            }
-
+           
             const response = await adminAPI.examPapers.getById(examPaperId)
 
             console.log('📄 API response received:', {
@@ -177,12 +140,12 @@ export default function ExamPaperDetailsPage() {
             }
 
             if (response.data?.data) {
-                console.log('✅ Found exam paper data with ID:', response.data.data.id)
+                // console.log('✅ Found exam paper data with ID:', response.data.data.id)
                 setExamPaper(response.data.data)
             } else {
                 console.warn('⚠️ No exam paper data found in response:', response)
-                console.warn('Using mock data as fallback')
-                setExamPaper(mockExamPaper)
+                // console.warn('Using mock data as fallback')
+                // setExamPaper(mockExamPaper)
             }
         } catch (error) {
             console.error('❌ loadExamPaper error:', error)

@@ -1,9 +1,17 @@
 import createClient from 'openapi-fetch';
 import type { paths } from '@/types/generated/api';
 
-const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const API_BASE_URL = RAW_BASE_URL.replace(/\/+$/, '');
+const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://fastapi.localhost/api/v1';
+const API_BASE_URL = RAW_BASE_URL;
 const AUTO_REDIRECT_ON_401 = process.env.NEXT_PUBLIC_AUTH_AUTO_REDIRECT_ON_401 !== 'false'; // Default to true
+
+// Log API configuration for debugging
+// console.log('API Configuration:', {
+//   RAW_BASE_URL,
+//   API_BASE_URL,
+//   AUTO_REDIRECT_ON_401,
+//   NODE_ENV: process.env.NODE_ENV
+// });
 
 // Create the main API client
 export const api = createClient<paths>({
@@ -24,7 +32,7 @@ api.use({
     request.headers.set('accept', 'application/json');
     request.headers.set('Content-Type', 'application/json');
 
-    console.log('Request:', request);
+    // console.log('Request:', request);
     return request;
   },
 

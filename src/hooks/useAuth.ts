@@ -15,17 +15,34 @@ export const useAuth = () => {
   const { user, isAuthenticated, login, logout, setError, clearError, invalidateSession } = useAuthStore();
   const { addNotification } = useUIStore();
 
-  const handleLogin = async (credentials: LoginRequest) => {
+  const handleLogin = async (credentials: { email: string; password: string; provider?: 'email' | 'google' | 'github' | 'facebook' | 'twitter' }) => {
     setIsLoading(true);
     clearError();
-    // console.log(credentials);
+
+    // Ensure provider field is included for backend API compatibility
+    const loginData: LoginRequest = {
+      email: credentials.email,
+      password: credentials.password,
+      provider: credentials.provider || 'email' // Default to email provider
+    };
+
+    // console.log('Login attempt with:', { email: loginData.email, provider: loginData.provider });
+
     try {
-      const { data, error } = await api.POST('/api/v1/login', {
-        body: credentials,
+      const { data, error } = await api.POST('/login', {
+        body: loginData,
       });
 
 
       if (error) {
+        // Enhanced error logging for debugging
+        console.log('Login API Error:', {
+          error,
+          status: error.status || 'unknown',
+          detail: error.detail,
+          message: error.message
+        });
+
         // Handle specific error cases
         let errorMessage = 'Login failed. Please check your credentials.';
 
@@ -33,6 +50,8 @@ export const useAuth = () => {
           errorMessage = error.detail;
         } else if (Array.isArray(error.detail)) {
           errorMessage = error.detail.map(e => e.msg).join(', ');
+        } else if (error.message) {
+          errorMessage = error.message;
         }
 
         // Handle token expiration specifically
@@ -54,6 +73,12 @@ export const useAuth = () => {
         const tokenData = data.data as TokenResponse;
         const user = tokenData.user as UserRead;
 
+        console.log('Login successful:', {
+          userId: user.id,
+          email: user.email,
+          hasToken: !!tokenData.access_token
+        });
+
         // Store token and user data
         setAuthToken(tokenData.access_token);
         login(user, tokenData.access_token);
@@ -65,6 +90,16 @@ export const useAuth = () => {
         });
 
         return { success: true, user, token: tokenData.access_token };
+      } else {
+        console.log('Login response missing data:', data);
+        const errorMessage = 'Login response was invalid. Please try again.';
+        setError(errorMessage);
+        addNotification({
+          type: 'error',
+          title: 'Login Failed',
+          message: errorMessage,
+        });
+        return { success: false, error: errorMessage };
       }
     } catch (err) {
       const errorMessage = 'An unexpected error occurred. Please try again.';
@@ -87,7 +122,7 @@ export const useAuth = () => {
     clearError();
 
     try {
-      const { data, error } = await api.POST('/api/v1/user', {
+      const { data, error } = await api.POST('/user', {
         body: userData,
       });
 
@@ -136,7 +171,7 @@ export const useAuth = () => {
   const handleLogout = async () => {
     try {
       // Call logout endpoint to invalidate token on server
-      await api.POST('/api/v1/logout');
+      await api.POST('/logout');
     } catch (err) {
       // Continue with logout even if server call fails
       console.warn('Server logout failed:', err);
@@ -155,10 +190,10 @@ export const useAuth = () => {
 
   const getCurrentUser = async () => {
     try {
-      const { data, error } = await api.GET('/api/v1/user/me');
+      const { data, error } = await api.GET('/user/me');
 
       if (error) {
-        console.error('Failed to get current user:', error);
+        console.log('Failed to get current user:', error);
         return null;
       }
 
@@ -166,7 +201,7 @@ export const useAuth = () => {
         return data.data as UserRead;
       }
     } catch (err) {
-      console.error('Error getting current user:', err);
+      console.log('Error getting current user:', err);
       return null;
     }
 
@@ -178,7 +213,7 @@ export const useAuth = () => {
     clearError();
 
     try {
-      const { data, error } = await api.POST('/api/v1/login/password-reset', {
+      const { data, error } = await api.POST('/login/password-reset', {
         body: { email },
       });
 

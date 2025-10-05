@@ -33,22 +33,22 @@ const adminAPI = {
     // System Health & Statistics
     health: {
         async getBasic() {
-            return api.GET('/api/v1/health');
+            return api.GET('/health');
         },
 
         async getDetailed() {
-            return api.GET('/api/v1/health/detailed');
+            return api.GET('/health/detailed');
         },
 
         async getDatabase() {
-            return api.GET('/api/v1/health/database');
+            return api.GET('/health/database');
         },
     },
 
     // Statistics
     stats: {
         async getDetailed() {
-            return api.GET('/api/v1/report/detailed-statistics');
+            return api.GET('/report/detailed-statistics');
         },
     },
 
@@ -60,7 +60,7 @@ const adminAPI = {
             search?: string;
             role?: string;
         }) {
-            return api.GET('/api/v1/user/list', {
+            return api.GET('/user/list', {
                 params: {
                     query: params
                 }
@@ -68,7 +68,7 @@ const adminAPI = {
         },
 
         async getById(userId: string) {
-            return api.GET('/api/v1/user/{user_id}', {
+            return api.GET('/user/{user_id}', {
                 params: {
                     path: { user_id: userId }
                 }
@@ -76,13 +76,13 @@ const adminAPI = {
         },
 
         async create(userData: UserCreate) {
-            return api.POST('/api/v1/user', {
+            return api.POST('/user', {
                 body: userData
             });
         },
 
         async update(userId: string, userData: UserUpdate) {
-            return api.PUT('/api/v1/user/{user_id}', {
+            return api.PUT('/user/{user_id}', {
                 params: {
                     path: { user_id: userId }
                 },
@@ -91,7 +91,7 @@ const adminAPI = {
         },
 
         async delete(userId: string) {
-            return api.DELETE('/api/v1/user/{user_id}', {
+            return api.DELETE('/user/{user_id}', {
                 params: {
                     path: { user_id: userId }
                 }
@@ -99,7 +99,7 @@ const adminAPI = {
         },
 
         async activate(userId: string) {
-            return api.PUT('/api/v1/user/{user_id}/activate', {
+            return api.PUT('/user/{user_id}/activate', {
                 params: {
                     path: { user_id: userId }
                 }
@@ -107,7 +107,7 @@ const adminAPI = {
         },
 
         async deactivate(userId: string) {
-            return api.PUT('/api/v1/user/{user_id}/deactivate', {
+            return api.PUT('/user/{user_id}/deactivate', {
                 params: {
                     path: { user_id: userId }
                 }
@@ -133,7 +133,7 @@ const adminAPI = {
         },
 
         async getOrderedByCreatedAt(params?: { limit?: number; offset?: number }) {
-            return api.GET('/api/v1/user/order_by_created_at', {
+            return api.GET('/user/order_by_created_at', {
                 params: {
                     query: params
                 }
@@ -144,11 +144,11 @@ const adminAPI = {
     // Role Management
     roles: {
         async list() {
-            return api.GET('/api/v1/role');
+            return api.GET('/role');
         },
 
         async getById(roleId: string) {
-            return api.GET('/api/v1/role/{role_id}', {
+            return api.GET('/role/{role_id}', {
                 params: {
                     path: { role_id: roleId }
                 }
@@ -156,13 +156,13 @@ const adminAPI = {
         },
 
         async create(roleData: RoleCreate) {
-            return api.POST('/api/v1/role', {
+            return api.POST('/role', {
                 body: roleData
             });
         },
 
         async update(roleId: string, roleData: RoleUpdate) {
-            return api.PUT('/api/v1/role/{role_id}', {
+            return api.PUT('/role/{role_id}', {
                 params: {
                     path: { role_id: roleId }
                 },
@@ -171,7 +171,7 @@ const adminAPI = {
         },
 
         async delete(roleId: string) {
-            return api.DELETE('/api/v1/role/{role_id}', {
+            return api.DELETE('/role/{role_id}', {
                 params: {
                     path: { role_id: roleId }
                 }
@@ -182,7 +182,7 @@ const adminAPI = {
     // Institution Management
     institutions: {
         async list(params?: { limit?: number; skip?: number }) {
-            return api.GET('/api/v1/institution', {
+            return api.GET('/institution', {
                 params: {
                     query: params
                 }
@@ -190,7 +190,7 @@ const adminAPI = {
         },
 
         async getById(institutionId: string) {
-            return api.GET('/api/v1/institution/get_by_id/{institution_id}', {
+            return api.GET('/institution/get_by_id/{institution_id}', {
                 params: {
                     path: { institution_id: institutionId }
                 }
@@ -198,13 +198,13 @@ const adminAPI = {
         },
 
         async create(institutionData: components['schemas']['InstitutionCreate']) {
-            return api.POST('/api/v1/institution', {
+            return api.POST('/institution', {
                 body: institutionData
             });
         },
 
         async update(institutionId: string, institutionData: components['schemas']['InstitutionUpdate']) {
-            return api.PUT('/api/v1/institution/{institution_id}', {
+            return api.PUT('/institution/{institution_id}', {
                 params: {
                     path: { institution_id: institutionId }
                 },
@@ -213,7 +213,7 @@ const adminAPI = {
         },
 
         async delete(institutionId: string) {
-            return api.DELETE('/api/v1/institution/{institution_id}', {
+            return api.DELETE('/institution/{institution_id}', {
                 params: {
                     path: { institution_id: institutionId }
                 }
@@ -234,7 +234,7 @@ const adminAPI = {
             skip?: number;
             highlight?: boolean;
         }) {
-            return api.GET('/api/v1/institution/search/advanced', {
+            return api.GET('/institution/search/advanced', {
                 params: {
                     query: params
                 }
@@ -242,7 +242,7 @@ const adminAPI = {
         },
 
         async getOrderedByCreatedAt(params?: { page?: number; size?: number; order?: 'ascendent' | 'descendent' }) {
-            return api.GET('/api/v1/institution/get_by_created_at', {
+            return api.GET('/institution/get_by_created_at', {
                 params: {
                     query: params
                 }
@@ -255,7 +255,7 @@ const adminAPI = {
      */
     examTitles: {
         async list(params?: { skip?: number; limit?: number }) {
-            return api.GET('/api/v1/exam-title', {
+            return api.GET('/exam-title', {
                 params: {
                     query: params
                 }
@@ -268,7 +268,7 @@ const adminAPI = {
      */
     examDescriptions: {
         async list(params?: { skip?: number; limit?: number }) {
-            return api.GET('/api/v1/exam-description', {
+            return api.GET('/exam-description', {
                 params: {
                     query: params
                 }
@@ -281,7 +281,7 @@ const adminAPI = {
      */
     modules: {
         async list(params?: { skip?: number; limit?: number }) {
-            return api.GET('/api/v1/module', {
+            return api.GET('/module', {
                 params: {
                     query: params
                 }
@@ -294,7 +294,7 @@ const adminAPI = {
      */
     instructions: {
         async list(params?: { skip?: number; limit?: number }) {
-            return api.GET('/api/v1/instruction', {
+            return api.GET('/instruction', {
                 params: {
                     query: params
                 }
@@ -305,17 +305,17 @@ const adminAPI = {
     // Groups & Teams
     groups: {
         async list() {
-            return api.GET('/api/v1/group');
+            return api.GET('/group');
         },
 
         async create(groupData: components['schemas']['IGroupCreate']) {
-            return api.POST('/api/v1/group', {
+            return api.POST('/group', {
                 body: groupData
             });
         },
 
         async addUser(userId: string, groupId: string) {
-            return api.POST('/api/v1/group/add_user/{user_id}/{group_id}', {
+            return api.POST('/group/add_user/{user_id}/{group_id}', {
                 params: {
                     path: { user_id: userId, group_id: groupId }
                 }
@@ -323,7 +323,7 @@ const adminAPI = {
         },
 
         async removeUser(userId: string, groupId: string) {
-            return api.DELETE('/api/v1/group/remove_user/{user_id}/{group_id}', {
+            return api.DELETE('/group/remove_user/{user_id}/{group_id}', {
                 params: {
                     path: { user_id: userId, group_id: groupId }
                 }
@@ -333,11 +333,11 @@ const adminAPI = {
 
     teams: {
         async list() {
-            return api.GET('/api/v1/team');
+            return api.GET('/team');
         },
 
         async create(teamData: components['schemas']['ITeamCreate']) {
-            return api.POST('/api/v1/team', {
+            return api.POST('/team', {
                 body: teamData
             });
         },
@@ -353,7 +353,7 @@ const adminAPI = {
             search?: string;
             institution_id?: string;
         }) {
-            return api.GET('/api/v1/faculty', {
+            return api.GET('/faculty', {
                 params: {
                     query: params
                 }
@@ -361,7 +361,7 @@ const adminAPI = {
         },
 
         async getById(facultyId: string) {
-            return api.GET('/api/v1/faculty/get_by_id/{faculty_id}', {
+            return api.GET('/faculty/get_by_id/{faculty_id}', {
                 params: {
                     path: { faculty_id: facultyId }
                 }
@@ -369,7 +369,7 @@ const adminAPI = {
         },
 
         async getBySlug(facultySlug: string) {
-            return api.GET('/api/v1/faculty/get_by_slug/{faculty_slug}', {
+            return api.GET('/faculty/get_by_slug/{faculty_slug}', {
                 params: {
                     path: { faculty_slug: facultySlug }
                 }
@@ -377,13 +377,13 @@ const adminAPI = {
         },
 
         async create(facultyData: components['schemas']['FacultyCreate']) {
-            return api.POST('/api/v1/faculty', {
+            return api.POST('/faculty', {
                 body: facultyData
             });
         },
 
         async update(facultyId: string, facultyData: components['schemas']['FacultyUpdate']) {
-            return api.PUT('/api/v1/faculty/{faculty_id}', {
+            return api.PUT('/faculty/{faculty_id}', {
                 params: {
                     path: { faculty_id: facultyId }
                 },
@@ -392,7 +392,7 @@ const adminAPI = {
         },
 
         async delete(facultyId: string) {
-            return api.DELETE('/api/v1/faculty/{faculty_id}', {
+            return api.DELETE('/faculty/{faculty_id}', {
                 params: {
                     path: { faculty_id: facultyId }
                 }
@@ -403,7 +403,7 @@ const adminAPI = {
             const formData = new FormData();
             formData.append('faculty_image', imageFile);
 
-            return api.POST('/api/v1/faculty/{faculty_id}/image', {
+            return api.POST('/faculty/{faculty_id}/image', {
                 params: {
                     path: { faculty_id: facultyId }
                 },
@@ -413,7 +413,7 @@ const adminAPI = {
         },
 
         async getOrderedByCreatedAt(params?: { page?: number; size?: number; order?: 'ascendent' | 'descendent' }) {
-            return api.GET('/api/v1/faculty/get_by_created_at', {
+            return api.GET('/faculty/get_by_created_at', {
                 params: {
                     query: params
                 }
@@ -431,7 +431,7 @@ const adminAPI = {
             search?: string;
             faculty_id?: string;
         }) {
-            return api.GET('/api/v1/department', {
+            return api.GET('/department', {
                 params: {
                     query: params
                 }
@@ -439,7 +439,7 @@ const adminAPI = {
         },
 
         async getById(departmentId: string) {
-            return api.GET('/api/v1/department/get_by_id/{department_id}', {
+            return api.GET('/department/get_by_id/{department_id}', {
                 params: {
                     path: { department_id: departmentId }
                 }
@@ -447,7 +447,7 @@ const adminAPI = {
         },
 
         async getBySlug(departmentSlug: string) {
-            return api.GET('/api/v1/department/get_by_slug/{department_slug}', {
+            return api.GET('/department/get_by_slug/{department_slug}', {
                 params: {
                     path: { department_slug: departmentSlug }
                 }
@@ -455,13 +455,13 @@ const adminAPI = {
         },
 
         async create(departmentData: components['schemas']['DepartmentCreate']) {
-            return api.POST('/api/v1/department', {
+            return api.POST('/department', {
                 body: departmentData
             });
         },
 
         async update(departmentId: string, departmentData: components['schemas']['DepartmentUpdate']) {
-            return api.PUT('/api/v1/department/{department_id}', {
+            return api.PUT('/department/{department_id}', {
                 params: {
                     path: { department_id: departmentId }
                 },
@@ -470,7 +470,7 @@ const adminAPI = {
         },
 
         async delete(departmentId: string) {
-            return api.DELETE('/api/v1/department/{department_id}', {
+            return api.DELETE('/department/{department_id}', {
                 params: {
                     path: { department_id: departmentId }
                 }
@@ -481,7 +481,7 @@ const adminAPI = {
             const formData = new FormData();
             formData.append('department_image', imageFile);
 
-            return api.POST('/api/v1/department/{department_id}/image', {
+            return api.POST('/department/{department_id}/image', {
                 params: {
                     path: { department_id: departmentId }
                 },
@@ -490,7 +490,7 @@ const adminAPI = {
         },
 
         async getOrderedByCreatedAt(params?: { page?: number; size?: number; order?: 'ascendent' | 'descendent' }) {
-            return api.GET('/api/v1/department/get_by_created_at', {
+            return api.GET('/department/get_by_created_at', {
                 params: {
                     query: params
                 }
@@ -498,7 +498,7 @@ const adminAPI = {
         },
 
         async addProgramme(departmentId: string, programmeId: string) {
-            return api.POST('/api/v1/department/{department_id}/programmes/{programme_id}', {
+            return api.POST('/department/{department_id}/programmes/{programme_id}', {
                 params: {
                     path: {
                         department_id: departmentId,
@@ -519,7 +519,7 @@ const adminAPI = {
             search?: string;
             programme_id?: string;
         }) {
-            return api.GET('/api/v1/course', {
+            return api.GET('/course', {
                 params: {
                     query: params
                 }
@@ -527,7 +527,7 @@ const adminAPI = {
         },
 
         async getById(courseId: string) {
-            return api.GET('/api/v1/course/get_by_id/{course_id}', {
+            return api.GET('/course/get_by_id/{course_id}', {
                 params: {
                     path: { course_id: courseId }
                 }
@@ -535,7 +535,7 @@ const adminAPI = {
         },
 
         async getBySlug(courseSlug: string) {
-            return api.GET('/api/v1/course/get_by_slug/{course_slug}', {
+            return api.GET('/course/get_by_slug/{course_slug}', {
                 params: {
                     path: { course_slug: courseSlug }
                 }
@@ -543,13 +543,13 @@ const adminAPI = {
         },
 
         async create(courseData: components['schemas']['CourseCreate']) {
-            return api.POST('/api/v1/course', {
+            return api.POST('/course', {
                 body: courseData
             });
         },
 
         async update(courseId: string, courseData: components['schemas']['CourseUpdate']) {
-            return api.PUT('/api/v1/course/{course_id}', {
+            return api.PUT('/course/{course_id}', {
                 params: {
                     path: { course_id: courseId }
                 },
@@ -558,7 +558,7 @@ const adminAPI = {
         },
 
         async delete(courseId: string) {
-            return api.DELETE('/api/v1/course/{course_id}', {
+            return api.DELETE('/course/{course_id}', {
                 params: {
                     path: { course_id: courseId }
                 }
@@ -569,7 +569,7 @@ const adminAPI = {
             const formData = new FormData();
             formData.append('course_image', imageFile);
 
-            return api.POST('/api/v1/course/{course_id}/image', {
+            return api.POST('/course/{course_id}/image', {
                 params: {
                     path: { course_id: courseId }
                 },
@@ -578,7 +578,7 @@ const adminAPI = {
         },
 
         async getOrderedByCreatedAt(params?: { page?: number; size?: number; order?: 'ascendent' | 'descendent' }) {
-            return api.GET('/api/v1/course/get_by_created_at', {
+            return api.GET('/course/get_by_created_at', {
                 params: {
                     query: params
                 }
@@ -586,7 +586,7 @@ const adminAPI = {
         },
 
         async addModule(courseId: string, moduleId: string) {
-            return api.POST('/api/v1/course/{course_id}/modules/{module_id}', {
+            return api.POST('/course/{course_id}/modules/{module_id}', {
                 params: {
                     path: {
                         course_id: courseId,
@@ -643,7 +643,7 @@ const adminAPI = {
                     }
 
                     console.log('🔍 Using search endpoint with params:', searchParams);
-                    const response = await api.GET('/api/v1/exampaper/search', {
+                    const response = await api.GET('/exampaper/search', {
                         params: {
                             query: searchParams
                         }
@@ -671,27 +671,27 @@ const adminAPI = {
                     };
 
                     console.log('📄 Using list endpoint with params:', listParams);
-                    const response = await api.GET('/api/v1/exampaper', {
+                    const response = await api.GET('/exampaper', {
                         params: {
                             query: listParams
                         }
                     });
 
                     // Log only the structure, not the full data to avoid console spam
-                    if (response.data?.data?.items) {
-                        console.log('📄 List response structure:', {
-                            message: response.data.message,
-                            totalItems: response.data.data.total,
-                            itemsCount: response.data.data.items.length,
-                            firstItem: response.data.data.items[0] ? {
-                                id: response.data.data.items[0].id,
-                                title: (response.data.data.items[0] as any).title?.name,
-                                questionSetsCount: response.data.data.items[0].question_sets?.length
-                            } : null
-                        });
-                    } else {
-                        console.log('📄 List response:', response);
-                    }
+                    // if (response.data?.data?.items) {
+                    // console.log('📄 List response structure:', {
+                    //     message: response.data.message,
+                    //     totalItems: response.data.data.total,
+                    //     itemsCount: response.data.data.items.length,
+                    //     firstItem: response.data.data.items[0] ? {
+                    //         id: response.data.data.items[0].id,
+                    //         title: (response.data.data.items[0] as any).title?.name,
+                    //         questionSetsCount: response.data.data.items[0].question_sets?.length
+                    //     } : null
+                    // });
+                    // } else {
+                    //     console.log('📄 List response:', response);
+                    // }
                     return response;
                 }
             } catch (error) {
@@ -716,7 +716,7 @@ const adminAPI = {
             limit?: number;
             highlight?: boolean;
         }) {
-            const response = await api.GET('/api/v1/exampaper/search', {
+            const response = await api.GET('/exampaper/search', {
                 params: {
                     query: params
                 }
@@ -727,7 +727,7 @@ const adminAPI = {
         async getById(examPaperId: string) {
             try {
                 console.log('📄 ExamPapers.getById called with ID:', examPaperId);
-                const response = await api.GET('/api/v1/exampaper/get_by_id/{exampaper_id}', {
+                const response = await api.GET('/exampaper/get_by_id/{exampaper_id}', {
                     params: {
                         path: { exampaper_id: examPaperId }
                     }
@@ -741,7 +741,7 @@ const adminAPI = {
         },
 
         async getBySlug(examPaperSlug: string) {
-            const response = await api.GET('/api/v1/exampaper/get_by_slug/{exampaper_slug}', {
+            const response = await api.GET('/exampaper/get_by_slug/{exampaper_slug}', {
                 params: {
                     path: { exampaper_slug: examPaperSlug }
                 }
@@ -750,14 +750,14 @@ const adminAPI = {
         },
 
         async create(examPaperData: ExamPaperCreate) {
-            const response = await api.POST('/api/v1/exampaper', {
+            const response = await api.POST('/exampaper', {
                 body: examPaperData
             });
             return response;
         },
 
         async update(examPaperId: string, examPaperData: ExamPaperUpdate) {
-            const response = await api.PUT('/api/v1/exampaper/{exampaper_id}', {
+            const response = await api.PUT('/exampaper/{exampaper_id}', {
                 params: {
                     path: { exampaper_id: examPaperId }
                 },
@@ -767,7 +767,7 @@ const adminAPI = {
         },
 
         async delete(examPaperId: string) {
-            const response = await api.DELETE('/api/v1/exampaper/{exampaper_id}', {
+            const response = await api.DELETE('/exampaper/{exampaper_id}', {
                 params: {
                     path: { exampaper_id: examPaperId }
                 }
@@ -776,7 +776,7 @@ const adminAPI = {
         },
 
         async getOrderedByCreatedAt(params?: { page?: number; size?: number; order?: 'ascendent' | 'descendent' }) {
-            const response = await api.GET('/api/v1/exampaper/get_by_created_at', {
+            const response = await api.GET('/exampaper/get_by_created_at', {
                 params: {
                     query: params
                 }
@@ -785,7 +785,7 @@ const adminAPI = {
         },
 
         async getSearchSuggestions(q: string, limit?: number) {
-            const response = await api.GET('/api/v1/exampaper/search/suggestions', {
+            const response = await api.GET('/exampaper/search/suggestions', {
                 params: {
                     query: { q, limit }
                 }
@@ -795,7 +795,7 @@ const adminAPI = {
 
         // Question Set management for exam papers
         async addQuestionSet(examPaperId: string, questionSetId: string) {
-            const response = await api.POST('/api/v1/exampaper/{exampaper_id}/question-sets/{question_set_id}', {
+            const response = await api.POST('/exampaper/{exampaper_id}/question-sets/{question_set_id}', {
                 params: {
                     path: {
                         exampaper_id: examPaperId,
@@ -807,7 +807,7 @@ const adminAPI = {
         },
 
         async removeQuestionSet(examPaperId: string, questionSetId: string) {
-            const response = await api.DELETE('/api/v1/exampaper/{exampaper_id}/question-sets/{question_set_id}', {
+            const response = await api.DELETE('/exampaper/{exampaper_id}/question-sets/{question_set_id}', {
                 params: {
                     path: {
                         exampaper_id: examPaperId,
@@ -835,7 +835,7 @@ const adminAPI = {
             skip?: number;
             limit?: number;
         }) {
-            const response = await api.GET('/api/v1/questions', {
+            const response = await api.GET('/questions', {
                 params: {
                     query: params
                 }
@@ -869,7 +869,7 @@ const adminAPI = {
             /** Enable search term highlighting */
             highlight?: boolean;
         }) {
-            const response = await api.GET('/api/v1/questions/search', {
+            const response = await api.GET('/questions/search', {
                 params: {
                     query: params
                 }
@@ -878,7 +878,7 @@ const adminAPI = {
         },
 
         async getById(questionId: string) {
-            const response = await api.GET('/api/v1/questions/{question_id}', {
+            const response = await api.GET('/questions/{question_id}', {
                 params: {
                     path: { question_id: questionId }
                 }
@@ -887,14 +887,14 @@ const adminAPI = {
         },
 
         async createMain(questionData: components['schemas']['MainQuestionCreate']) {
-            const response = await api.POST('/api/v1/questions/main', {
+            const response = await api.POST('/questions/main', {
                 body: questionData
             });
             return response;
         },
 
         async update(questionId: string, questionData: any) {
-            const response = await api.PUT('/api/v1/questions/{question_id}', {
+            const response = await api.PUT('/questions/{question_id}', {
                 params: {
                     path: { question_id: questionId }
                 },
@@ -904,7 +904,7 @@ const adminAPI = {
         },
 
         async delete(questionId: string) {
-            const response = await api.DELETE('/api/v1/questions/{question_id}', {
+            const response = await api.DELETE('/questions/{question_id}', {
                 params: {
                     path: { question_id: questionId }
                 }
@@ -913,14 +913,14 @@ const adminAPI = {
         },
 
         async createSubQuestion(subQuestionData: components['schemas']['SubQuestionCreate']) {
-            const response = await api.POST('/api/v1/questions/sub', {
+            const response = await api.POST('/questions/sub', {
                 body: subQuestionData
             });
             return response;
         },
 
         async getSubQuestions(questionId: string) {
-            const response = await api.GET('/api/v1/questions/{question_id}/sub-questions', {
+            const response = await api.GET('/questions/{question_id}/sub-questions', {
                 params: {
                     path: { question_id: questionId }
                 }
@@ -929,7 +929,7 @@ const adminAPI = {
         },
 
         async createBulkSubQuestions(questionId: string, subQuestionsData: components['schemas']['SubQuestionCreate'][]) {
-            const response = await api.POST('/api/v1/questions/{question_id}/sub-questions/bulk', {
+            const response = await api.POST('/questions/{question_id}/sub-questions/bulk', {
                 params: {
                     path: { question_id: questionId }
                 },
@@ -939,12 +939,12 @@ const adminAPI = {
         },
 
         async getStats() {
-            const response = await api.GET('/api/v1/questions/stats');
+            const response = await api.GET('/questions/stats');
             return response;
         },
 
         async getSearchSuggestions(q: string, limit?: number, question_type?: 'main' | 'sub' | 'all') {
-            const response = await api.GET('/api/v1/questions/search/suggestions', {
+            const response = await api.GET('/questions/search/suggestions', {
                 params: {
                     query: { q, limit, question_type }
                 }
@@ -962,7 +962,7 @@ const adminAPI = {
             skip?: number;
             limit?: number;
         }) {
-            const response = await api.GET('/api/v1/question-set', {
+            const response = await api.GET('/question-set', {
                 params: {
                     query: params
                 }
@@ -971,7 +971,7 @@ const adminAPI = {
         },
 
         async getById(questionSetId: string) {
-            const response = await api.GET('/api/v1/question-set/get_by_id/{question_set_id}', {
+            const response = await api.GET('/question-set/get_by_id/{question_set_id}', {
                 params: {
                     path: { question_set_id: questionSetId }
                 }
@@ -980,14 +980,14 @@ const adminAPI = {
         },
 
         async create(questionSetData: components['schemas']['QuestionSetCreate']) {
-            const response = await api.POST('/api/v1/question-set', {
+            const response = await api.POST('/question-set', {
                 body: questionSetData
             });
             return response;
         },
 
         async update(questionSetId: string, questionSetData: any) {
-            const response = await api.PUT('/api/v1/question-set/{question_set_id}', {
+            const response = await api.PUT('/question-set/{question_set_id}', {
                 params: {
                     path: { question_set_id: questionSetId }
                 },
@@ -997,7 +997,7 @@ const adminAPI = {
         },
 
         async delete(questionSetId: string) {
-            const response = await api.DELETE('/api/v1/question-set/{question_set_id}', {
+            const response = await api.DELETE('/question-set/{question_set_id}', {
                 params: {
                     path: { question_set_id: questionSetId }
                 }

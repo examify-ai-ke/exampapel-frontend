@@ -67,7 +67,7 @@ const navItems: NavItem[] = [
     icon: BookOpen,
     children: [
       {
-        title: 'Browse Papers',
+        title: 'Browse Exam Papers',
         href: '/dashboard/exam-papers',
         icon: Search,
       },
@@ -77,30 +77,30 @@ const navItems: NavItem[] = [
         icon: FileText,
       },
       {
-        title: 'Recent Papers',
+        title: 'Recent Exam Papers',
         href: '/dashboard/exam-papers/recent',
         icon: TrendingUp,
       },
       {
-        title: 'Manage Papers',
+        title: 'Manage Exam Papers',
         href: '/dashboard/exam-papers/manage',
         icon: FolderOpen,
         roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
       },
       {
-        title: 'Create Paper',
+        title: 'Create Exam Paper',
         href: '/dashboard/exam-papers/create',
         icon: Plus,
         roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
       },
       {
-        title: 'Draft Papers',
+        title: 'Draft Exam Papers',
         href: '/dashboard/exam-papers/drafts',
         icon: Edit,
         roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
       },
       {
-        title: 'Archived Papers',
+        title: 'Archived Exam Papers',
         href: '/dashboard/exam-papers/archived',
         icon: Archive,
         roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],

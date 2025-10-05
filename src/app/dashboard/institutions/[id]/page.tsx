@@ -471,7 +471,7 @@ export default function InstitutionDetailPage() {
                                 </Button>
 
                                 <Button variant="outline" className="w-full justify-start h-12" asChild>
-                                    <a href={`/dashboard/papers/manage?institution=${institution.id}`}>
+                                    <a href={`/dashboard/exam-papers/manage?institution=${institution.id}`}>
                                         <div className="flex items-center gap-3">
                                             <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
                                                 <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />
