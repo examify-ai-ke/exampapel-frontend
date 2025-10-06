@@ -4,7 +4,25 @@ import "./globals.css";
 import { Notifications } from "@/components/ui/notifications";
 import { APP_CONFIG } from "@/lib/constants";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+// GTSuper font - uncomment when you add the font file to public/fonts/
+import localFont from "next/font/local";
+const gtSuper = localFont({
+  src: [
+    {
+      path: "../../public/fonts/GTSuper-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+  ],
+  variable: "--font-gt-super",
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
+});
 
 export const metadata: Metadata = {
   title: APP_CONFIG.name,
@@ -37,6 +55,7 @@ export const viewport: Viewport = {
   ],
 };
 
+// <body className={`${inter.variable} font-sans`}>
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -44,7 +63,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+     
+      <body className={`${inter.variable} ${gtSuper.variable} font-sans`}> 
         {children}
         <Notifications />
       </body>

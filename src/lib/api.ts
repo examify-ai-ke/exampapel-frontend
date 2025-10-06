@@ -1,7 +1,8 @@
 import createClient from 'openapi-fetch';
 import type { paths } from '@/types/generated/api';
 
-const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://fastapi.localhost/api/v1';
+// Base URL should NOT include /api/v1 since OpenAPI schema paths already include it
+const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://fastapi.localhost';
 const API_BASE_URL = RAW_BASE_URL;
 const AUTO_REDIRECT_ON_401 = process.env.NEXT_PUBLIC_AUTH_AUTO_REDIRECT_ON_401 !== 'false'; // Default to true
 

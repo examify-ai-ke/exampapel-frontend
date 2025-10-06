@@ -33,22 +33,22 @@ const adminAPI = {
     // System Health & Statistics
     health: {
         async getBasic() {
-            return api.GET('/api/v1/health');
+            return api.GET('/health');
         },
 
         async getDetailed() {
-            return api.GET('/api/v1/health/detailed');
+            return api.GET('/health/detailed');
         },
 
         async getDatabase() {
-            return api.GET('/api/v1/health/database');
+            return api.GET('/health/database');
         },
     },
 
     // Statistics
     stats: {
         async getDetailed() {
-            return api.GET('/api/v1/report/detailed-statistics');
+            return api.GET('/report/detailed-statistics');
         },
     },
 
@@ -60,7 +60,7 @@ const adminAPI = {
             search?: string;
             role?: string;
         }) {
-            return api.GET('/api/v1/user/list', {
+            return api.GET('/user/list', {
                 params: {
                     query: params
                 }
@@ -68,7 +68,7 @@ const adminAPI = {
         },
 
         async getById(userId: string) {
-            return api.GET('/api/v1/user/{user_id}', {
+            return api.GET('/user/{user_id}', {
                 params: {
                     path: { user_id: userId }
                 }
@@ -76,13 +76,13 @@ const adminAPI = {
         },
 
         async create(userData: UserCreate) {
-            return api.POST('/api/v1/user', {
+            return api.POST('/user', {
                 body: userData
             });
         },
 
         async update(userId: string, userData: UserUpdate) {
-            return api.PUT('/api/v1/user/{user_id}', {
+            return api.PUT('/user/{user_id}', {
                 params: {
                     path: { user_id: userId }
                 },
@@ -91,7 +91,7 @@ const adminAPI = {
         },
 
         async delete(userId: string) {
-            return api.DELETE('/api/v1/user/{user_id}', {
+            return api.DELETE('/user/{user_id}', {
                 params: {
                     path: { user_id: userId }
                 }
@@ -99,7 +99,7 @@ const adminAPI = {
         },
 
         async activate(userId: string) {
-            return api.PUT('/api/v1/user/{user_id}/activate', {
+            return api.PUT('/user/{user_id}/activate', {
                 params: {
                     path: { user_id: userId }
                 }
@@ -107,7 +107,7 @@ const adminAPI = {
         },
 
         async deactivate(userId: string) {
-            return api.PUT('/api/v1/user/{user_id}/deactivate', {
+            return api.PUT('/user/{user_id}/deactivate', {
                 params: {
                     path: { user_id: userId }
                 }
@@ -133,7 +133,7 @@ const adminAPI = {
         },
 
         async getOrderedByCreatedAt(params?: { limit?: number; offset?: number }) {
-            return api.GET('/api/v1/user/order_by_created_at', {
+            return api.GET('/user/order_by_created_at', {
                 params: {
                     query: params
                 }
@@ -144,11 +144,11 @@ const adminAPI = {
     // Role Management
     roles: {
         async list() {
-            return api.GET('/api/v1/role');
+            return api.GET('/role');
         },
 
         async getById(roleId: string) {
-            return api.GET('/api/v1/role/{role_id}', {
+            return api.GET('/role/{role_id}', {
                 params: {
                     path: { role_id: roleId }
                 }
@@ -156,13 +156,13 @@ const adminAPI = {
         },
 
         async create(roleData: RoleCreate) {
-            return api.POST('/api/v1/role', {
+            return api.POST('/role', {
                 body: roleData
             });
         },
 
         async update(roleId: string, roleData: RoleUpdate) {
-            return api.PUT('/api/v1/role/{role_id}', {
+            return api.PUT('/role/{role_id}', {
                 params: {
                     path: { role_id: roleId }
                 },
@@ -171,7 +171,7 @@ const adminAPI = {
         },
 
         async delete(roleId: string) {
-            return api.DELETE('/api/v1/role/{role_id}', {
+            return api.DELETE('/role/{role_id}', {
                 params: {
                     path: { role_id: roleId }
                 }
@@ -182,7 +182,7 @@ const adminAPI = {
     // Institution Management
     institutions: {
         async list(params?: { limit?: number; skip?: number }) {
-            return api.GET('/api/v1/institution', {
+            return api.GET('/institution', {
                 params: {
                     query: params
                 }
@@ -190,7 +190,7 @@ const adminAPI = {
         },
 
         async getById(institutionId: string) {
-            return api.GET('/api/v1/institution/get_by_id/{institution_id}', {
+            return api.GET('/institution/get_by_id/{institution_id}', {
                 params: {
                     path: { institution_id: institutionId }
                 }
@@ -198,13 +198,13 @@ const adminAPI = {
         },
 
         async create(institutionData: components['schemas']['InstitutionCreate']) {
-            return api.POST('/api/v1/institution', {
+            return api.POST('/institution', {
                 body: institutionData
             });
         },
 
         async update(institutionId: string, institutionData: components['schemas']['InstitutionUpdate']) {
-            return api.PUT('/api/v1/institution/{institution_id}', {
+            return api.PUT('/institution/{institution_id}', {
                 params: {
                     path: { institution_id: institutionId }
                 },
@@ -213,7 +213,7 @@ const adminAPI = {
         },
 
         async delete(institutionId: string) {
-            return api.DELETE('/api/v1/institution/{institution_id}', {
+            return api.DELETE('/institution/{institution_id}', {
                 params: {
                     path: { institution_id: institutionId }
                 }
@@ -234,7 +234,7 @@ const adminAPI = {
             skip?: number;
             highlight?: boolean;
         }) {
-            return api.GET('/api/v1/institution/search/advanced', {
+            return api.GET('/institution/search/advanced', {
                 params: {
                     query: params
                 }
@@ -242,7 +242,7 @@ const adminAPI = {
         },
 
         async getOrderedByCreatedAt(params?: { page?: number; size?: number; order?: 'ascendent' | 'descendent' }) {
-            return api.GET('/api/v1/institution/get_by_created_at', {
+            return api.GET('/institution/get_by_created_at', {
                 params: {
                     query: params
                 }
@@ -255,7 +255,7 @@ const adminAPI = {
      */
     examTitles: {
         async list(params?: { skip?: number; limit?: number }) {
-            return api.GET('/api/v1/exam-title', {
+            return api.GET('/exam-title', {
                 params: {
                     query: params
                 }
@@ -268,7 +268,7 @@ const adminAPI = {
      */
     examDescriptions: {
         async list(params?: { skip?: number; limit?: number }) {
-            return api.GET('/api/v1/exam-description', {
+            return api.GET('/exam-description', {
                 params: {
                     query: params
                 }
@@ -291,7 +291,7 @@ const adminAPI = {
             limit?: number;
             course_id?: string;
         }) {
-            return api.GET('/api/v1/module', {
+            return api.GET('/module', {
                 params: {
                     query: params
                 }
@@ -307,7 +307,7 @@ const adminAPI = {
             skip?: number;
             limit?: number;
         }) {
-            return api.GET('/api/v1/module/search', {
+            return api.GET('/module/search', {
                 params: {
                     query: params
                 }
@@ -315,7 +315,7 @@ const adminAPI = {
         },
 
         async getById(moduleId: string) {
-            return api.GET('/api/v1/module/get_by_id/{module_id}', {
+            return api.GET('/module/get_by_id/{module_id}', {
                 params: {
                     path: { module_id: moduleId }
                 }
@@ -323,7 +323,7 @@ const adminAPI = {
         },
 
         async getBySlug(moduleSlug: string) {
-            return api.GET('/api/v1/module/get_by_slug/{module_slug}', {
+            return api.GET('/module/get_by_slug/{module_slug}', {
                 params: {
                     path: { module_slug: moduleSlug }
                 }
@@ -331,13 +331,13 @@ const adminAPI = {
         },
 
         async create(moduleData: components['schemas']['ModuleCreate']) {
-            return api.POST('/api/v1/module', {
+            return api.POST('/module', {
                 body: moduleData
             });
         },
 
         async update(moduleId: string, moduleData: components['schemas']['ModuleUpdate']) {
-            return api.PUT('/api/v1/module/{module_id}', {
+            return api.PUT('/module/{module_id}', {
                 params: {
                     path: { module_id: moduleId }
                 },
@@ -346,7 +346,7 @@ const adminAPI = {
         },
 
         async delete(moduleId: string) {
-            return api.DELETE('/api/v1/module/{module_id}', {
+            return api.DELETE('/module/{module_id}', {
                 params: {
                     path: { module_id: moduleId }
                 }
@@ -354,17 +354,19 @@ const adminAPI = {
         },
 
         async uploadImage(moduleId: string, imageFile: File) {
-            // Note: Module image upload endpoint not available in API
-            // This is a placeholder for when the endpoint is implemented
-            console.warn('Module image upload endpoint not yet implemented in API');
-            return Promise.resolve({ 
-                data: { success: false, message: 'Endpoint not implemented' },
-                error: undefined 
+            const formData = new FormData();
+            formData.append('module_image', imageFile);
+
+            return api.POST('/module/{module_id}/image', {
+                params: {
+                    path: { module_id: moduleId }
+                },
+                body: formData as any
             });
         },
 
         async getOrderedByCreatedAt(params?: { page?: number; size?: number; order?: 'ascendent' | 'descendent' }) {
-            return api.GET('/api/v1/module/get_by_created_at', {
+            return api.GET('/module/get_by_created_at', {
                 params: {
                     query: params
                 }
@@ -380,12 +382,12 @@ const adminAPI = {
                 let totalCourses = 0;
                 let totalExamPapers = 0;
 
-                if (modulesResponse.data && typeof modulesResponse.data === 'object' && 'data' in modulesResponse.data) {
-                    const data = modulesResponse.data.data as any;
-                    totalModules = data?.total || 0;
+                if (modulesResponse.data?.data) {
+                    const data = modulesResponse.data.data;
+                    totalModules = data.total || 0;
 
                     // Sum up courses_count and exam_papers_count from all modules
-                    if (data?.items && Array.isArray(data.items)) {
+                    if (data.items && Array.isArray(data.items)) {
                         totalCourses = data.items.reduce((sum: number, mod: any) => sum + (mod.courses_count || 0), 0);
                         totalExamPapers = data.items.reduce((sum: number, mod: any) => sum + (mod.exam_papers_count || 0), 0);
                     }
@@ -421,7 +423,7 @@ const adminAPI = {
      */
     instructions: {
         async list(params?: { skip?: number; limit?: number }) {
-            return api.GET('/api/v1/instruction', {
+            return api.GET('/instruction', {
                 params: {
                     query: params
                 }
@@ -432,17 +434,17 @@ const adminAPI = {
     // Groups & Teams
     groups: {
         async list() {
-            return api.GET('/api/v1/group');
+            return api.GET('/group');
         },
 
         async create(groupData: components['schemas']['IGroupCreate']) {
-            return api.POST('/api/v1/group', {
+            return api.POST('/group', {
                 body: groupData
             });
         },
 
         async addUser(userId: string, groupId: string) {
-            return api.POST('/api/v1/group/add_user/{user_id}/{group_id}', {
+            return api.POST('/group/add_user/{user_id}/{group_id}', {
                 params: {
                     path: { user_id: userId, group_id: groupId }
                 }
@@ -450,7 +452,7 @@ const adminAPI = {
         },
 
         async removeUser(userId: string, groupId: string) {
-            return api.DELETE('/api/v1/group/remove_user/{user_id}/{group_id}', {
+            return api.DELETE('/group/remove_user/{user_id}/{group_id}', {
                 params: {
                     path: { user_id: userId, group_id: groupId }
                 }
@@ -460,11 +462,11 @@ const adminAPI = {
 
     teams: {
         async list() {
-            return api.GET('/api/v1/team');
+            return api.GET('/team');
         },
 
         async create(teamData: components['schemas']['ITeamCreate']) {
-            return api.POST('/api/v1/team', {
+            return api.POST('/team', {
                 body: teamData
             });
         },
@@ -480,7 +482,7 @@ const adminAPI = {
             search?: string;
             institution_id?: string;
         }) {
-            return api.GET('/api/v1/faculty', {
+            return api.GET('/faculty', {
                 params: {
                     query: params
                 }
@@ -495,7 +497,7 @@ const adminAPI = {
             skip?: number;
             limit?: number;
         }) {
-            return api.GET('/api/v1/faculty/search', {
+            return api.GET('/faculty/search', {
                 params: {
                     query: params
                 }
@@ -503,7 +505,7 @@ const adminAPI = {
         },
 
         async getById(facultyId: string) {
-            return api.GET('/api/v1/faculty/get_by_id/{faculty_id}', {
+            return api.GET('/faculty/get_by_id/{faculty_id}', {
                 params: {
                     path: { faculty_id: facultyId }
                 }
@@ -511,7 +513,7 @@ const adminAPI = {
         },
 
         async getBySlug(facultySlug: string) {
-            return api.GET('/api/v1/faculty/get_by_slug/{faculty_slug}', {
+            return api.GET('/faculty/get_by_slug/{faculty_slug}', {
                 params: {
                     path: { faculty_slug: facultySlug }
                 }
@@ -519,13 +521,13 @@ const adminAPI = {
         },
 
         async create(facultyData: components['schemas']['FacultyCreate']) {
-            return api.POST('/api/v1/faculty', {
+            return api.POST('/faculty', {
                 body: facultyData
             });
         },
 
         async update(facultyId: string, facultyData: components['schemas']['FacultyUpdate']) {
-            return api.PUT('/api/v1/faculty/{faculty_id}', {
+            return api.PUT('/faculty/{faculty_id}', {
                 params: {
                     path: { faculty_id: facultyId }
                 },
@@ -534,7 +536,7 @@ const adminAPI = {
         },
 
         async delete(facultyId: string) {
-            return api.DELETE('/api/v1/faculty/{faculty_id}', {
+            return api.DELETE('/faculty/{faculty_id}', {
                 params: {
                     path: { faculty_id: facultyId }
                 }
@@ -545,7 +547,7 @@ const adminAPI = {
             const formData = new FormData();
             formData.append('faculty_image', imageFile);
 
-            return api.POST('/api/v1/faculty/{faculty_id}/image', {
+            return api.POST('/faculty/{faculty_id}/image', {
                 params: {
                     path: { faculty_id: facultyId }
                 },
@@ -555,7 +557,7 @@ const adminAPI = {
         },
 
         async getOrderedByCreatedAt(params?: { page?: number; size?: number; order?: 'ascendent' | 'descendent' }) {
-            return api.GET('/api/v1/faculty/get_by_created_at', {
+            return api.GET('/faculty/get_by_created_at', {
                 params: {
                     query: params
                 }
@@ -568,18 +570,15 @@ const adminAPI = {
 
                 // Get all counts from paginated responses (much more efficient)
                 const [facultiesResponse, departmentsResponse, institutionsResponse] = await Promise.all([
-                    api.GET('/api/v1/faculty', { params: { query: { limit: 1 } } }), // Only need count, not data
-                    api.GET('/api/v1/department', { params: { query: { limit: 1 } } }),
-                    api.GET('/api/v1/institution', { params: { query: { limit: 1 } } })
+                    api.GET('/faculty', { params: { query: { limit: 1 } } }), // Only need count, not data
+                    api.GET('/department', { params: { query: { limit: 1 } } }),
+                    api.GET('/institution', { params: { query: { limit: 1 } } })
                 ]);
 
-                // Extract totals from paginated responses with proper type checking
-                const totalFaculties = (facultiesResponse.data && typeof facultiesResponse.data === 'object' && 'data' in facultiesResponse.data) 
-                    ? ((facultiesResponse.data.data as any)?.total || 0) : 0;
-                const totalDepartments = (departmentsResponse.data && typeof departmentsResponse.data === 'object' && 'data' in departmentsResponse.data)
-                    ? ((departmentsResponse.data.data as any)?.total || 0) : 0;
-                const totalInstitutions = (institutionsResponse.data && typeof institutionsResponse.data === 'object' && 'data' in institutionsResponse.data)
-                    ? ((institutionsResponse.data.data as any)?.total || 0) : 0;
+                // Extract totals from paginated responses
+                const totalFaculties = facultiesResponse.data?.data?.total || 0;
+                const totalDepartments = departmentsResponse.data?.data?.total || 0;
+                const totalInstitutions = institutionsResponse.data?.data?.total || 0;
                 const averageDepartments = totalFaculties > 0 ?
                     Number((totalDepartments / totalFaculties).toFixed(1)) : 0;
 
@@ -618,15 +617,12 @@ const adminAPI = {
 
                 // Only get departments and institutions count - faculty count comes from main search
                 const [departmentsResponse, institutionsResponse] = await Promise.all([
-                    api.GET('/api/v1/department', { params: { query: { limit: 1 } } }),
-                    api.GET('/api/v1/institution', { params: { query: { limit: 1 } } })
+                    api.GET('/department', { params: { query: { limit: 1 } } }),
+                    api.GET('/institution', { params: { query: { limit: 1 } } })
                 ]);
 
-                // Extract totals with proper type checking
-                const totalDepartments = (departmentsResponse.data && typeof departmentsResponse.data === 'object' && 'data' in departmentsResponse.data)
-                    ? ((departmentsResponse.data.data as any)?.total || 0) : 0;
-                const totalInstitutions = (institutionsResponse.data && typeof institutionsResponse.data === 'object' && 'data' in institutionsResponse.data)
-                    ? ((institutionsResponse.data.data as any)?.total || 0) : 0;
+                const totalDepartments = departmentsResponse.data?.data?.total || 0;
+                const totalInstitutions = institutionsResponse.data?.data?.total || 0;
 
                 console.log('Partial statistics loaded:', {
                     totalDepartments,
@@ -651,7 +647,7 @@ const adminAPI = {
         },
 
         async removeDepartment(facultyId: string, departmentId: string) {
-            return api.DELETE('/api/v1/faculty/{faculty_id}/departments/{department_id}', {
+            return api.DELETE('/faculty/{faculty_id}/departments/{department_id}', {
                 params: {
                     path: {
                         faculty_id: facultyId,
@@ -672,7 +668,7 @@ const adminAPI = {
             search?: string;
             faculty_id?: string;
         }) {
-            return api.GET('/api/v1/department', {
+            return api.GET('/department', {
                 params: {
                     query: params
                 }
@@ -688,7 +684,7 @@ const adminAPI = {
             skip?: number;
             limit?: number;
         }) {
-            return api.GET('/api/v1/department/search', {
+            return api.GET('/department/search', {
                 params: {
                     query: params
                 }
@@ -696,7 +692,7 @@ const adminAPI = {
         },
 
         async getById(departmentId: string) {
-            return api.GET('/api/v1/department/get_by_id/{department_id}', {
+            return api.GET('/department/get_by_id/{department_id}', {
                 params: {
                     path: { department_id: departmentId }
                 }
@@ -704,7 +700,7 @@ const adminAPI = {
         },
 
         async getBySlug(departmentSlug: string) {
-            return api.GET('/api/v1/department/get_by_slug/{department_slug}', {
+            return api.GET('/department/get_by_slug/{department_slug}', {
                 params: {
                     path: { department_slug: departmentSlug }
                 }
@@ -712,13 +708,13 @@ const adminAPI = {
         },
 
         async create(departmentData: components['schemas']['DepartmentCreate']) {
-            return api.POST('/api/v1/department', {
+            return api.POST('/department', {
                 body: departmentData
             });
         },
 
         async update(departmentId: string, departmentData: components['schemas']['DepartmentUpdate']) {
-            return api.PUT('/api/v1/department/{department_id}', {
+            return api.PUT('/department/{department_id}', {
                 params: {
                     path: { department_id: departmentId }
                 },
@@ -727,7 +723,7 @@ const adminAPI = {
         },
 
         async delete(departmentId: string) {
-            return api.DELETE('/api/v1/department/{department_id}', {
+            return api.DELETE('/department/{department_id}', {
                 params: {
                     path: { department_id: departmentId }
                 }
@@ -738,7 +734,7 @@ const adminAPI = {
             const formData = new FormData();
             formData.append('department_image', imageFile);
 
-            return api.POST('/api/v1/department/{department_id}/image', {
+            return api.POST('/department/{department_id}/image', {
                 params: {
                     path: { department_id: departmentId }
                 },
@@ -747,7 +743,7 @@ const adminAPI = {
         },
 
         async getOrderedByCreatedAt(params?: { page?: number; size?: number; order?: 'ascendent' | 'descendent' }) {
-            return api.GET('/api/v1/department/get_by_created_at', {
+            return api.GET('/department/get_by_created_at', {
                 params: {
                     query: params
                 }
@@ -760,18 +756,15 @@ const adminAPI = {
 
                 // Get all counts from paginated responses (much more efficient)
                 const [departmentsResponse, programmesResponse, facultiesResponse] = await Promise.all([
-                    api.GET('/api/v1/department', { params: { query: { limit: 1 } } }), // Only need count, not data
-                    api.GET('/api/v1/programme', { params: { query: { limit: 1 } } }),
-                    api.GET('/api/v1/faculty', { params: { query: { limit: 1 } } })
+                    api.GET('/department', { params: { query: { limit: 1 } } }), // Only need count, not data
+                    api.GET('/programme', { params: { query: { limit: 1 } } }),
+                    api.GET('/faculty', { params: { query: { limit: 1 } } })
                 ]);
 
-                // Extract totals from paginated responses with proper type checking
-                const totalDepartments = (departmentsResponse.data && typeof departmentsResponse.data === 'object' && 'data' in departmentsResponse.data)
-                    ? ((departmentsResponse.data.data as any)?.total || 0) : 0;
-                const totalProgrammes = (programmesResponse.data && typeof programmesResponse.data === 'object' && 'data' in programmesResponse.data)
-                    ? ((programmesResponse.data.data as any)?.total || 0) : 0;
-                const totalFaculties = (facultiesResponse.data && typeof facultiesResponse.data === 'object' && 'data' in facultiesResponse.data)
-                    ? ((facultiesResponse.data.data as any)?.total || 0) : 0;
+                // Extract totals from paginated responses
+                const totalDepartments = departmentsResponse.data?.data?.total || 0;
+                const totalProgrammes = programmesResponse.data?.data?.total || 0;
+                const totalFaculties = facultiesResponse.data?.data?.total || 0;
                 const averageProgrammes = totalDepartments > 0 ?
                     Number((totalProgrammes / totalDepartments).toFixed(1)) : 0;
 
@@ -805,7 +798,7 @@ const adminAPI = {
         },
 
         async addProgramme(departmentId: string, programmeId: string) {
-            return api.POST('/api/v1/department/{department_id}/programmes/{programme_id}', {
+            return api.POST('/department/{department_id}/programmes/{programme_id}', {
                 params: {
                     path: {
                         department_id: departmentId,
@@ -816,7 +809,7 @@ const adminAPI = {
         },
 
         async removeProgramme(departmentId: string, programmeId: string) {
-            return api.DELETE('/api/v1/department/{department_id}/programmes/{programme_id}', {
+            return api.DELETE('/department/{department_id}/programmes/{programme_id}', {
                 params: {
                     path: {
                         department_id: departmentId,
@@ -842,7 +835,7 @@ const adminAPI = {
             limit?: number;
             department_id?: string;
         }) {
-            return api.GET('/api/v1/programme', {
+            return api.GET('/programme', {
                 params: {
                     query: params
                 }
@@ -857,7 +850,7 @@ const adminAPI = {
             skip?: number;
             limit?: number;
         }) {
-            return api.GET('/api/v1/programme/search', {
+            return api.GET('/programme/search', {
                 params: {
                     query: params
                 }
@@ -865,7 +858,7 @@ const adminAPI = {
         },
 
         async getById(programmeId: string) {
-            return api.GET('/api/v1/programme/get_by_id/{programme_id}', {
+            return api.GET('/programme/get_by_id/{programme_id}', {
                 params: {
                     path: { programme_id: programmeId }
                 }
@@ -873,7 +866,7 @@ const adminAPI = {
         },
 
         async getBySlug(programmeSlug: string) {
-            return api.GET('/api/v1/programme/get_by_slug/{programme_slug}', {
+            return api.GET('/programme/get_by_slug/{programme_slug}', {
                 params: {
                     path: { programme_slug: programmeSlug }
                 }
@@ -881,13 +874,13 @@ const adminAPI = {
         },
 
         async create(programmeData: components['schemas']['ProgrammeCreate']) {
-            return api.POST('/api/v1/programme', {
+            return api.POST('/programme', {
                 body: programmeData
             });
         },
 
         async update(programmeId: string, programmeData: components['schemas']['ProgrammeUpdate']) {
-            return api.PUT('/api/v1/programme/{programme_id}', {
+            return api.PUT('/programme/{programme_id}', {
                 params: {
                     path: { programme_id: programmeId }
                 },
@@ -896,7 +889,7 @@ const adminAPI = {
         },
 
         async delete(programmeId: string) {
-            return api.DELETE('/api/v1/programme/{programme_id}', {
+            return api.DELETE('/programme/{programme_id}', {
                 params: {
                     path: { programme_id: programmeId }
                 }
@@ -907,7 +900,7 @@ const adminAPI = {
             const formData = new FormData();
             formData.append('programme_image', imageFile);
 
-            return api.POST('/api/v1/programme/{programme_id}/image', {
+            return api.POST('/programme/{programme_id}/image', {
                 params: {
                     path: { programme_id: programmeId }
                 },
@@ -916,7 +909,7 @@ const adminAPI = {
         },
 
         async getOrderedByCreatedAt(params?: { page?: number; size?: number; order?: 'ascendent' | 'descendent' }) {
-            return api.GET('/api/v1/programme/get_by_created_at', {
+            return api.GET('/programme/get_by_created_at', {
                 params: {
                     query: params
                 }
@@ -932,12 +925,12 @@ const adminAPI = {
                 let totalCourses = 0;
                 let totalDepartments = 0;
 
-                if (programmesResponse.data && typeof programmesResponse.data === 'object' && 'data' in programmesResponse.data) {
-                    const data = programmesResponse.data.data as any;
-                    totalProgrammes = data?.total || 0;
+                if (programmesResponse.data?.data) {
+                    const data = programmesResponse.data.data;
+                    totalProgrammes = data.total || 0;
 
                     // Sum up courses_count and departments_count from all programmes
-                    if (data?.items && Array.isArray(data.items)) {
+                    if (data.items && Array.isArray(data.items)) {
                         totalCourses = data.items.reduce((sum: number, prog: any) => sum + (prog.courses_count || 0), 0);
                         totalDepartments = data.items.reduce((sum: number, prog: any) => sum + (prog.departments_count || 0), 0);
                     }
@@ -978,7 +971,7 @@ const adminAPI = {
             search?: string;
             programme_id?: string;
         }) {
-            return api.GET('/api/v1/course', {
+            return api.GET('/course', {
                 params: {
                     query: params
                 }
@@ -996,7 +989,7 @@ const adminAPI = {
             skip?: number;
             limit?: number;
         }) {
-            return api.GET('/api/v1/course/search', {
+            return api.GET('/course/search', {
                 params: {
                     query: params
                 }
@@ -1004,7 +997,7 @@ const adminAPI = {
         },
 
         async getById(courseId: string) {
-            return api.GET('/api/v1/course/get_by_id/{course_id}', {
+            return api.GET('/course/get_by_id/{course_id}', {
                 params: {
                     path: { course_id: courseId }
                 }
@@ -1012,7 +1005,7 @@ const adminAPI = {
         },
 
         async getBySlug(courseSlug: string) {
-            return api.GET('/api/v1/course/get_by_slug/{course_slug}', {
+            return api.GET('/course/get_by_slug/{course_slug}', {
                 params: {
                     path: { course_slug: courseSlug }
                 }
@@ -1020,13 +1013,13 @@ const adminAPI = {
         },
 
         async create(courseData: components['schemas']['CourseCreate']) {
-            return api.POST('/api/v1/course', {
+            return api.POST('/course', {
                 body: courseData
             });
         },
 
         async update(courseId: string, courseData: components['schemas']['CourseUpdate']) {
-            return api.PUT('/api/v1/course/{course_id}', {
+            return api.PUT('/course/{course_id}', {
                 params: {
                     path: { course_id: courseId }
                 },
@@ -1035,7 +1028,7 @@ const adminAPI = {
         },
 
         async delete(courseId: string) {
-            return api.DELETE('/api/v1/course/{course_id}', {
+            return api.DELETE('/course/{course_id}', {
                 params: {
                     path: { course_id: courseId }
                 }
@@ -1046,7 +1039,7 @@ const adminAPI = {
             const formData = new FormData();
             formData.append('course_image', imageFile);
 
-            return api.POST('/api/v1/course/{course_id}/image', {
+            return api.POST('/course/{course_id}/image', {
                 params: {
                     path: { course_id: courseId }
                 },
@@ -1055,7 +1048,7 @@ const adminAPI = {
         },
 
         async getOrderedByCreatedAt(params?: { page?: number; size?: number; order?: 'ascendent' | 'descendent' }) {
-            return api.GET('/api/v1/course/get_by_created_at', {
+            return api.GET('/course/get_by_created_at', {
                 params: {
                     query: params
                 }
@@ -1063,7 +1056,7 @@ const adminAPI = {
         },
 
         async addModule(courseId: string, moduleId: string) {
-            return api.POST('/api/v1/course/{course_id}/modules/{module_id}', {
+            return api.POST('/course/{course_id}/modules/{module_id}', {
                 params: {
                     path: {
                         course_id: courseId,
@@ -1074,7 +1067,7 @@ const adminAPI = {
         },
 
         async removeModule(courseId: string, moduleId: string) {
-            return api.DELETE('/api/v1/course/{course_id}/modules/{module_id}', {
+            return api.DELETE('/course/{course_id}/modules/{module_id}', {
                 params: {
                     path: {
                         course_id: courseId,
@@ -1182,25 +1175,22 @@ const adminAPI = {
                     }
 
                     console.log('🔍 Using search endpoint with params:', searchParams);
-                    const response = await api.GET('/api/v1/exampaper/search', {
+                    const response = await api.GET('/exampaper/search', {
                         params: {
                             query: searchParams
                         }
                     });
                     // Log only the structure, not the full data to avoid console spam
-                    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
-                        const responseData = response.data as any;
-                        if (responseData.data?.items) {
-                            console.log('🔍 Search response structure:', {
-                                message: responseData.message,
-                                totalItems: responseData.data.total,
-                                itemsCount: responseData.data.items.length,
-                                searchQuery: searchParams.q || 'No search term (filter only)',
-                                institutionFilter: searchParams.institution_id || 'None',
-                                courseFilter: searchParams.course_id || 'None',
-                                yearFilter: searchParams.year || 'None'
-                            });
-                        }
+                    if (response.data?.data?.items) {
+                        console.log('🔍 Search response structure:', {
+                            message: response.data.message,
+                            totalItems: response.data.data.total,
+                            itemsCount: response.data.data.items.length,
+                            searchQuery: searchParams.q || 'No search term (filter only)',
+                            institutionFilter: searchParams.institution_id || 'None',
+                            courseFilter: searchParams.course_id || 'None',
+                            yearFilter: searchParams.year || 'None'
+                        });
                     } else {
                         console.log('🔍 Search response:', response);
                     }
@@ -1213,7 +1203,7 @@ const adminAPI = {
                     };
 
                     console.log('📄 Using list endpoint with params:', listParams);
-                    const response = await api.GET('/api/v1/exampaper', {
+                    const response = await api.GET('/exampaper', {
                         params: {
                             query: listParams
                         }
@@ -1258,7 +1248,7 @@ const adminAPI = {
             limit?: number;
             highlight?: boolean;
         }) {
-            const response = await api.GET('/api/v1/exampaper/search', {
+            const response = await api.GET('/exampaper/search', {
                 params: {
                     query: params
                 }
@@ -1269,7 +1259,7 @@ const adminAPI = {
         async getById(examPaperId: string) {
             try {
                 console.log('📄 ExamPapers.getById called with ID:', examPaperId);
-                const response = await api.GET('/api/v1/exampaper/get_by_id/{exampaper_id}', {
+                const response = await api.GET('/exampaper/get_by_id/{exampaper_id}', {
                     params: {
                         path: { exampaper_id: examPaperId }
                     }
@@ -1283,7 +1273,7 @@ const adminAPI = {
         },
 
         async getBySlug(examPaperSlug: string) {
-            const response = await api.GET('/api/v1/exampaper/get_by_slug/{exampaper_slug}', {
+            const response = await api.GET('/exampaper/get_by_slug/{exampaper_slug}', {
                 params: {
                     path: { exampaper_slug: examPaperSlug }
                 }
@@ -1292,14 +1282,14 @@ const adminAPI = {
         },
 
         async create(examPaperData: ExamPaperCreate) {
-            const response = await api.POST('/api/v1/exampaper', {
+            const response = await api.POST('/exampaper', {
                 body: examPaperData
             });
             return response;
         },
 
         async update(examPaperId: string, examPaperData: ExamPaperUpdate) {
-            const response = await api.PUT('/api/v1/exampaper/{exampaper_id}', {
+            const response = await api.PUT('/exampaper/{exampaper_id}', {
                 params: {
                     path: { exampaper_id: examPaperId }
                 },
@@ -1309,7 +1299,7 @@ const adminAPI = {
         },
 
         async delete(examPaperId: string) {
-            const response = await api.DELETE('/api/v1/exampaper/{exampaper_id}', {
+            const response = await api.DELETE('/exampaper/{exampaper_id}', {
                 params: {
                     path: { exampaper_id: examPaperId }
                 }
@@ -1318,7 +1308,7 @@ const adminAPI = {
         },
 
         async getOrderedByCreatedAt(params?: { skip?: number; limit?: number; order?: 'ascendent' | 'descendent' }) {
-            const response = await api.GET('/api/v1/exampaper/get_by_created_at', {
+            const response = await api.GET('/exampaper/get_by_created_at', {
                 params: {
                     query: params
                 }
@@ -1327,7 +1317,7 @@ const adminAPI = {
         },
 
         async getSearchSuggestions(q: string, limit?: number) {
-            const response = await api.GET('/api/v1/exampaper/search/suggestions', {
+            const response = await api.GET('/exampaper/search/suggestions', {
                 params: {
                     query: { q, limit }
                 }
@@ -1337,7 +1327,7 @@ const adminAPI = {
 
         // Question Set management for exam papers
         async addQuestionSet(examPaperId: string, questionSetId: string) {
-            const response = await api.POST('/api/v1/exampaper/{exampaper_id}/question-sets/{question_set_id}', {
+            const response = await api.POST('/exampaper/{exampaper_id}/question-sets/{question_set_id}', {
                 params: {
                     path: {
                         exampaper_id: examPaperId,
@@ -1349,7 +1339,7 @@ const adminAPI = {
         },
 
         async removeQuestionSet(examPaperId: string, questionSetId: string) {
-            const response = await api.DELETE('/api/v1/exampaper/{exampaper_id}/question-sets/{question_set_id}', {
+            const response = await api.DELETE('/exampaper/{exampaper_id}/question-sets/{question_set_id}', {
                 params: {
                     path: {
                         exampaper_id: examPaperId,
@@ -1379,7 +1369,7 @@ const adminAPI = {
             skip?: number;
             limit?: number;
         }) {
-            const response = await api.GET('/api/v1/questions', {
+            const response = await api.GET('/questions', {
                 params: {
                     query: params
                 }
@@ -1423,7 +1413,7 @@ const adminAPI = {
             /** Enable search term highlighting */
             highlight?: boolean;
         }) {
-            const response = await api.GET('/api/v1/questions/search', {
+            const response = await api.GET('/questions/search', {
                 params: {
                     query: params
                 }
@@ -1432,7 +1422,7 @@ const adminAPI = {
         },
 
         async getById(questionId: string) {
-            const response = await api.GET('/api/v1/questions/{question_id}', {
+            const response = await api.GET('/questions/{question_id}', {
                 params: {
                     path: { question_id: questionId }
                 }
@@ -1441,14 +1431,14 @@ const adminAPI = {
         },
 
         async createMain(questionData: components['schemas']['MainQuestionCreate']) {
-            const response = await api.POST('/api/v1/questions/main', {
+            const response = await api.POST('/questions/main', {
                 body: questionData
             });
             return response;
         },
 
         async update(questionId: string, questionData: any) {
-            const response = await api.PUT('/api/v1/questions/{question_id}', {
+            const response = await api.PUT('/questions/{question_id}', {
                 params: {
                     path: { question_id: questionId }
                 },
@@ -1458,7 +1448,7 @@ const adminAPI = {
         },
 
         async delete(questionId: string) {
-            const response = await api.DELETE('/api/v1/questions/{question_id}', {
+            const response = await api.DELETE('/questions/{question_id}', {
                 params: {
                     path: { question_id: questionId }
                 }
@@ -1467,7 +1457,7 @@ const adminAPI = {
         },
 
         async removeSubQuestion(mainQuestionId: string, subQuestionId: string) {
-            const response = await api.DELETE('/api/v1/questions/{main_question_id}/sub-questions/{sub_question_id}', {
+            const response = await api.DELETE('/questions/{main_question_id}/sub-questions/{sub_question_id}', {
                 params: {
                     path: {
                         main_question_id: mainQuestionId,
@@ -1479,7 +1469,7 @@ const adminAPI = {
         },
 
         async unlinkFromQuestionSet(mainQuestionId: string) {
-            const response = await api.DELETE('/api/v1/questions/{main_question_id}/question-set', {
+            const response = await api.DELETE('/questions/{main_question_id}/question-set', {
                 params: {
                     path: { main_question_id: mainQuestionId }
                 }
@@ -1488,14 +1478,14 @@ const adminAPI = {
         },
 
         async createSubQuestion(subQuestionData: components['schemas']['SubQuestionCreate']) {
-            const response = await api.POST('/api/v1/questions/sub', {
+            const response = await api.POST('/questions/sub', {
                 body: subQuestionData
             });
             return response;
         },
 
         async getSubQuestions(questionId: string) {
-            const response = await api.GET('/api/v1/questions/{question_id}/sub-questions', {
+            const response = await api.GET('/questions/{question_id}/sub-questions', {
                 params: {
                     path: { question_id: questionId }
                 }
@@ -1504,7 +1494,7 @@ const adminAPI = {
         },
 
         async createBulkSubQuestions(questionId: string, subQuestionsData: components['schemas']['SubQuestionCreate'][]) {
-            const response = await api.POST('/api/v1/questions/{question_id}/sub-questions/bulk', {
+            const response = await api.POST('/questions/{question_id}/sub-questions/bulk', {
                 params: {
                     path: { question_id: questionId }
                 },
@@ -1514,7 +1504,7 @@ const adminAPI = {
         },
 
         async getSearchSuggestions(q: string, limit?: number, question_type?: 'main' | 'sub' | 'all') {
-            const response = await api.GET('/api/v1/questions/search/suggestions', {
+            const response = await api.GET('/questions/search/suggestions', {
                 params: {
                     query: { q, limit, question_type }
                 }
@@ -1532,7 +1522,7 @@ const adminAPI = {
             skip?: number;
             limit?: number;
         }) {
-            const response = await api.GET('/api/v1/question-set', {
+            const response = await api.GET('/question-set', {
                 params: {
                     query: params
                 }
@@ -1541,7 +1531,7 @@ const adminAPI = {
         },
 
         async getById(questionSetId: string) {
-            const response = await api.GET('/api/v1/question-set/get_by_id/{question_set_id}', {
+            const response = await api.GET('/question-set/get_by_id/{question_set_id}', {
                 params: {
                     path: { question_set_id: questionSetId }
                 }
@@ -1550,14 +1540,14 @@ const adminAPI = {
         },
 
         async create(questionSetData: components['schemas']['QuestionSetCreate']) {
-            const response = await api.POST('/api/v1/question-set', {
+            const response = await api.POST('/question-set', {
                 body: questionSetData
             });
             return response;
         },
 
         async update(questionSetId: string, questionSetData: any) {
-            const response = await api.PUT('/api/v1/question-set/{question_set_id}', {
+            const response = await api.PUT('/question-set/{question_set_id}', {
                 params: {
                     path: { question_set_id: questionSetId }
                 },
@@ -1567,7 +1557,7 @@ const adminAPI = {
         },
 
         async delete(questionSetId: string) {
-            const response = await api.DELETE('/api/v1/question-set/{question_set_id}', {
+            const response = await api.DELETE('/question-set/{question_set_id}', {
                 params: {
                     path: { question_set_id: questionSetId }
                 }
@@ -1608,85 +1598,6 @@ export async function getQuestions(token?: string) {
         return { success: false, error: 'Failed to fetch questions' };
     }
 }
-
-// Helper utilities for admin operations
-export const adminHelpers = {
-    /**
-     * Generate activity summary from users data
-     */
-    generateActivitySummary(users: any[]) {
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        
-        const todayRegistrations = users.filter(user => {
-            if (!user.created_at) return false;
-            const createdDate = new Date(user.created_at);
-            return createdDate >= today;
-        }).length;
-
-        const pendingVerifications = users.filter(user => 
-            !user.is_verified && user.is_active
-        ).length;
-
-        return {
-            todayRegistrations,
-            pendingVerifications,
-        };
-    },
-
-    /**
-     * Format health status from API response
-     */
-    formatHealthStatus(healthData: any): 'healthy' | 'warning' | 'critical' {
-        if (!healthData) return 'warning';
-        
-        // Check database status
-        const dbStatus = healthData.database_status || healthData.database;
-        if (dbStatus === 'error' || dbStatus === 'disconnected') {
-            return 'critical';
-        }
-        
-        // Check if there are any error indicators
-        if (healthData.status === 'error' || healthData.healthy === false) {
-            return 'critical';
-        }
-        
-        // Check for warnings
-        if (dbStatus === 'slow' || healthData.status === 'degraded') {
-            return 'warning';
-        }
-        
-        return 'healthy';
-    },
-
-    /**
-     * Safely extract total from paginated response
-     */
-    extractTotal(response: any): number {
-        if (!response || !response.data) return 0;
-        
-        if (typeof response.data === 'object' && 'data' in response.data) {
-            const data = response.data.data as any;
-            return data?.total || 0;
-        }
-        
-        return 0;
-    },
-
-    /**
-     * Safely extract items from paginated response
-     */
-    extractItems(response: any): any[] {
-        if (!response || !response.data) return [];
-        
-        if (typeof response.data === 'object' && 'data' in response.data) {
-            const data = response.data.data as any;
-            return data?.items || [];
-        }
-        
-        return [];
-    },
-};
 
 export { adminAPI };
 export default adminAPI;

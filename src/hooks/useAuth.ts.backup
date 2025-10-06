@@ -29,7 +29,7 @@ export const useAuth = () => {
     // console.log('Login attempt with:', { email: loginData.email, provider: loginData.provider });
 
     try {
-      const { data, error } = await api.POST('/api/v1/login', {
+      const { data, error } = await api.POST('/login', {
         body: loginData,
       });
 
@@ -122,7 +122,7 @@ export const useAuth = () => {
     clearError();
 
     try {
-      const { data, error } = await api.POST('/api/v1/user', {
+      const { data, error } = await api.POST('/user', {
         body: userData,
       });
 
@@ -171,7 +171,7 @@ export const useAuth = () => {
   const handleLogout = async () => {
     try {
       // Call logout endpoint to invalidate token on server
-      await api.POST('/api/v1/logout');
+      await api.POST('/logout');
     } catch (err) {
       // Continue with logout even if server call fails
       console.warn('Server logout failed:', err);
@@ -190,7 +190,7 @@ export const useAuth = () => {
 
   const getCurrentUser = async () => {
     try {
-      const { data, error } = await api.GET('/api/v1/user/me');
+      const { data, error } = await api.GET('/user/me');
 
       if (error) {
         console.log('Failed to get current user:', error);
@@ -213,7 +213,7 @@ export const useAuth = () => {
     clearError();
 
     try {
-      const { data, error } = await api.POST('/api/v1/login/password-reset', {
+      const { data, error } = await api.POST('/login/password-reset', {
         body: { email },
       });
 

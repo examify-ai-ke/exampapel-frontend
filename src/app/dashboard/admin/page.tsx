@@ -166,10 +166,11 @@ export default function AdminDashboardPage() {
 
             // Process users data if available
             if (usersResponse.status === 'fulfilled' && usersResponse.value.data) {
-                const usersData = usersResponse.value.data;
-                if (usersData.data && Array.isArray(usersData.data)) {
-                    const users = usersData.data;
-                    updatedStats.totalUsers = usersData.total || users.length;
+                const users = adminHelpers.extractItems(usersResponse.value);
+                const total = adminHelpers.extractTotal(usersResponse.value);
+                
+                if (users.length > 0) {
+                    updatedStats.totalUsers = total || users.length;
 
                     // Calculate activity summary
                     const activitySummary = adminHelpers.generateActivitySummary(users);
@@ -177,7 +178,7 @@ export default function AdminDashboardPage() {
                     updatedStats.pendingVerifications = activitySummary.pendingVerifications;
 
                     // Estimate active users (users who logged in recently or are verified)
-                    updatedStats.activeUsers = users.filter(user =>
+                    updatedStats.activeUsers = users.filter((user: any) =>
                         user.is_verified || user.is_active
                     ).length;
                 }
@@ -185,17 +186,16 @@ export default function AdminDashboardPage() {
 
             // Process health data if available
             if (healthResponse.status === 'fulfilled' && healthResponse.value.data) {
-                const healthData = healthResponse.value.data;
+                const healthData = healthResponse.value.data as any;
                 updatedStats.systemHealth = adminHelpers.formatHealthStatus(healthData);
-                updatedStats.databaseStatus = healthData.database_status || 'connected';
+                updatedStats.databaseStatus = (healthData?.database_status || healthData?.database || 'connected') as any;
             }
 
             // Process institutions data if available
             if (institutionsResponse.status === 'fulfilled' && institutionsResponse.value.data) {
-                const institutionsData = institutionsResponse.value.data;
-                if (institutionsData.data && Array.isArray(institutionsData.data)) {
-                    updatedStats.totalInstitutions = institutionsData.total || institutionsData.data.length;
-                }
+                const institutions = adminHelpers.extractItems(institutionsResponse.value);
+                const total = adminHelpers.extractTotal(institutionsResponse.value);
+                updatedStats.totalInstitutions = total || institutions.length;
             }
 
             setStats(updatedStats);
@@ -245,7 +245,7 @@ export default function AdminDashboardPage() {
     };
 
     // Check if user has admin role
-    const isAdmin = user?.role === 'admin' || user?.role === 'Admin';
+    const isAdmin = user?.role?.name?.toLowerCase() === 'admin' || user?.is_superuser;
 
     if (!isAdmin) {
         return (
