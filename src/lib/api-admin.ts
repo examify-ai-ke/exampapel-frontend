@@ -1503,11 +1503,6 @@ const adminAPI = {
             return response;
         },
 
-        async getStats() {
-            const response = await api.GET('/questions/stats');
-            return response;
-        },
-
         async getSearchSuggestions(q: string, limit?: number, question_type?: 'main' | 'sub' | 'all') {
             const response = await api.GET('/questions/search/suggestions', {
                 params: {

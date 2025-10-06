@@ -17,6 +17,7 @@ import {
     AlertTriangle,
     Users,
     Eye,
+    Unlink,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner, LoadingOverlay } from '@/components/ui/loading-spinner';
 import { AdminBreadcrumb } from '@/components/ui/breadcrumb';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/ui';
 import { adminAPI } from '@/lib/api-admin';
@@ -50,6 +61,8 @@ export default function QuestionDetailPage() {
     const [subQuestions, setSubQuestions] = useState<QuestionRead[]>([]);
     const [loading, setLoading] = useState(true);
     const [deleting, setDeleting] = useState(false);
+    const [unlinkDialogOpen, setUnlinkDialogOpen] = useState(false);
+    const [subQuestionToUnlink, setSubQuestionToUnlink] = useState<{ mainId: string; subId: string } | null>(null);
 
     // Load question data
     const loadQuestion = async () => {
@@ -145,6 +158,38 @@ export default function QuestionDetailPage() {
             });
         } finally {
             setDeleting(false);
+        }
+    };
+
+    // Handle removing sub-question from main question
+    const handleRemoveSubQuestion = async (mainQuestionId: string, subQuestionId: string) => {
+        setSubQuestionToUnlink({ mainId: mainQuestionId, subId: subQuestionId });
+        setUnlinkDialogOpen(true);
+    };
+
+    // Confirm and execute sub-question unlinking
+    const confirmUnlinkSubQuestion = async () => {
+        if (!subQuestionToUnlink) return;
+
+        try {
+            await adminAPI.questions.removeSubQuestion(subQuestionToUnlink.mainId, subQuestionToUnlink.subId);
+            addNotification({
+                type: 'success',
+                title: 'Sub-Question Unlinked',
+                message: 'The sub-question has been successfully unlinked from the main question.',
+            });
+            // Reload question data to reflect changes
+            await loadQuestion();
+        } catch (error) {
+            console.error('Error removing sub-question:', error);
+            addNotification({
+                type: 'error',
+                title: 'Unlinking Failed',
+                message: error instanceof Error ? error.message : 'Failed to unlink sub-question. Please try again.',
+            });
+        } finally {
+            setUnlinkDialogOpen(false);
+            setSubQuestionToUnlink(null);
         }
     };
 
@@ -415,6 +460,15 @@ export default function QuestionDetailPage() {
                                                             <Edit className="h-4 w-4" />
                                                         </Link>
                                                     </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                        onClick={() => handleRemoveSubQuestion(question.id, subQuestion.id)}
+                                                        title="Unlink from main question"
+                                                    >
+                                                        <Unlink className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
                                             </div>
                                         </div>
@@ -614,6 +668,52 @@ export default function QuestionDetailPage() {
                     </Card>
                 </div>
             </div>
+
+            {/* Unlink Sub-Question Confirmation Dialog */}
+            <AlertDialog open={unlinkDialogOpen} onOpenChange={setUnlinkDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center space-x-2">
+                            <Unlink className="h-5 w-5 text-red-600" />
+                            <span>Unlink Sub-Question</span>
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-left">
+                            Are you sure you want to unlink this sub-question from the main question?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <div className="px-6 py-2">
+                        <div className="text-sm text-gray-700">
+                            <strong>What will happen:</strong>
+                            <ul className="list-disc list-inside mt-2 space-y-1">
+                                <li>The sub-question will be removed from this main question</li>
+                                <li>The sub-question itself will <strong>not be deleted</strong></li>
+                                <li>It can be added back to this or another main question later</li>
+                                <li>All answers and content will be preserved</li>
+                            </ul>
+                            <p className="mt-3 text-sm text-gray-600">
+                                This action can be undone by re-linking the sub-question.
+                            </p>
+                        </div>
+                    </div>
+
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => {
+                            setUnlinkDialogOpen(false);
+                            setSubQuestionToUnlink(null);
+                        }}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmUnlinkSubQuestion}
+                            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                        >
+                            <Unlink className="mr-2 h-4 w-4" />
+                            Unlink Sub-Question
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

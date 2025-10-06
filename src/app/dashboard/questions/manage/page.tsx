@@ -24,6 +24,7 @@ import {
     Hash,
     List,
     Grid,
+    ArrowLeft,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -96,14 +97,21 @@ interface QuestionsStats {
     orphanQuestions: number;
 }
 
-// Filter interface - matches API parameters
+// Filter interface - matches questions list page
 interface QuestionsFilters {
     search?: string;
-    question_set_id?: string;
-    exam_paper_id?: string;
-    numbering_style?: string;
-    has_answers?: 'yes' | 'no';
+    question_type?: 'main' | 'sub' | 'all';
     marks_range?: 'low' | 'medium' | 'high';
+    exam_paper_id?: string;
+    question_set_id?: string;
+    institution_id?: string;
+    course_id?: string;
+    module_id?: string;
+    programme_id?: string;
+    numbering_style?: string;
+    has_answers?: 'yes' | 'no' | 'all';
+    sort_by?: 'relevance' | 'marks' | 'created_at';
+    sort_order?: 'asc' | 'desc';
 }
 
 // Initial empty states - data will be loaded from API
@@ -123,9 +131,8 @@ export default function QuestionsManagePage() {
     const { addNotification } = useUIStore();
     const router = useRouter();
 
-    // State management
+    // State management - matches questions list page
     const [questions, setQuestions] = useState<QuestionRead[]>([]);
-    const [questionSets, setQuestionSets] = useState<QuestionSetRead[]>([]);
     const [loading, setLoading] = useState(false);
     const [stats, setStats] = useState<QuestionsStats>(initialStats);
     const [viewMode, setViewMode] = useState<'hierarchical' | 'table'>('hierarchical');
@@ -136,6 +143,8 @@ export default function QuestionsManagePage() {
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalItems, setTotalItems] = useState(0);
+    const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
     const ITEMS_PER_PAGE = 20;
 
@@ -169,61 +178,107 @@ export default function QuestionsManagePage() {
         );
     }
 
-    // Load questions data
+    // Load questions data - matches questions list page implementation
     const loadQuestions = async () => {
         try {
             setLoading(true);
+            console.log('Loading questions with comprehensive filtering from backend API...');
 
-            // Build API parameters
-            const apiParams: any = {
+            // Build search parameters - matches questions list page
+            const searchParams: any = {
+                question_type: filters.question_type || 'main',
+                include_children: true, // Include sub-questions
                 skip: currentPage * ITEMS_PER_PAGE,
                 limit: ITEMS_PER_PAGE,
+                highlight: true, // Enable search highlighting
             };
 
-            // Add filters to API params
-            if (filters.question_set_id) {
-                apiParams.question_set_id = filters.question_set_id;
-            }
-            if (filters.exam_paper_id) {
-                apiParams.exam_paper_id = filters.exam_paper_id;
+            // Add search query if provided
+            if (filters.search && filters.search.trim() !== '') {
+                searchParams.q = filters.search.trim();
             }
 
-            // Load questions and question sets in parallel
-            const [questionsResponse, questionSetsResponse] = await Promise.all([
-                // Load questions with sub-questions included
-                filters.search
-                    ? adminAPI.questions.search({
-                        q: filters.search,
-                        skip: apiParams.skip,
-                        limit: apiParams.limit,
-                        question_set_id: apiParams.question_set_id,
-                        exam_paper_id: apiParams.exam_paper_id,
-                        has_answers: filters.has_answers === 'yes' ? true : filters.has_answers === 'no' ? false : undefined,
-                        numbering_style: filters.numbering_style,
-                    })
-                    : adminAPI.questions.list({
-                        ...apiParams,
-                        include_children: true, // Include sub-questions
-                    }),
-                // Load question sets
-                adminAPI.questionSets.list({ limit: 20 }) // Load all question sets
-            ]);
+            // Add filters - matches questions list page
+            if (filters.exam_paper_id) {
+                searchParams.exam_paper_id = filters.exam_paper_id;
+            }
+            if (filters.question_set_id) {
+                searchParams.question_set_id = filters.question_set_id;
+            }
+            if (filters.institution_id) {
+                searchParams.institution_id = filters.institution_id;
+            }
+            if (filters.course_id) {
+                searchParams.course_id = filters.course_id;
+            }
+            if (filters.module_id) {
+                searchParams.module_id = filters.module_id;
+            }
+            if (filters.programme_id) {
+                searchParams.programme_id = filters.programme_id;
+            }
+            if (filters.numbering_style) {
+                searchParams.numbering_style = filters.numbering_style;
+            }
+            if (filters.has_answers && filters.has_answers !== 'all') {
+                searchParams.has_answers = filters.has_answers === 'yes';
+            }
+
+            // Add marks range filter - matches questions list page
+            if (filters.marks_range) {
+                const marksMin = getMarksRangeMin(filters.marks_range);
+                const marksMax = getMarksRangeMax(filters.marks_range);
+                if (marksMin !== undefined) searchParams.marks_min = marksMin;
+                if (marksMax !== undefined) searchParams.marks_max = marksMax;
+            }
+
+            // Add sorting - matches questions list page
+            searchParams.sort_by = filters.sort_by || 'relevance';
+            searchParams.sort_order = filters.sort_order || 'desc';
+
+            // Use search endpoint for all queries (more powerful than list) - matches questions list page
+            const questionsResponse = await adminAPI.questions.search(searchParams);
+
+            console.log('Questions API response:', questionsResponse);
 
             if (questionsResponse.data?.data) {
                 const responseData = questionsResponse.data.data;
                 const questionsData = responseData.items || [];
 
+                // Questions already include their children from the API
                 setQuestions(questionsData);
                 setTotalItems(responseData.total || 0);
                 setTotalPages(Math.ceil((responseData.total || 0) / ITEMS_PER_PAGE));
 
-                // Calculate stats from the loaded data
-                calculateStats(questionsData, responseData.total || 0);
-            }
+                // Calculate stats from loaded data - matches questions list page
+                const totalSubQuestions = questionsData.reduce((sum: any, q: any) => sum + (q.children?.length || 0), 0);
+                const questionsWithAnswers = questionsData.filter((q: any) => q.answers && q.answers.length > 0).length;
+                const totalMarks = questionsData.reduce((sum: any, q: any) => {
+                    const mainMarks = q.marks || 0;
+                    const subMarks = (q.children || []).reduce((subSum: any, sub: any) => subSum + (sub.marks || 0), 0);
+                    return sum + mainMarks + subMarks;
+                }, 0);
+                const totalQuestionCount = questionsData.length + totalSubQuestions;
+                const averageMarks = totalQuestionCount > 0 ? totalMarks / totalQuestionCount : 0;
 
-            if (questionSetsResponse.data?.data) {
-                const questionSetsData = questionSetsResponse.data.data;
-                setQuestionSets(questionSetsData.items || []);
+                // For recent questions, count those created in the last 7 days
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                const recentQuestions = questionsData.filter((q: any) => new Date(q.created_at) > sevenDaysAgo).length;
+
+                // Orphan questions are main questions without question_set_id or exam_paper_id
+                const orphanQuestions = questionsData.filter((q: any) => !q.question_set_id && !q.exam_paper_id).length;
+
+                setStats({
+                    totalQuestions: totalQuestionCount,
+                    mainQuestions: questionsData.length,
+                    subQuestions: totalSubQuestions,
+                    questionsWithAnswers,
+                    totalMarks,
+                    averageMarks: Math.round(averageMarks * 10) / 10,
+                    recentQuestions,
+                    orphanQuestions,
+                });
             }
         } catch (error) {
             console.error('Error loading questions:', error);
@@ -237,33 +292,6 @@ export default function QuestionsManagePage() {
         }
     };
 
-    // Calculate statistics from questions data
-    const calculateStats = (questionsData: QuestionRead[], total: number) => {
-        const mainQuestions = questionsData.filter(q => !q.parent_id).length;
-        const subQuestions = questionsData.filter(q => q.parent_id).length;
-        const questionsWithAnswers = questionsData.filter(q => q.answers && q.answers.length > 0).length;
-        const totalMarks = questionsData.reduce((sum, q) => sum + (q.marks || 0), 0);
-        const averageMarks = questionsData.length > 0 ? totalMarks / questionsData.length : 0;
-
-        // For recent questions, we'll count questions created in the last 7 days
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        const recentQuestions = questionsData.filter(q => new Date(q.created_at) > sevenDaysAgo).length;
-
-        // Orphan questions are those without question_set_id or exam_paper_id
-        const orphanQuestions = questionsData.filter(q => !q.question_set_id && !q.exam_paper_id).length;
-
-        setStats({
-            totalQuestions: total,
-            mainQuestions,
-            subQuestions,
-            totalMarks,
-            averageMarks: Math.round(averageMarks * 10) / 10, // Round to 1 decimal
-            recentQuestions,
-            questionsWithAnswers,
-            orphanQuestions,
-        });
-    };
 
     // Transform question data for table display
     const transformQuestionForTable = (question: QuestionRead): QuestionTableData => {
@@ -463,48 +491,67 @@ export default function QuestionsManagePage() {
         setCurrentPage(0);
     };
 
-    // Load statistics from API if available
-    const loadQuestionStats = async () => {
-        try {
-            const response = await adminAPI.questions.getStats();
-            if (response.data?.data) {
-                // If API provides stats, use them
-                const apiStats = response.data.data as any; // Type assertion for API stats
-                setStats({
-                    totalQuestions: (apiStats.total_questions as number) || 0,
-                    mainQuestions: (apiStats.main_questions as number) || 0,
-                    subQuestions: (apiStats.sub_questions as number) || 0,
-                    totalMarks: (apiStats.total_marks as number) || 0,
-                    averageMarks: (apiStats.average_marks as number) || 0,
-                    recentQuestions: (apiStats.recent_questions as number) || 0,
-                    questionsWithAnswers: (apiStats.questions_with_answers as number) || 0,
-                    orphanQuestions: (apiStats.orphan_questions as number) || 0,
-                });
-            }
-        } catch (error) {
-            console.log('Stats API not available, using calculated stats');
-            // Stats will be calculated from loaded questions data
+    // Helper functions for marks range - matches questions list page
+    const getMarksRangeMin = (range?: string) => {
+        switch (range) {
+            case 'low': return 1;
+            case 'medium': return 4;
+            case 'high': return 8;
+            default: return undefined;
         }
     };
+
+    const getMarksRangeMax = (range?: string) => {
+        switch (range) {
+            case 'low': return 3;
+            case 'medium': return 7;
+            case 'high': return undefined;
+            default: return undefined;
+        }
+    };
+
+    // Statistics are calculated from loaded questions data
+    // This provides real-time stats based on current filters and is more accurate
 
     // Load data on mount and when filters change
     useEffect(() => {
         loadQuestions();
-        loadQuestionStats();
     }, [currentPage, filters]);
 
     // Define table columns
     const columns = [
         {
+            key: 'select' as keyof QuestionTableData,
+            header: 'Select',
+            cell: (item: QuestionTableData) => (
+                <input
+                    type="checkbox"
+                    checked={selectedQuestions.includes(item.id)}
+                    onChange={(e) => {
+                        if (e.target.checked) {
+                            setSelectedQuestions(prev => [...prev, item.id]);
+                        } else {
+                            setSelectedQuestions(prev => prev.filter(id => id !== item.id));
+                        }
+                    }}
+                    className="rounded border-gray-300"
+                />
+            ),
+            sortable: false,
+            width: '5%',
+        },
+        {
             key: 'displayText' as keyof QuestionTableData,
-            header: 'Question',
+            header: 'Question Content',
             cell: (item: QuestionTableData) => (
                 <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0">
-                        <HelpCircle className="h-6 w-6 text-purple-600" />
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100">
+                            <HelpCircle className="h-4 w-4 text-purple-600" />
+                        </div>
                     </div>
                     <div className="min-w-0 flex-1">
-                        <div className="font-medium text-gray-900 mb-1">{item.displayText}</div>
+                        <div className="font-medium text-gray-900 mb-1 line-clamp-2">{item.displayText}</div>
                         <div className="flex items-center space-x-2 mb-1">
                             {item.numberingDisplay}
                         </div>
@@ -512,23 +559,64 @@ export default function QuestionsManagePage() {
                             {item.marksDisplay}
                             {item.typeDisplay}
                         </div>
+                        {item.children && item.children.length > 0 && (
+                            <div className="mt-1">
+                                <Badge variant="outline" className="text-xs">
+                                    <Hash className="mr-1 h-3 w-3" />
+                                    {item.children.length} sub-questions
+                                </Badge>
+                            </div>
+                        )}
                     </div>
                 </div>
             ),
             sortable: false,
-            width: '35%',
+            width: '40%',
         },
         {
             key: 'paperInfo' as keyof QuestionTableData,
-            header: 'Paper & Set',
-            cell: (item: QuestionTableData) => item.paperInfo,
+            header: 'Context',
+            cell: (item: QuestionTableData) => (
+                <div className="text-sm">
+                    <div className="flex items-center space-x-1 mb-1">
+                        <BookOpen className="h-3 w-3 text-blue-500" />
+                        <span className="text-gray-600">
+                            {item.exam_paper_id ? `Paper ${item.exam_paper_id.slice(0, 8)}` : 'No Paper'}
+                        </span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                        <FileText className="h-3 w-3 text-green-500" />
+                        <span className="text-gray-600">
+                            {item.question_set_id ? `Set ${item.question_set_id.slice(0, 8)}` : 'No Set'}
+                        </span>
+                    </div>
+                    {item.parent_id && (
+                        <div className="mt-1">
+                            <Badge variant="secondary" className="text-xs">
+                                Sub-question
+                            </Badge>
+                        </div>
+                    )}
+                </div>
+            ),
             sortable: false,
             width: '15%',
         },
         {
             key: 'statusBadge' as keyof QuestionTableData,
             header: 'Status',
-            cell: (item: QuestionTableData) => item.statusBadge,
+            cell: (item: QuestionTableData) => (
+                <div className="space-y-1">
+                    {item.statusBadge}
+                    <div className="text-xs text-gray-500">
+                        {item.answers && item.answers.length > 0 ? (
+                            <span className="text-green-600">{item.answers.length} answer{item.answers.length !== 1 ? 's' : ''}</span>
+                        ) : (
+                            <span className="text-red-600">No answers</span>
+                        )}
+                    </div>
+                </div>
+            ),
             sortable: false,
             width: '15%',
         },
@@ -536,8 +624,17 @@ export default function QuestionsManagePage() {
             key: 'createdAtFormatted' as keyof QuestionTableData,
             header: 'Created',
             cell: (item: QuestionTableData) => (
-                <div className="text-sm text-gray-600">
-                    <div>{item.createdAtFormatted}</div>
+                <div className="text-sm">
+                    <div className="text-gray-900 font-medium">{item.createdAtFormatted}</div>
+                    <div className="text-gray-500 text-xs">
+                        {(() => {
+                            const now = new Date();
+                            const created = new Date(item.created_at);
+                            const diffTime = Math.abs(now.getTime() - created.getTime());
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            return diffDays === 1 ? 'Yesterday' : `${diffDays} days ago`;
+                        })()}
+                    </div>
                 </div>
             ),
             sortable: true,
@@ -545,7 +642,7 @@ export default function QuestionsManagePage() {
         },
         {
             key: 'actions' as keyof QuestionTableData,
-            header: '',
+            header: 'Actions',
             cell: (item: QuestionTableData) => item.actions,
             sortable: false,
             width: '10%',
@@ -648,12 +745,14 @@ export default function QuestionsManagePage() {
             {/* Filters and Search */}
             <Card>
                 <CardContent className="pt-6">
+                    <div className="space-y-4">
+                        {/* Main Search and Quick Filters */}
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <Input
-                                    placeholder="Search questions..."
+                                        placeholder="Search questions by text, number, or content..."
                                     className="pl-10"
                                     value={filters.search || ''}
                                     onChange={(e) => handleSearch(e.target.value)}
@@ -675,11 +774,39 @@ export default function QuestionsManagePage() {
                             </SelectContent>
                         </Select>
 
+                            <Select
+                                value={filters.question_type || 'all'}
+                                onValueChange={(value) => handleFilterChange('question_type', value === 'all' ? undefined : value as any)}
+                            >
+                                <SelectTrigger className="w-full sm:w-[180px]">
+                                    <SelectValue placeholder="Question type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Types</SelectItem>
+                                    <SelectItem value="main">Main Questions</SelectItem>
+                                    <SelectItem value="sub">Sub Questions</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                                className="w-full sm:w-auto"
+                            >
+                                <Filter className="h-4 w-4 mr-2" />
+                                {showAdvancedFilters ? 'Hide' : 'Show'} Filters
+                            </Button>
+                        </div>
+
+                        {/* Advanced Filters */}
+                        {showAdvancedFilters && (
+                            <div className="border-t pt-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <Select
                             value={filters.numbering_style || 'all'}
                             onValueChange={(value) => handleFilterChange('numbering_style', value === 'all' ? undefined : value)}
                         >
-                            <SelectTrigger className="w-full sm:w-[180px]">
+                                        <SelectTrigger>
                                 <SelectValue placeholder="Numbering style" />
                             </SelectTrigger>
                             <SelectContent>
@@ -694,7 +821,7 @@ export default function QuestionsManagePage() {
                             value={filters.marks_range || 'all'}
                             onValueChange={(value) => handleFilterChange('marks_range', value === 'all' ? undefined : value as any)}
                         >
-                            <SelectTrigger className="w-full sm:w-[180px]">
+                                        <SelectTrigger>
                                 <SelectValue placeholder="Marks range" />
                             </SelectTrigger>
                             <SelectContent>
@@ -704,6 +831,49 @@ export default function QuestionsManagePage() {
                                 <SelectItem value="high">High (8+)</SelectItem>
                             </SelectContent>
                         </Select>
+
+                                    <Select
+                                        value={filters.sort_by || 'relevance'}
+                                        onValueChange={(value) => handleFilterChange('sort_by', value as any)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Sort by" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="relevance">Relevance</SelectItem>
+                                            <SelectItem value="marks">Marks</SelectItem>
+                                            <SelectItem value="created_at">Created Date</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+
+                                    <Select
+                                        value={filters.sort_order || 'desc'}
+                                        onValueChange={(value) => handleFilterChange('sort_order', value as any)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Sort order" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="desc">Descending</SelectItem>
+                                            <SelectItem value="asc">Ascending</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+
+                                    <div className="flex items-center space-x-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                setFilters({});
+                                                setCurrentPage(0);
+                                            }}
+                                        >
+                                            Clear All
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
@@ -712,7 +882,7 @@ export default function QuestionsManagePage() {
             <LoadingOverlay isLoading={loading}>
                 {viewMode === 'hierarchical' ? (
                     <HierarchicalQuestions
-                        questionSets={questionSets}
+                        questionSets={[]}
                         questions={questions}
                         onEditQuestion={handleEditQuestion}
                         onDeleteQuestion={handleDeleteQuestion}
@@ -751,57 +921,111 @@ export default function QuestionsManagePage() {
                     />
                 ) : (
                     <Card>
-                        <DataTable
-                            data={transformedQuestions}
-                            columns={columns}
-                            title={`${totalItems} Questions`}
-                            searchable={false}
-                            filterable={false}
-                            pagination={true}
-                            pageSize={ITEMS_PER_PAGE}
-                            actions={[
-                                {
-                                    label: 'Export Selected',
-                                    onClick: (selectedItems: QuestionTableData[]) => {
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                    <div>
+                                        <CardTitle className="text-lg">
+                                            Questions Table
+                                            {selectedQuestions.length > 0 && (
+                                                <Badge variant="secondary" className="ml-2">
+                                                    {selectedQuestions.length} selected
+                                                </Badge>
+                                            )}
+                                        </CardTitle>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                            Showing {questions.length} of {totalItems} questions
+                                        </p>
+                                    </div>
+                                    {questions.length > 0 && (
+                                        <div className="flex items-center space-x-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedQuestions.length === questions.length}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setSelectedQuestions(questions.map(q => q.id));
+                                                    } else {
+                                                        setSelectedQuestions([]);
+                                                    }
+                                                }}
+                                                className="rounded border-gray-300"
+                                            />
+                                            <span className="text-sm text-gray-600">Select All</span>
+                                        </div>
+                                    )}
+                                </div>
+                                {selectedQuestions.length > 0 && (
+                                    <div className="flex items-center space-x-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
                                         addNotification({
                                             type: 'info',
                                             title: 'Export Started',
-                                            message: `Exporting ${selectedItems.length} questions...`,
-                                        });
-                                    },
-                                    icon: Download,
-                                    variant: 'outline',
-                                },
-                                {
-                                    label: 'Bulk Edit Marks',
-                                    onClick: (selectedItems: QuestionTableData[]) => {
+                                                    message: `Exporting ${selectedQuestions.length} questions...`,
+                                                });
+                                            }}
+                                        >
+                                            <Download className="h-4 w-4 mr-2" />
+                                            Export ({selectedQuestions.length})
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
                                         addNotification({
                                             type: 'info',
                                             title: 'Bulk Edit',
-                                            message: `Editing marks for ${selectedItems.length} questions...`,
-                                        });
-                                    },
-                                    icon: Edit,
-                                    variant: 'outline',
-                                },
-                                {
-                                    label: 'Delete Selected',
-                                    onClick: (selectedItems: QuestionTableData[]) => {
-                                        if (confirm(`Are you sure you want to delete ${selectedItems.length} questions?`)) {
+                                                    message: `Editing marks for ${selectedQuestions.length} questions...`,
+                                                });
+                                            }}
+                                        >
+                                            <Edit className="h-4 w-4 mr-2" />
+                                            Edit Marks
+                                        </Button>
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            onClick={() => {
+                                                if (confirm(`Are you sure you want to delete ${selectedQuestions.length} questions? This action cannot be undone.`)) {
                                             addNotification({
                                                 type: 'warning',
                                                 title: 'Bulk Delete',
-                                                message: `Deleting ${selectedItems.length} questions...`,
-                                            });
-                                        }
-                                    },
-                                    icon: Trash2,
-                                    variant: 'destructive',
-                                },
-                            ]}
+                                                        message: `Deleting ${selectedQuestions.length} questions...`,
+                                                    });
+                                                }
+                                            }}
+                                        >
+                                            <Trash2 className="h-4 w-4 mr-2" />
+                                            Delete ({selectedQuestions.length})
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setSelectedQuestions([])}
+                                        >
+                                            Clear Selection
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <DataTable
+                                data={transformedQuestions}
+                                columns={columns}
+                                title=""
+                                searchable={false}
+                                filterable={false}
+                                pagination={true}
+                                pageSize={ITEMS_PER_PAGE}
+                                actions={[]}
                             emptyMessage="No questions found. Create your first question to get started."
                             loading={loading}
                         />
+                        </CardContent>
                     </Card>
                 )}
             </LoadingOverlay>
