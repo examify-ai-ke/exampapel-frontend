@@ -1307,7 +1307,7 @@ const adminAPI = {
             return response;
         },
 
-        async getOrderedByCreatedAt(params?: { page?: number; size?: number; order?: 'ascendent' | 'descendent' }) {
+        async getOrderedByCreatedAt(params?: { skip?: number; limit?: number; order?: 'ascendent' | 'descendent' }) {
             const response = await api.GET('/exampaper/get_by_created_at', {
                 params: {
                     query: params

@@ -57,7 +57,7 @@
 ## Implementation Phases
 
 ### Phase 1: Create Public Browse Experience (HIGH PRIORITY)
-**Goal**: Let anyone browse and view exam papers
+**Goal**: Let anyone browse and view exam Questions from exampapers
 
 **Tasks**:
 1. Create `(public)/browse/page.tsx`
@@ -96,10 +96,10 @@
    - Recent activities
    - Recommended papers
    - Quick stats
-   - Continue studying section
+   - Continue revision  section
 
 2. Create `/student/saved/page.tsx`
-   - Bookmarked papers
+   - Bookmarked exampapers
    - Favorite questions
    - Custom collections
 

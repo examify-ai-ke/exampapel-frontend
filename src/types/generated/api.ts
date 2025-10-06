@@ -2788,7 +2788,7 @@ export interface paths {
         };
         /**
          * Get Exams List Order By Created At
-         * @description Gets a paginated list of ExamPapers ordered by created at datetime
+         * @description Gets a paginated list of ExamPapers ordered by created_at datetime
          */
         get: operations["get_exams_list_order_by_created_at_api_v1_exampaper_get_by_created_at_get"];
         put?: never;
@@ -13602,10 +13602,10 @@ export interface operations {
     get_exams_list_order_by_created_at_api_v1_exampaper_get_by_created_at_get: {
         parameters: {
             query?: {
-                /** @description It is optional. Default is ascendent */
-                order?: components["schemas"]["IOrderEnum"] | null;
-                page?: number;
-                size?: number;
+                /** @description Sort order: ascendent or descendent */
+                order?: components["schemas"]["IOrderEnum"];
+                skip?: number;
+                limit?: number;
             };
             header?: never;
             path?: never;

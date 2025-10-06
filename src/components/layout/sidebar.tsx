@@ -58,51 +58,49 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  // Main Navigation
   {
     title: 'Dashboard',
     href: '/dashboard',
-    icon: LayoutDashboard,
+    icon: Home,
   },
+  
+  // Content Management (Primary)
   {
     title: 'Exam Papers',
     href: '/dashboard/exam-papers',
     icon: BookOpen,
     children: [
       {
-        title: 'Browse Exam Papers',
+        title: 'Browse All',
         href: '/dashboard/exam-papers',
         icon: Search,
       },
       {
-        title: 'My Favorites',
-        href: '/dashboard/exam-papers/favorites',
-        icon: FileText,
-      },
-      {
-        title: 'Recent Exam Papers',
+        title: 'Recent',
         href: '/dashboard/exam-papers/recent',
         icon: TrendingUp,
       },
       {
-        title: 'Manage Exam Papers',
-        href: '/dashboard/exam-papers/manage',
-        icon: FolderOpen,
-        roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
-      },
-      {
-        title: 'Create Exam Paper',
+        title: 'Create New',
         href: '/dashboard/exam-papers/create',
         icon: Plus,
         roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
       },
       {
-        title: 'Draft Exam Papers',
+        title: 'Manage',
+        href: '/dashboard/exam-papers/manage',
+        icon: Settings,
+        roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
+      },
+      {
+        title: 'Drafts',
         href: '/dashboard/exam-papers/drafts',
         icon: Edit,
         roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
       },
       {
-        title: 'Archived Exam Papers',
+        title: 'Archived',
         href: '/dashboard/exam-papers/archived',
         icon: Archive,
         roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
@@ -110,21 +108,55 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    title: 'Questions',
+    href: '/dashboard/questions',
+    icon: HelpCircle,
+    roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
+    children: [
+      {
+        title: 'Browse All',
+        href: '/dashboard/questions',
+        icon: Search,
+        roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
+      },
+      {
+        title: 'Manage',
+        href: '/dashboard/questions/manage',
+        icon: Settings,
+        roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
+      },
+      {
+        title: 'Question Sets',
+        href: '/dashboard/questions/sets',
+        icon: FolderOpen,
+        roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
+      },
+      {
+        title: 'Answers',
+        href: '/dashboard/questions/answers',
+        icon: CheckCircle,
+        roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
+      },
+      {
+        title: 'Import',
+        href: '/dashboard/questions/import',
+        icon: Upload,
+        roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
+      },
+    ],
+  },
+
+  // Academic Structure
+  {
     title: 'Institutions',
     href: '/dashboard/institutions',
     icon: Building,
     roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
     children: [
       {
-        title: 'All Institutions',
+        title: 'Overview',
         href: '/dashboard/institutions',
-        icon: Building,
-        roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
-      },
-      {
-        title: 'Manage Institutions',
-        href: '/dashboard/institutions/manage',
-        icon: Settings,
+        icon: LayoutDashboard,
         roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
       },
       {
@@ -159,44 +191,15 @@ const navItems: NavItem[] = [
       },
     ],
   },
+
+  // Personal
   {
-    title: 'Questions Bank',
-    href: '/dashboard/questions',
-    icon: HelpCircle,
-    roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
-    children: [
-      {
-        title: 'All Questions',
-        href: '/dashboard/questions',
-        icon: HelpCircle,
-        roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
-      },
-      {
-        title: 'Manage Questions',
-        href: '/dashboard/questions/manage',
-        icon: Settings,
-        roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
-      },
-      {
-        title: 'Question Sets',
-        href: '/dashboard/questions/sets',
-        icon: FolderOpen,
-        roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
-      },
-      {
-        title: 'Answers Management',
-        href: '/dashboard/questions/answers',
-        icon: CheckCircle,
-        roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
-      },
-      {
-        title: 'Import Questions',
-        href: '/dashboard/questions/import',
-        icon: Upload,
-        roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
-      },
-    ],
+    title: 'My Progress',
+    href: '/dashboard/progress',
+    icon: TrendingUp,
   },
+
+  // Administration (Bottom)
   {
     title: 'Administration',
     href: '/dashboard/admin',
@@ -210,21 +213,15 @@ const navItems: NavItem[] = [
         roles: [USER_ROLES.ADMIN],
       },
       {
-        title: 'User Management',
+        title: 'Users',
         href: '/dashboard/admin/users',
         icon: Users,
         roles: [USER_ROLES.ADMIN],
       },
       {
-        title: 'Role Management',
+        title: 'Roles',
         href: '/dashboard/admin/roles',
         icon: Shield,
-        roles: [USER_ROLES.ADMIN],
-      },
-      {
-        title: 'System Settings',
-        href: '/dashboard/admin/settings',
-        icon: Settings,
         roles: [USER_ROLES.ADMIN],
       },
       {
@@ -234,22 +231,18 @@ const navItems: NavItem[] = [
         roles: [USER_ROLES.ADMIN],
       },
       {
-        title: 'Data Management',
+        title: 'Settings',
+        href: '/dashboard/admin/settings',
+        icon: Settings,
+        roles: [USER_ROLES.ADMIN],
+      },
+      {
+        title: 'Data',
         href: '/dashboard/admin/data',
         icon: Database,
         roles: [USER_ROLES.ADMIN],
       },
     ],
-  },
-  {
-    title: 'My Progress',
-    href: '/dashboard/progress',
-    icon: TrendingUp,
-  },
-  {
-    title: 'Profile',
-    href: '/dashboard/profile',
-    icon: User,
   },
 ];
 
@@ -375,15 +368,25 @@ export function Sidebar({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {filteredNavItems.map((item) => {
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        {filteredNavItems.map((item, index) => {
           const Icon = item.icon;
           const hasChildren = item.children && item.children.length > 0;
           const isItemActive = isActive(item.href);
           const isItemExpanded = isExpanded(item.href);
+          
+          // Add section separator before "My Progress" and "Administration"
+          const showSeparator = !isCollapsed && (
+            item.title === 'My Progress' || 
+            item.title === 'Administration'
+          );
 
           return (
             <div key={item.href}>
+              {showSeparator && (
+                <div className="my-4 border-t border-gray-700" />
+              )}
+              
               <Link
                 href={hasChildren ? '#' : item.href}
                 onClick={hasChildren ? (e) => {
@@ -391,21 +394,26 @@ export function Sidebar({
                   toggleExpanded(item.href);
                 } : undefined}
                 className={cn(
-                  'flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  'flex items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                   isItemActive
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/50'
                     : 'text-gray-300 hover:bg-gray-800 hover:text-white',
-                  isCollapsed && 'justify-center'
+                  isCollapsed && 'justify-center px-2',
+                  !isCollapsed && 'group'
                 )}
+                title={isCollapsed ? item.title : undefined}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className={cn(
+                  'h-5 w-5 flex-shrink-0',
+                  isItemActive ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                )} />
                 {!isCollapsed && (
                   <>
-                    <span>{item.title}</span>
+                    <span className="flex-1">{item.title}</span>
                     {hasChildren && (
                       <ChevronRight
                         className={cn(
-                          'ml-auto h-4 w-4 transition-transform',
+                          'h-4 w-4 transition-transform duration-200',
                           isItemExpanded && 'rotate-90'
                         )}
                       />
@@ -416,7 +424,7 @@ export function Sidebar({
 
               {/* Children */}
               {hasChildren && !isCollapsed && isItemExpanded && (
-                <div className="ml-6 mt-2 space-y-1">
+                <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-gray-700 pl-3">
                   {item.children!
                     .filter(child => {
                       if (!child.roles) return true;
@@ -431,13 +439,16 @@ export function Sidebar({
                           key={child.href}
                           href={child.href}
                           className={cn(
-                            'flex items-center space-x-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                            'flex items-center space-x-2.5 rounded-md px-3 py-2 text-sm transition-all duration-200 group',
                             isChildActive
-                              ? 'bg-blue-600/20 text-blue-300'
-                              : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                              ? 'bg-blue-600/20 text-blue-300 font-medium border-l-2 border-blue-400 -ml-[2px] pl-[10px]'
+                              : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:border-l-2 hover:border-gray-600 hover:-ml-[2px] hover:pl-[10px]'
                           )}
                         >
-                          <ChildIcon className="h-4 w-4" />
+                          <ChildIcon className={cn(
+                            'h-4 w-4 flex-shrink-0',
+                            isChildActive ? 'text-blue-300' : 'text-gray-500 group-hover:text-gray-300'
+                          )} />
                           <span>{child.title}</span>
                         </Link>
                       );
