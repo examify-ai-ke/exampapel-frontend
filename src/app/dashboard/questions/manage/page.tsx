@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     HelpCircle,
     Plus,
@@ -25,6 +25,8 @@ import {
     List,
     Grid,
     ArrowLeft,
+    RefreshCw,
+    Unlink,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -63,7 +65,7 @@ import { AdminBreadcrumb } from '@/components/ui/breadcrumb';
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/ui';
 import { adminAPI } from '@/lib/api-admin';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatRelativeTime } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import type { components } from '@/types/generated/api';
 
@@ -79,14 +81,14 @@ interface QuestionTableData extends QuestionRead {
     numberingDisplay: React.ReactNode;
     marksDisplay: React.ReactNode;
     typeDisplay: React.ReactNode;
-    statusBadge: React.ReactNode;
+    statusDisplay: React.ReactNode;
     paperInfo: React.ReactNode;
-    createdAtFormatted: string;
+    createdAtDisplay: React.ReactNode;
     actions: React.ReactNode;
 }
 
-// Statistics interface
-interface QuestionsStats {
+// Statistics interface (renamed to match main questions page)
+interface QuestionsOverviewStats {
     totalQuestions: number;
     mainQuestions: number;
     subQuestions: number;
@@ -115,7 +117,7 @@ interface QuestionsFilters {
 }
 
 // Initial empty states - data will be loaded from API
-const initialStats: QuestionsStats = {
+const initialStats: QuestionsOverviewStats = {
     totalQuestions: 0,
     mainQuestions: 0,
     subQuestions: 0,
@@ -134,8 +136,8 @@ export default function QuestionsManagePage() {
     // State management - matches questions list page
     const [questions, setQuestions] = useState<QuestionRead[]>([]);
     const [loading, setLoading] = useState(false);
-    const [stats, setStats] = useState<QuestionsStats>(initialStats);
-    const [viewMode, setViewMode] = useState<'hierarchical' | 'table'>('hierarchical');
+    const [stats, setStats] = useState<QuestionsOverviewStats>(initialStats);
+    const [viewMode, setViewMode] = useState<'hierarchical' | 'table'>('table');
     const [filters, setFilters] = useState<QuestionsFilters>({});
     const [selectedQuestion, setSelectedQuestion] = useState<QuestionRead | null>(null);
     const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -143,10 +145,18 @@ export default function QuestionsManagePage() {
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalItems, setTotalItems] = useState(0);
+    const [pageSize, setPageSize] = useState(20);
     const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+    const [apiStatus, setApiStatus] = useState<'connected' | 'error'>('error');
+    const hasInitializedRef = useRef(false);
 
-    const ITEMS_PER_PAGE = 20;
+    // Academic hierarchy data for filters
+    const [institutions, setInstitutions] = useState<any[]>([]);
+    const [courses, setCourses] = useState<any[]>([]);
+    const [modules, setModules] = useState<any[]>([]);
+    const [programmes, setProgrammes] = useState<any[]>([]);
+    const [loadingHierarchy, setLoadingHierarchy] = useState(false);
 
     // Role-based access control
     const currentUser = user || {
@@ -178,6 +188,28 @@ export default function QuestionsManagePage() {
         );
     }
 
+    // Load academic hierarchy data for filters
+    const loadHierarchyData = async () => {
+        try {
+            setLoadingHierarchy(true);
+            const [institutionsResponse, coursesResponse, modulesResponse, programmesResponse] = await Promise.all([
+                adminAPI.institutions.list({ limit: 100 }),
+                adminAPI.courses.list({ limit: 100 }),
+                adminAPI.modules.list({ limit: 100 }),
+                adminAPI.programmes.list({ limit: 100 })
+            ]);
+
+            setInstitutions(institutionsResponse.data?.data?.items || []);
+            setCourses(coursesResponse.data?.data?.items || []);
+            setModules(modulesResponse.data?.data?.items || []);
+            setProgrammes(programmesResponse.data?.data?.items || []);
+        } catch (error) {
+            console.error('Error loading hierarchy data:', error);
+        } finally {
+            setLoadingHierarchy(false);
+        }
+    };
+
     // Load questions data - matches questions list page implementation
     const loadQuestions = async () => {
         try {
@@ -188,8 +220,8 @@ export default function QuestionsManagePage() {
             const searchParams: any = {
                 question_type: filters.question_type || 'main',
                 include_children: true, // Include sub-questions
-                skip: currentPage * ITEMS_PER_PAGE,
-                limit: ITEMS_PER_PAGE,
+                skip: currentPage * pageSize,
+                limit: pageSize,
                 highlight: true, // Enable search highlighting
             };
 
@@ -248,7 +280,7 @@ export default function QuestionsManagePage() {
                 // Questions already include their children from the API
                 setQuestions(questionsData);
                 setTotalItems(responseData.total || 0);
-                setTotalPages(Math.ceil((responseData.total || 0) / ITEMS_PER_PAGE));
+                setTotalPages(Math.ceil((responseData.total || 0) / pageSize));
 
                 // Calculate stats from loaded data - matches questions list page
                 const totalSubQuestions = questionsData.reduce((sum: any, q: any) => sum + (q.children?.length || 0), 0);
@@ -279,14 +311,21 @@ export default function QuestionsManagePage() {
                     recentQuestions,
                     orphanQuestions,
                 });
+
+                setApiStatus('connected');
             }
         } catch (error) {
             console.error('Error loading questions:', error);
+            setApiStatus('error');
             addNotification({
                 type: 'error',
                 title: 'Failed to load questions',
                 message: error instanceof Error ? error.message : 'Please try again later.',
             });
+
+            // Do not fallback – keep empty state
+            setQuestions([]);
+            setTotalItems(0);
         } finally {
             setLoading(false);
         }
@@ -306,8 +345,8 @@ export default function QuestionsManagePage() {
             displayText = textBlocks || 'No text content';
         }
 
-        const truncatedText = displayText.length > 100 ?
-            `${displayText.substring(0, 100)}...` : displayText;
+        const truncatedText = displayText.length > 120 ?
+            `${displayText.substring(0, 120)}...` : displayText;
 
         const numberingDisplay = (
             <div className="flex items-center space-x-2">
@@ -324,13 +363,17 @@ export default function QuestionsManagePage() {
         const marksDisplay = (
             <div className="flex items-center text-sm font-medium">
                 <Star className="mr-1 h-4 w-4 text-yellow-500" />
-                {question.marks || 0} marks
+                <span className="font-bold">{question.marks || 0}</span>
+                <span className="text-gray-500 ml-1">pts</span>
             </div>
         );
 
         const typeDisplay = (
             <div className="flex flex-col space-y-1">
-                <Badge variant={question.parent_id ? 'secondary' : 'default'} className="text-xs">
+                <Badge
+                    variant={question.parent_id ? 'secondary' : 'default'}
+                    className={question.parent_id ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'}
+                >
                     {question.parent_id ? 'Sub-question' : 'Main Question'}
                 </Badge>
                 {question.children && question.children.length > 0 && (
@@ -341,29 +384,44 @@ export default function QuestionsManagePage() {
             </div>
         );
 
-        const statusBadge = (
-            <Badge
-                variant={question.answers && question.answers.length > 0 ? 'default' : 'secondary'}
-                className={question.answers && question.answers.length > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
-            >
-                {question.answers && question.answers.length > 0 ? (
-                    <>
-                        <CheckCircle className="mr-1 h-3 w-3" />
-                        Has Answers
-                    </>
-                ) : (
-                    <>
-                        <AlertTriangle className="mr-1 h-3 w-3" />
-                        No Answers
-                    </>
-                )}
-            </Badge>
+        const statusDisplay = (
+            <div className="flex flex-col space-y-1">
+                <Badge
+                    variant={question.answers && question.answers.length > 0 ? 'default' : 'secondary'}
+                    className={question.answers && question.answers.length > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                >
+                    {question.answers && question.answers.length > 0 ? (
+                        <>
+                            <CheckCircle className="mr-1 h-3 w-3" />
+                            {question.answers.length} Answer{question.answers.length !== 1 ? 's' : ''}
+                        </>
+                    ) : (
+                        <>
+                            <AlertTriangle className="mr-1 h-3 w-3" />
+                            No Answers
+                        </>
+                    )}
+                </Badge>
+            </div>
         );
 
         const paperInfo = (
+            <div className="text-xs text-gray-600 space-y-1">
+                <div className="flex items-center">
+                    <BookOpen className="mr-1 h-3 w-3" />
+                    <span>Paper: {question.exam_paper_id?.slice(0, 8) || 'N/A'}</span>
+                </div>
+                <div className="flex items-center">
+                    <FileText className="mr-1 h-3 w-3" />
+                    <span>Set: {question.question_set_id?.slice(0, 8) || 'N/A'}</span>
+                </div>
+            </div>
+        );
+
+        const createdAtDisplay = (
             <div className="text-xs text-gray-600">
-                <div>Paper: {question.exam_paper_id || 'N/A'}</div>
-                <div>Set: {question.question_set_id || 'N/A'}</div>
+                <div>{formatDate(question.created_at)}</div>
+                <div className="text-gray-500">{formatRelativeTime(question.created_at)}</div>
             </div>
         );
 
@@ -388,10 +446,30 @@ export default function QuestionsManagePage() {
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Manage Answers
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleAddSubQuestion(question.id)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Sub-question
-                    </DropdownMenuItem>
+                    {!question.parent_id && (
+                        <DropdownMenuItem onClick={() => handleAddSubQuestion(question.id)}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Sub-question
+                        </DropdownMenuItem>
+                    )}
+                    {question.parent_id && (
+                        <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => handleRemoveSubQuestion(question.parent_id!, question.id)}
+                        >
+                            <Unlink className="mr-2 h-4 w-4" />
+                            Remove from Main Question
+                        </DropdownMenuItem>
+                    )}
+                    {!question.parent_id && question.question_set_id && (
+                        <DropdownMenuItem
+                            className="text-orange-600"
+                            onClick={() => handleUnlinkFromQuestionSet(question.id)}
+                        >
+                            <Unlink className="mr-2 h-4 w-4" />
+                            Unlink from Question Set
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => handleDuplicateQuestion(question.id)}>
                         <Copy className="mr-2 h-4 w-4" />
@@ -414,9 +492,9 @@ export default function QuestionsManagePage() {
             numberingDisplay,
             marksDisplay,
             typeDisplay,
-            statusBadge,
+            statusDisplay,
             paperInfo,
-            createdAtFormatted: formatDate(question.created_at),
+            createdAtDisplay,
             actions,
         };
     };
@@ -481,6 +559,48 @@ export default function QuestionsManagePage() {
         });
     };
 
+    // Handle removing sub-question from main question
+    const handleRemoveSubQuestion = async (mainQuestionId: string, subQuestionId: string) => {
+        try {
+            await adminAPI.questions.removeSubQuestion(mainQuestionId, subQuestionId);
+            useUIStore.getState().addNotification({
+                type: 'success',
+                title: 'Success',
+                message: 'Sub-question removed successfully'
+            });
+            // Reload questions to reflect changes
+            void loadQuestions();
+        } catch (error) {
+            console.error('Error removing sub-question:', error);
+            useUIStore.getState().addNotification({
+                type: 'error',
+                title: 'Error',
+                message: 'Failed to remove sub-question'
+            });
+        }
+    };
+
+    // Handle unlinking question from question set
+    const handleUnlinkFromQuestionSet = async (mainQuestionId: string) => {
+        try {
+            await adminAPI.questions.unlinkFromQuestionSet(mainQuestionId);
+            useUIStore.getState().addNotification({
+                type: 'success',
+                title: 'Success',
+                message: 'Question unlinked from question set successfully'
+            });
+            // Reload questions to reflect changes
+            void loadQuestions();
+        } catch (error) {
+            console.error('Error unlinking from question set:', error);
+            useUIStore.getState().addNotification({
+                type: 'error',
+                title: 'Error',
+                message: 'Failed to unlink from question set'
+            });
+        }
+    };
+
     const handleSearch = (searchTerm: string) => {
         setFilters(prev => ({ ...prev, search: searchTerm }));
         setCurrentPage(0);
@@ -513,136 +633,123 @@ export default function QuestionsManagePage() {
     // Statistics are calculated from loaded questions data
     // This provides real-time stats based on current filters and is more accurate
 
-    // Load data on mount and when filters change
+    // Initial load (guarded to avoid React StrictMode double-fetch in dev)
     useEffect(() => {
-        loadQuestions();
-    }, [currentPage, filters]);
+        if (!hasInitializedRef.current) {
+            hasInitializedRef.current = true;
+            void loadQuestions();
+            void loadHierarchyData();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Load when filters/page change (skip if not initialized yet)
+    useEffect(() => {
+        if (!hasInitializedRef.current) return;
+        void loadQuestions();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPage, filters, pageSize]);
 
     // Define table columns
     const columns = [
         {
-            key: 'select' as keyof QuestionTableData,
-            header: 'Select',
-            cell: (item: QuestionTableData) => (
-                <input
-                    type="checkbox"
-                    checked={selectedQuestions.includes(item.id)}
-                    onChange={(e) => {
-                        if (e.target.checked) {
-                            setSelectedQuestions(prev => [...prev, item.id]);
-                        } else {
-                            setSelectedQuestions(prev => prev.filter(id => id !== item.id));
-                        }
-                    }}
-                    className="rounded border-gray-300"
-                />
-            ),
-            sortable: false,
-            width: '5%',
-        },
-        {
             key: 'displayText' as keyof QuestionTableData,
-            header: 'Question Content',
+            header: 'Question',
             cell: (item: QuestionTableData) => (
                 <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100">
-                            <HelpCircle className="h-4 w-4 text-purple-600" />
-                        </div>
+                        <HelpCircle className="h-6 w-6 text-purple-600" />
                     </div>
                     <div className="min-w-0 flex-1">
-                        <div className="font-medium text-gray-900 mb-1 line-clamp-2">{item.displayText}</div>
-                        <div className="flex items-center space-x-2 mb-1">
+                        <div className="font-medium text-gray-900 mb-2 leading-tight">{item.displayText}</div>
+                        <div className="flex items-center space-x-3 mb-1">
                             {item.numberingDisplay}
+                            {item.marksDisplay}
                         </div>
                         <div className="flex items-center space-x-2">
-                            {item.marksDisplay}
                             {item.typeDisplay}
                         </div>
-                        {item.children && item.children.length > 0 && (
-                            <div className="mt-1">
-                                <Badge variant="outline" className="text-xs">
-                                    <Hash className="mr-1 h-3 w-3" />
-                                    {item.children.length} sub-questions
-                                </Badge>
-                            </div>
-                        )}
                     </div>
                 </div>
             ),
             sortable: false,
-            width: '40%',
+            width: '45%',
         },
         {
-            key: 'paperInfo' as keyof QuestionTableData,
-            header: 'Context',
-            cell: (item: QuestionTableData) => (
-                <div className="text-sm">
-                    <div className="flex items-center space-x-1 mb-1">
-                        <BookOpen className="h-3 w-3 text-blue-500" />
-                        <span className="text-gray-600">
-                            {item.exam_paper_id ? `Paper ${item.exam_paper_id.slice(0, 8)}` : 'No Paper'}
-                        </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                        <FileText className="h-3 w-3 text-green-500" />
-                        <span className="text-gray-600">
-                            {item.question_set_id ? `Set ${item.question_set_id.slice(0, 8)}` : 'No Set'}
-                        </span>
-                    </div>
-                    {item.parent_id && (
-                        <div className="mt-1">
-                            <Badge variant="secondary" className="text-xs">
-                                Sub-question
-                            </Badge>
-                        </div>
-                    )}
-                </div>
-            ),
-            sortable: false,
-            width: '15%',
-        },
-        {
-            key: 'statusBadge' as keyof QuestionTableData,
-            header: 'Status',
-            cell: (item: QuestionTableData) => (
-                <div className="space-y-1">
-                    {item.statusBadge}
-                    <div className="text-xs text-gray-500">
-                        {item.answers && item.answers.length > 0 ? (
-                            <span className="text-green-600">{item.answers.length} answer{item.answers.length !== 1 ? 's' : ''}</span>
-                        ) : (
-                            <span className="text-red-600">No answers</span>
-                        )}
-                    </div>
-                </div>
-            ),
-            sortable: false,
-            width: '15%',
-        },
-        {
-            key: 'createdAtFormatted' as keyof QuestionTableData,
+            key: 'createdAtDisplay' as keyof QuestionTableData,
             header: 'Created',
-            cell: (item: QuestionTableData) => (
-                <div className="text-sm">
-                    <div className="text-gray-900 font-medium">{item.createdAtFormatted}</div>
-                    <div className="text-gray-500 text-xs">
-                        {(() => {
-                            const now = new Date();
-                            const created = new Date(item.created_at);
-                            const diffTime = Math.abs(now.getTime() - created.getTime());
-                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                            return diffDays === 1 ? 'Yesterday' : `${diffDays} days ago`;
-                        })()}
-                    </div>
-                </div>
-            ),
+            cell: (item: QuestionTableData) => item.createdAtDisplay,
             sortable: true,
             width: '15%',
         },
         {
+            key: 'institution' as keyof QuestionTableData,
+            header: 'Institution',
+            cell: (item: QuestionTableData) => (
+                <div className="max-w-[120px]">
+                    <div className="font-medium text-sm truncate" title={item.institution?.name || 'N/A'}>
+                        {item.institution?.name || 'N/A'}
+                    </div>
+                </div>
+            ),
+            sortable: false,
+            width: '15%',
+        },
+        {
+            key: 'programme' as keyof QuestionTableData,
+            header: 'Programme',
+            cell: (item: QuestionTableData) => (
+                <div className="max-w-[120px]">
+                    <div className="font-medium text-sm truncate" title={item.programme?.name || 'N/A'}>
+                        {item.programme?.name || 'N/A'}
+                    </div>
+                </div>
+            ),
+            sortable: false,
+            width: '15%',
+        },
+        {
+            key: 'course' as keyof QuestionTableData,
+            header: 'Course',
+            cell: (item: QuestionTableData) => (
+                <div className="max-w-[120px]">
+                    <div className="font-medium text-sm truncate" title={item.course?.name || 'N/A'}>
+                        {item.course?.name || 'N/A'}
+                    </div>
+                </div>
+            ),
+            sortable: false,
+            width: '15%',
+        },
+        {
+            key: 'modules' as keyof QuestionTableData,
+            header: 'Modules',
+            cell: (item: QuestionTableData) => (
+                <div className="max-w-[150px]">
+                    {item.modules && item.modules.length > 0 ? (
+                        <div className="space-y-1">
+                            {item.modules.slice(0, 2).map((module, index) => (
+                                <div key={index} className="text-xs bg-gray-100 px-2 py-1 rounded truncate" title={module.name || 'Unnamed Module'}>
+                                    {module.name || 'Unnamed Module'}
+                                </div>
+                            ))}
+                            {item.modules.length > 2 && (
+                                <div className="text-xs text-gray-500">
+                                    +{item.modules.length - 2} more
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <span className="text-gray-400 text-sm">No modules</span>
+                    )}
+                </div>
+            ),
+            sortable: false,
+            width: '20%',
+        },
+        {
             key: 'actions' as keyof QuestionTableData,
-            header: 'Actions',
+            header: '',
             cell: (item: QuestionTableData) => item.actions,
             sortable: false,
             width: '10%',
@@ -658,13 +765,20 @@ export default function QuestionsManagePage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Questions Management</h1>
-                    <p className="text-gray-600">
+                    <h1 className="text-2xl font-bold text-gray-900">Questions Management</h1>
+                    <p className="text-gray-600 mt-1">
                         Manage exam questions, answers, and question sets
                     </p>
+                    {/* API Status Indicator */}
+                    <div className="flex items-center gap-2 mt-2">
+                        <div className={`w-2 h-2 rounded-full ${apiStatus === 'connected' ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span className={`text-sm ${apiStatus === 'connected' ? 'text-green-700' : 'text-red-700'}`}>
+                            {apiStatus === 'connected' ? 'Connected to Backend' : 'API Connection Error'}
+                        </span>
+                    </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <div className="flex items-center space-x-1 mr-4">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center space-x-1 mr-2">
                         <Button
                             variant={viewMode === 'hierarchical' ? 'default' : 'outline'}
                             size="sm"
@@ -678,17 +792,26 @@ export default function QuestionsManagePage() {
                             size="sm"
                             onClick={() => setViewMode('table')}
                         >
-                            <List className="h-4 w-4 mr-1" />
+                            <FileText className="h-4 w-4 mr-1" />
                             Table
                         </Button>
                     </div>
+                    <Button
+                        variant="outline"
+                        onClick={loadQuestions}
+                        disabled={loading}
+                        className="flex items-center gap-2"
+                    >
+                        <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </Button>
                     <Button variant="outline" onClick={() => addNotification({ type: 'info', title: 'Import', message: 'Question import feature coming soon...' })}>
                         <Upload className="h-4 w-4 mr-2" />
                         Import
                     </Button>
-                    <Button onClick={handleCreateQuestion} className="flex items-center space-x-2">
+                    <Button onClick={handleCreateQuestion} className="flex items-center gap-2">
                         <Plus className="h-4 w-4" />
-                        <span>Add Question</span>
+                        Add Question
                     </Button>
                 </div>
             </div>
@@ -701,19 +824,10 @@ export default function QuestionsManagePage() {
                         <HelpCircle className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalQuestions}</div>
-                        <p className="text-xs text-muted-foreground">All questions in system</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Main vs Sub</CardTitle>
-                        <List className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.mainQuestions}/{stats.subQuestions}</div>
-                        <p className="text-xs text-muted-foreground">Main / Sub questions</p>
+                        <div className="text-2xl font-bold">{stats.totalQuestions.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground">
+                            {stats.mainQuestions.toLocaleString()} main, {stats.subQuestions.toLocaleString()} sub
+                        </p>
                     </CardContent>
                 </Card>
 
@@ -723,21 +837,34 @@ export default function QuestionsManagePage() {
                         <CheckCircle className="h-4 w-4 text-green-600" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.questionsWithAnswers}</div>
+                        <div className="text-2xl font-bold">{stats.questionsWithAnswers.toLocaleString()}</div>
                         <p className="text-xs text-muted-foreground">
-                            {((stats.questionsWithAnswers / stats.totalQuestions) * 100).toFixed(1)}% coverage
+                            {stats.totalQuestions > 0 ? ((stats.questionsWithAnswers / stats.totalQuestions) * 100).toFixed(1) : 0}% coverage
                         </p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Avg. Marks</CardTitle>
+                        <CardTitle className="text-sm font-medium">Total Marks</CardTitle>
                         <Star className="h-4 w-4 text-yellow-600" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.averageMarks}</div>
-                        <p className="text-xs text-muted-foreground">Per question average</p>
+                        <div className="text-2xl font-bold">{stats.totalMarks.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground">
+                            Avg {stats.averageMarks} per question
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Recent Questions</CardTitle>
+                        <Clock className="h-4 w-4 text-blue-600" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stats.recentQuestions.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground">Created in last 7 days</p>
                     </CardContent>
                 </Card>
             </div>
@@ -1019,12 +1146,21 @@ export default function QuestionsManagePage() {
                                 title=""
                                 searchable={false}
                                 filterable={false}
-                                pagination={true}
-                                pageSize={ITEMS_PER_PAGE}
+                                pagination={{
+                                    currentPage: currentPage,
+                                    totalPages: totalPages,
+                                    totalItems: totalItems,
+                                    pageSize: pageSize,
+                                    onPageChange: (newPage: number) => setCurrentPage(newPage),
+                                    onPageSizeChange: (newSize: number) => {
+                                        setPageSize(newSize);
+                                        setCurrentPage(0);
+                                    },
+                                }}
                                 actions={[]}
-                            emptyMessage="No questions found. Create your first question to get started."
-                            loading={loading}
-                        />
+                                emptyMessage="No questions found matching your filters"
+                                loading={loading}
+                            />
                         </CardContent>
                     </Card>
                 )}
