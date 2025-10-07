@@ -55,9 +55,10 @@ export default function ModulesPage() {
     const statsLoadedRef = useRef(false);
     const coursesLoadedRef = useRef(false);
 
-    // Load statistics (memoized to prevent duplicate calls)
-    const loadStats = useCallback(async () => {
-        if (statsLoadedRef.current) return;
+    // Load statistics
+    const loadStats = useCallback(async (force = false) => {
+        // Only skip if not forced and already loaded
+        if (!force && statsLoadedRef.current) return;
         statsLoadedRef.current = true;
 
         try {
@@ -161,8 +162,10 @@ export default function ModulesPage() {
     const handleFormSuccess = async () => {
         setShowCreateModal(false);
         setEditingModule(null);
+        // Reset the ref to allow stats reload
+        statsLoadedRef.current = false;
         await loadModules();
-        await loadStats();
+        await loadStats(true); // Force reload stats
     };
 
     // Handle delete
@@ -177,8 +180,10 @@ export default function ModulesPage() {
                 message: 'The module has been deleted successfully.',
             });
             setDeletingModule(null);
+            // Reset the ref to allow stats reload
+            statsLoadedRef.current = false;
             await loadModules();
-            await loadStats();
+            await loadStats(true); // Force reload stats
         } catch (error: any) {
             console.error('Error deleting module:', error);
             addNotification({

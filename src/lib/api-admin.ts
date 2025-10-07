@@ -384,10 +384,26 @@ const adminAPI = {
                     const data = modulesResponse.data.data as any;
                     totalModules = data?.total || 0;
 
-                    // Sum up courses_count and exam_papers_count from all modules
+                    // Count unique courses and sum exam papers from all modules
                     if (data?.items && Array.isArray(data.items)) {
-                        totalCourses = data.items.reduce((sum: number, mod: any) => sum + (mod.courses_count || 0), 0);
-                        totalExamPapers = data.items.reduce((sum: number, mod: any) => sum + (mod.exam_papers_count || 0), 0);
+                        // Use a Set to track unique course IDs
+                        const uniqueCourseIds = new Set<string>();
+                        
+                        data.items.forEach((mod: any) => {
+                            // Add course IDs from the courses array
+                            if (mod.courses && Array.isArray(mod.courses)) {
+                                mod.courses.forEach((course: any) => {
+                                    if (course.id) {
+                                        uniqueCourseIds.add(course.id);
+                                    }
+                                });
+                            }
+                            
+                            // Sum up exam papers
+                            totalExamPapers += (mod.exam_papers_count || 0);
+                        });
+                        
+                        totalCourses = uniqueCourseIds.size;
                     }
                 }
 
