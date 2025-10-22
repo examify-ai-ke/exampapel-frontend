@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Building2, FileText, MapPin } from 'lucide-react';
 import type { InstitutionCardProps } from './types';
+import type { InstitutionRead } from '@/types/generated/api';
 
 export function InstitutionCard({ institution, className = '' }: InstitutionCardProps) {
   const router = useRouter();
@@ -16,7 +17,7 @@ export function InstitutionCard({ institution, className = '' }: InstitutionCard
   };
 
   // Get paper count from the institution object
-  const paperCount = (institution as InstitutionRead & { exam_papers_count?: number }).exam_papers_count || 0;
+  const paperCount = (institution as InstitutionRead & { exams_count?: number }).exams_count || 0;
 
   return (
     <Card className={`hover:shadow-lg transition-shadow ${className}`}>
@@ -24,9 +25,9 @@ export function InstitutionCard({ institution, className = '' }: InstitutionCard
         <div className="flex flex-col items-center text-center space-y-4">
           {/* Institution Logo/Icon */}
           <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
-            {institution.logo_url ? (
+            {(institution as any).logo?.media?.link ? (
               <Image
-                src={institution.logo_url}
+                src={(institution as any).logo.media.link}
                 alt={institution.name}
                 width={64}
                 height={64}
@@ -42,9 +43,9 @@ export function InstitutionCard({ institution, className = '' }: InstitutionCard
             <h3 className="font-semibold text-lg line-clamp-2">
               {institution.name}
             </h3>
-            {institution.acronym && (
+            {(institution as any).key && (
               <p className="text-sm text-gray-500">
-                ({institution.acronym})
+                ({(institution as any).key})
               </p>
             )}
           </div>

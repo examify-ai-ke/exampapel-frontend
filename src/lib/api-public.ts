@@ -411,6 +411,7 @@ export const publicAPI = {
          */
         async list(filters?: InstitutionFilters) {
             try {
+                console.log('🏛️ Fetching institutions:', filters);
                 const response = await api.GET('/api/v1/institution', {
                     params: {
                         query: {
@@ -420,8 +421,17 @@ export const publicAPI = {
                     }
                 });
 
+                const items = extractItems<InstitutionRead>(response);
+                console.log('📦 Institutions response:', {
+                    count: items.length,
+                    sampleData: items[0],
+                    hasExamsCount: items[0] && 'exams_count' in items[0],
+                    hasFacultiesCount: items[0] && 'faculties_count' in items[0],
+                    hasCampusesCount: items[0] && 'campuses_count' in items[0],
+                });
+
                 return {
-                    data: extractItems<InstitutionRead>(response),
+                    data: items,
                     total: extractTotal(response),
                     pagination: extractPagination(response),
                     error: response.error,
@@ -443,13 +453,15 @@ export const publicAPI = {
         async search(filters: InstitutionFilters) {
             try {
                 const searchParams: any = {
-                    q: filters.search || '',
                     skip: filters.skip || 0,
                     limit: filters.limit || 20,
                 };
 
+                if (filters.search) searchParams.q = filters.search;
                 if (filters.institution_type) searchParams.institution_type = filters.institution_type;
                 if (filters.location) searchParams.location = filters.location;
+
+                console.log('🔍 Searching institutions:', searchParams);
 
                 const response = await api.GET('/api/v1/institution/search/advanced', {
                     params: {
@@ -457,8 +469,15 @@ export const publicAPI = {
                     }
                 });
 
+                const items = extractItems<InstitutionRead>(response);
+                console.log('📦 Search results:', {
+                    count: items.length,
+                    filters: searchParams,
+                    sampleData: items[0],
+                });
+
                 return {
-                    data: extractItems<InstitutionRead>(response),
+                    data: items,
                     total: extractTotal(response),
                     pagination: extractPagination(response),
                     error: response.error,
@@ -550,9 +569,9 @@ export const publicAPI = {
 
                 const institutions = extractItems<InstitutionRead>(response);
                 
-                // Sort by exam_papers_count and take top N
+                // Sort by exams_count and take top N
                 const featured = institutions
-                    .sort((a: any, b: any) => (b.exam_papers_count || 0) - (a.exam_papers_count || 0))
+                    .sort((a: any, b: any) => (b.exams_count || 0) - (a.exams_count || 0))
                     .slice(0, limit);
 
                 return {
@@ -565,6 +584,38 @@ export const publicAPI = {
                 return {
                     data: [],
                     total: 0,
+                    error: error as any,
+                };
+            }
+        },
+
+        /**
+         * Get exam papers for a specific institution
+         */
+        async getExamPapers(institutionId: string, filters?: { skip?: number; limit?: number }) {
+            try {
+                const response = await api.GET('/api/v1/institution/{institution_id}/exam-papers', {
+                    params: {
+                        path: { institution_id: institutionId },
+                        query: {
+                            skip: filters?.skip || 0,
+                            limit: filters?.limit || 50,
+                        }
+                    }
+                });
+
+                return {
+                    data: extractItems<ExamPaperRead>(response),
+                    total: extractTotal(response),
+                    pagination: extractPagination(response),
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error fetching institution exam papers:', error);
+                return {
+                    data: [],
+                    total: 0,
+                    pagination: { page: 1, size: 10, pages: 0, total: 0 },
                     error: error as any,
                 };
             }

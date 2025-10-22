@@ -88,10 +88,10 @@ export function RecentQuestionsSection({
 
   return (
     <section className="py-16 bg-background">
-      <div className="w-full max-w-4xl mx-auto px-4 py-12">
+      <div className="w-full max-w-7xl mx-auto px-4 py-12">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Recent Questions</h2>
+          <h2 className="text-5xl font-semibold text-foreground mb-4">Recent Questions</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Explore the latest exam questions added to our platform. Practice with real past paper questions from top
             institutions.
@@ -123,9 +123,14 @@ export function RecentQuestionsSection({
               question.exam_paper?.year_of_exam || 
               'N/A';
             
-            // Use total_marks which is the sum of all sub-question marks
-            const totalMarks = question.total_marks || question.marks || 0;
+            // Calculate total marks by summing all sub-question marks
             const childrenCount = question.children_count || question.children?.length || 0;
+            const calculatedTotalMarks = question.children && question.children.length > 0
+              ? question.children.reduce((sum: number, child: any) => sum + (child.marks || 0), 0)
+              : question.marks || 0;
+            
+            // Use calculated total or fallback to total_marks from API
+            const totalMarks = calculatedTotalMarks || question.total_marks || question.marks || 0;
             const programme = 
               questionData.programme?.name || 
               question.exam_paper?.programme?.name;
@@ -170,12 +175,12 @@ export function RecentQuestionsSection({
                           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
                             {question.question_number || '?'}
                           </span>
-                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          <span className="text-md font-bold text-muted-foreground uppercase tracking-wide">
                             Question
                           </span>
                         </div>
 
-                        <h3 className="text-xl font-semibold text-foreground mb-3 line-clamp-2">
+                        <h3 className="text-foreground mb-3 line-clamp-3">
                           {mainText || 'No question text available'}
                         </h3>
 
@@ -222,9 +227,9 @@ export function RecentQuestionsSection({
                               ({subQuestion.question_number || '?'})
                             </span>
                             <div className="flex-1">
-                              <p className="text-sm text-foreground">{subText || 'No text available'}</p>
+                              <p className="text-xl text-foreground">{subText || 'No text available'}</p>
                               <div className="mt-2 flex items-center gap-4">
-                                <span className="text-xs font-medium text-muted-foreground">
+                                <span className="text-sm font-medium text-muted-foreground">
                                   Marks: <span className="text-primary">{subQuestion.marks || 0}</span>
                                 </span>
                               </div>

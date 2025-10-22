@@ -15,9 +15,10 @@ import localFont from "next/font/local";
 const gtSuper = localFont({
   src: [
     {
-      path: "../../public/fonts/GTSuper-Regular.woff2",
+      path: "../../public/fonts/GTSuperDisplay-Super.woff",
       weight: "400",
       style: "normal",
+       
     },
   ],
   variable: "--font-gt-super",

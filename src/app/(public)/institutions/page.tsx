@@ -56,7 +56,7 @@ export default function InstitutionsPage() {
       let institutions = result.data || [];
       if (sortBy === 'most-papers') {
         institutions = [...institutions].sort((a: any, b: any) => 
-          (b.exam_papers_count || 0) - (a.exam_papers_count || 0)
+          (b.exams_count || 0) - (a.exams_count || 0)
         );
       } else if (sortBy === 'alphabetical') {
         institutions = [...institutions].sort((a, b) => 

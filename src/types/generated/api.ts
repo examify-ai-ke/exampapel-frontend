@@ -1212,9 +1212,29 @@ export interface paths {
         };
         /**
          * Get Institution By Slug
-         * @description Gets a institution by slug
+         * @description Gets an institution by slug
          */
         get: operations["get_institution_by_slug_api_v1_institution_get_by_slug__institution_slug__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/institution/{institution_id}/exam-papers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Institution Exam Papers
+         * @description Gets all exam papers belonging to an institution
+         */
+        get: operations["get_institution_exam_papers_api_v1_institution__institution_id__exam_papers_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4588,6 +4608,12 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /** Slug */
+            slug?: string | null;
+            /** Hash Code */
+            hash_code?: string | null;
+            /** Identifying Name */
+            identifying_name?: string | null;
             /**
              * Tags
              * @default []
@@ -4610,12 +4636,21 @@ export interface components {
              * Format: uuid
              */
             created_by_id: string;
-            course: components["schemas"]["CourseReadForExamPaper"] | null;
+            course?: components["schemas"]["CourseReadForExamPaper"] | null;
             /**
              * Question Sets
              * @default []
              */
             question_sets: components["schemas"]["QuestionSetReadForExamPaperReadForInstitution"][] | null;
+            /**
+             * Questions Count
+             * @default 0
+             */
+            questions_count: number;
+            /** Created At */
+            created_at?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
         };
         /** ExamPaperReadForModule */
         ExamPaperReadForModule: {
@@ -10622,6 +10657,40 @@ export interface operations {
             header?: never;
             path: {
                 institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_institution_exam_papers_api_v1_institution__institution_id__exam_papers_get: {
+        parameters: {
+            query?: {
+                skip?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                institution_id: string;
             };
             cookie?: never;
         };
