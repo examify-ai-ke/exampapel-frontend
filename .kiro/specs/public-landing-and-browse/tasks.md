@@ -246,7 +246,7 @@ This implementation plan breaks down Phase 1 of the public pages into manageable
     - Expandable/collapsible sections
     - _Requirements: 3.1, 3.2_
 
-  - [ ] 6.5 Implement download PDF functionality
+  <!-- - [ ] 6.5 Implement download PDF functionality
     - Generate PDF from paper data
     - Include all questions and formatting
     - Exclude answers for guests
@@ -259,14 +259,14 @@ This implementation plan breaks down Phase 1 of the public pages into manageable
     - Copy link button
     - Email share option
     - Success feedback
-    - _Requirements: 3.5_
+    - _Requirements: 3.5_ -->
 
-  - [ ] 6.7 Create RelatedPapersSection component
+  <!-- - [ ] 6.7 Create RelatedPapersSection component
     - Fetch 4-6 related papers
     - Same institution or course
     - Display as PaperCard grid
     - "View More" link to filtered browse
-    - _Requirements: 3.6_
+    - _Requirements: 3.6_ -->
 
   - [x] 6.8 Integrate paper detail page
     - Fetch paper data by ID
@@ -276,8 +276,8 @@ This implementation plan breaks down Phase 1 of the public pages into manageable
     - Implement SSG with ISR
     - _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 7. Build institutions directory
-  - [ ] 7.1 Create InstitutionCard component
+- [x] 7. Build institutions directory
+  - [x] 7.1 Create InstitutionCard component
     - Institution logo/image
     - Institution name and type
     - Location display
@@ -285,7 +285,7 @@ This implementation plan breaks down Phase 1 of the public pages into manageable
     - "View Papers" button
     - _Requirements: 4.2_
 
-  - [ ] 7.2 Create institutions list page
+  - [x] 7.2 Create institutions list page
     - Grid of institution cards
     - Search bar for institutions
     - Filter by type
@@ -293,7 +293,7 @@ This implementation plan breaks down Phase 1 of the public pages into manageable
     - Pagination
     - _Requirements: 4.1_
 
-  - [ ] 7.3 Create institution profile page
+  - [x] 7.3 Create institution profile page
     - Institution header (logo, name, description)
     - Statistics section
     - Faculties/departments list
@@ -301,7 +301,7 @@ This implementation plan breaks down Phase 1 of the public pages into manageable
     - Contact information
     - _Requirements: 4.4_
 
-  - [ ] 7.4 Implement institution papers view
+  - [x] 7.4 Implement institution papers view
     - Filtered papers list for institution
     - Reuse browse page components
     - Pre-applied institution filter

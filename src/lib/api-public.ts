@@ -278,24 +278,55 @@ export const publicAPI = {
          * Fetch recent questions
          * Useful for landing page "Recent Questions" section
          */
-        async getRecent(limit: number = 10) {
+        async getRecent(limit: number = 10, skip: number = 0) {
             try {
+                console.log('🌐 Calling API: GET /api/v1/questions', { limit, skip });
                 const response = await api.GET('/api/v1/questions', {
                     params: {
                         query: {
-                            skip: 0,
-                            limit,
+                            question_type: 'all',
+                            include_children: true,
+                            skip,
+                            limit: 100, // Fetch more to ensure we get enough main questions after filtering
                         }
                     }
                 });
 
+                console.log('📡 Raw API Response:', {
+                    hasData: !!response.data,
+                    hasError: !!response.error,
+                    responseType: typeof response.data,
+                    responseKeys: response.data ? Object.keys(response.data) : []
+                });
+
+                const allItems = extractItems<QuestionRead>(response);
+                const totalFromAPI = extractTotal(response);
+                
+                // Filter to get only main questions (with children included)
+                const mainQuestions = allItems.filter((q: any) => 
+                    q.is_main_question === true
+                );
+
+                // Calculate total main questions (approximate based on ratio)
+                const mainQuestionsRatio = mainQuestions.length / allItems.length;
+                const estimatedTotalMainQuestions = Math.ceil(totalFromAPI * mainQuestionsRatio);
+
+                console.log('✅ Extracted data:', { 
+                    totalItems: allItems.length,
+                    totalFromAPI,
+                    mainQuestions: mainQuestions.length,
+                    estimatedTotal: estimatedTotalMainQuestions,
+                    sampleQuestion: mainQuestions[0],
+                    hasChildren: mainQuestions[0]?.children?.length > 0
+                });
+
                 return {
-                    data: extractItems<QuestionRead>(response),
-                    total: extractTotal(response),
+                    data: mainQuestions.slice(0, limit),
+                    total: estimatedTotalMainQuestions,
                     error: response.error,
                 };
             } catch (error) {
-                console.error('Error fetching recent questions:', error);
+                console.error('❌ Error fetching recent questions:', error);
                 return {
                     data: [],
                     total: 0,

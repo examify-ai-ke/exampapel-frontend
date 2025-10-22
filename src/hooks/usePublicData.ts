@@ -46,8 +46,16 @@ export function useRecentQuestions(limit: number = 9) {
   return useQuery({
     queryKey: publicQueryKeys.recentQuestions(limit),
     queryFn: async () => {
+      console.log('🔍 Fetching recent questions from API...');
       const result = await publicAPI.questions.getRecent(limit);
+      console.log('📦 API Response:', { 
+        dataCount: result.data?.length, 
+        total: result.total, 
+        error: result.error,
+        sampleData: result.data?.[0] 
+      });
       if (result.error) {
+        console.error('❌ Error fetching questions:', result.error);
         throw new Error('Failed to fetch recent questions');
       }
       return result.data;

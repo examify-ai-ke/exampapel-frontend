@@ -292,8 +292,9 @@ export function logAPIOperation(
 
 /**
  * Wrapper for API calls with standardized error handling and logging
+ * @deprecated Use executeAPICallWithMonitoring instead
  */
-export async function executeAPICall<T>(
+async function executeAPICallBase<T>(
   apiCall: () => Promise<APIResponse<T>>,
   options: ErrorHandlingOptions & {
     enableRetry?: boolean
