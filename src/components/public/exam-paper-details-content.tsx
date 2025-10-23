@@ -30,7 +30,7 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
       try {
         // First, try to fetch by slug
         let result = await publicAPI.examPapers.getBySlug(slug);
-        
+
         // If slug fetch fails, try by ID (slug might actually be an ID)
         if (result.error || !result.data) {
           result = await publicAPI.examPapers.getById(slug);
@@ -42,12 +42,12 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
         }
 
         setPaper(result.data);
-        
+
         // Fetch question sets for this exam paper
         if (result.data.id) {
           setIsLoadingQuestions(true);
           setQuestionsError(null);
-          
+
           try {
             const questionSetsResult = await publicAPI.questionSets.getByExamPaperId(result.data.id);
 
@@ -118,8 +118,8 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header Section */}
       <div className="bg-gradient-to-r from-teal-500 via-teal-600 to-cyan-600 border-b border-teal-700 shadow-lg">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-4 mb-4">
+        <div className="container mx-auto px-4 py-12">
+          <div className="flex items-center gap-4 mb-6">
             <Button
               variant="ghost"
               size="sm"
@@ -131,32 +131,32 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
             </Button>
           </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
             {/* Title and Info */}
             <div className="flex-1">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg">
-                  <BookOpen className="h-6 w-6 text-white" />
+              <div className="flex items-start gap-4 mb-6">
+                <div className="p-4 bg-white/20 backdrop-blur-sm rounded-lg">
+                  <BookOpen className="h-8 w-8 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-white mb-2">
+                  <h3 className="text-4xl font-normal text-white mb-3 line-clamp-3 tracking-wide">
                     {paper.title?.title || paper.identifying_name || 'Exam Paper'}
-                  </h1>
+                  </h3>
                   {paper.description?.description && (
-                    <p className="text-white/90 text-lg">{paper.description.description}</p>
+                    <p className="text-white/90 text-lg leading-relaxed">{paper.description.description}</p>
                   )}
                 </div>
               </div>
 
               {/* Meta Information */}
-              <div className="flex flex-wrap gap-4 text-sm">
+              <div className="flex flex-wrap gap-6 text-base">
                 {paper.institution && (
                   <div className="flex items-center gap-2 text-white/95">
                     <Building2 className="h-4 w-4 text-white/80" />
                     <span className="font-medium">{paper.institution.name}</span>
                   </div>
                 )}
-                
+
                 {paper.course && (
                   <div className="flex items-center gap-2 text-white/95">
                     <BookOpen className="h-4 w-4 text-white/80" />
@@ -181,7 +181,7 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
 
               {/* Tags */}
               {paper.tags && paper.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-4">
+                <div className="flex flex-wrap gap-2 mt-6">
                   {paper.tags.map((tag: string) => (
                     <Badge key={tag} className="bg-white/20 text-white border-white/30 hover:bg-white/30 text-xs">
                       <Tag className="h-3 w-3 mr-1" />
@@ -214,7 +214,7 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
           <aside className="lg:col-span-1">
             <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-6">
               <h3 className="font-semibold text-gray-900 mb-4">Exam Details</h3>
-              
+
               <div className="space-y-4 text-sm">
                 {paper.modules && paper.modules.length > 0 && (
                   <div>
@@ -247,16 +247,28 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
           {/* Questions Section */}
           <main className="lg:col-span-3">
             {/* Instructions */}
-            {paper.instructions && paper.instructions.length > 0 && (
+            {paper.instructions && Array.isArray(paper.instructions) && paper.instructions.length > 0 && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
                 <h2 className="text-lg font-semibold text-blue-900 mb-3">Instructions</h2>
-                <div className="space-y-2">
-                  {paper.instructions.map((instruction: any, index: number) => (
-                    <div key={instruction.id || index} className="text-blue-800">
-                      <p>{instruction.instruction || instruction.text}</p>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-blue-800">
+                  {paper.instructions.map((instruction: any, index: number) => {
+                    // Extract instruction text - API returns it in the 'name' field
+                    const instructionText = instruction.name ||
+                      instruction.instruction ||
+                      instruction.text ||
+                      instruction.content ||
+                      (typeof instruction === 'string' ? instruction : null);
+
+                    if (!instructionText) return null;
+
+                    return (
+                      <span key={instruction.id || index}>
+                        {index > 0 && <span className="mx-2">•</span>}
+                        {instructionText}
+                      </span>
+                    );
+                  })}
+                </p>
               </div>
             )}
 
@@ -270,7 +282,7 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
                   </Badge>
                 )}
               </div>
-              
+
               {isLoadingQuestions ? (
                 <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
                   <Loader2 className="h-8 w-8 animate-spin text-teal-500 mx-auto mb-3" />
@@ -281,8 +293,8 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
                   <div className="text-red-500 text-5xl mb-4">⚠️</div>
                   <h3 className="text-lg font-semibold text-red-900 mb-2">Error Loading Questions</h3>
                   <p className="text-red-700 mb-4">{questionsError}</p>
-                  <Button 
-                    onClick={() => window.location.reload()} 
+                  <Button
+                    onClick={() => window.location.reload()}
                     variant="outline"
                     className="border-red-300 text-red-700 hover:bg-red-100"
                   >
