@@ -103,12 +103,12 @@ export function RecentQuestionsSection({
           {questions.map((question) => {
             const isExpanded = expandedId === question.id;
             const mainText = extractQuestionText(question.question_text || (question as any).text);
-            
+
             // Try to get data from both question level and exam_paper level
             const questionData = question as any;
-            const institution = 
-              questionData.institution?.name || 
-              question.exam_paper?.institution?.name || 
+            const institution =
+              questionData.institution?.name ||
+              question.exam_paper?.institution?.name ||
               'Unknown Institution';
             const courseAcronym =
               questionData.course?.course_acronym ||
@@ -118,28 +118,28 @@ export function RecentQuestionsSection({
               question.exam_paper?.course?.code ||
               question.exam_paper?.course?.name ||
               'N/A';
-            const year = 
-              questionData.exam_paper?.year_of_exam || 
-              question.exam_paper?.year_of_exam || 
+            const year =
+              questionData.exam_paper?.year_of_exam ||
+              question.exam_paper?.year_of_exam ||
               'N/A';
-            
+
             // Calculate total marks by summing all sub-question marks
             const childrenCount = question.children_count || question.children?.length || 0;
             const calculatedTotalMarks = question.children && question.children.length > 0
               ? question.children.reduce((sum: number, child: any) => sum + (child.marks || 0), 0)
               : question.marks || 0;
-            
+
             // Use calculated total or fallback to total_marks from API
             const totalMarks = calculatedTotalMarks || question.total_marks || question.marks || 0;
-            const programme = 
-              questionData.programme?.name || 
+            const programme =
+              questionData.programme?.name ||
               question.exam_paper?.programme?.name;
-            const module = 
-              questionData.module?.name || 
+            const module =
+              questionData.module?.name ||
               questionData.modules?.[0]?.name ||
               question.exam_paper?.module?.name;
-            const exam_paper_name = 
-              questionData.exam_paper?.identifying_name || 
+            const exam_paper_name =
+              questionData.exam_paper?.identifying_name ||
               'Unknown Exam Paper';
 
             return (
@@ -203,7 +203,7 @@ export function RecentQuestionsSection({
                             <span className="text-base font-bold text-foreground">{year}</span>
                           </div>
 
-                           <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2">
                             <span className="text-sm font-medium text-muted-foreground">Exam Paper:</span>
                             <span className="text-base font-medium text-foreground">{exam_paper_name}</span>
                           </div>
