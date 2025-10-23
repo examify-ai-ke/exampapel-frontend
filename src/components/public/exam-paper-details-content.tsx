@@ -6,7 +6,8 @@ import { publicAPI } from '@/lib/api-public';
 import { Loader2, Calendar, Clock, Building2, BookOpen, Tag, ArrowLeft, Download, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
+import { QuestionCard } from './question-card';
+
 
 interface ExamPaperDetailsContentProps {
   slug: string;
@@ -15,8 +16,11 @@ interface ExamPaperDetailsContentProps {
 export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) {
   const router = useRouter();
   const [paper, setPaper] = useState<any>(null);
+  const [questionSets, setQuestionSets] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [questionsError, setQuestionsError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchPaper() {
@@ -29,7 +33,6 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
         
         // If slug fetch fails, try by ID (slug might actually be an ID)
         if (result.error || !result.data) {
-          console.log('Slug fetch failed, trying by ID...');
           result = await publicAPI.examPapers.getById(slug);
         }
 
@@ -39,8 +42,42 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
         }
 
         setPaper(result.data);
+        
+        // Fetch question sets for this exam paper
+        if (result.data.id) {
+          setIsLoadingQuestions(true);
+          setQuestionsError(null);
+          
+          try {
+            const questionSetsResult = await publicAPI.questionSets.getByExamPaperId(result.data.id);
+
+            // Handle API errors
+            if (questionSetsResult.error) {
+              const errorMessage = typeof questionSetsResult.error === 'object' && 'message' in questionSetsResult.error
+                ? questionSetsResult.error.message
+                : 'Failed to load questions';
+              console.error('[Component] Error loading questions:', errorMessage);
+              setQuestionsError(errorMessage);
+              setQuestionSets([]);
+              setIsLoadingQuestions(false);
+              return;
+            }
+
+            // Update state with validated data
+            setQuestionSets(questionSetsResult.data || []);
+          } catch (err) {
+            console.error('[Component] Exception while fetching questions:', err);
+            setQuestionsError('An unexpected error occurred while loading questions');
+            setQuestionSets([]);
+          } finally {
+            setIsLoadingQuestions(false);
+          }
+        } else {
+          console.warn('[Component] Exam paper has no ID, cannot fetch question sets');
+          setQuestionsError('Cannot load questions: exam paper ID is missing');
+        }
       } catch (err) {
-        console.error('Error fetching exam paper:', err);
+        console.error('[Component] Error fetching exam paper:', err);
         setError('Failed to load exam paper');
       } finally {
         setIsLoading(false);
@@ -224,17 +261,78 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
             )}
 
             {/* Questions */}
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Questions</h2>
-              
-              {/* TODO: Fetch and display questions */}
-              <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-                <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-600">Questions will be loaded here</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  Question sets: {paper.question_sets?.length || 0}
-                </p>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900">Questions</h2>
+                {questionSets.length > 0 && !isLoadingQuestions && !questionsError && (
+                  <Badge variant="secondary">
+                    {questionSets.reduce((total, set) => total + (set.questions?.length || 0), 0)} questions
+                  </Badge>
+                )}
               </div>
+              
+              {isLoadingQuestions ? (
+                <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-teal-500 mx-auto mb-3" />
+                  <p className="text-gray-600">Loading questions...</p>
+                </div>
+              ) : questionsError ? (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
+                  <div className="text-red-500 text-5xl mb-4">⚠️</div>
+                  <h3 className="text-lg font-semibold text-red-900 mb-2">Error Loading Questions</h3>
+                  <p className="text-red-700 mb-4">{questionsError}</p>
+                  <Button 
+                    onClick={() => window.location.reload()} 
+                    variant="outline"
+                    className="border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              ) : questionSets.length === 0 ? (
+                <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                  <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600">No questions available for this exam paper</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Questions will appear here once they are added
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {questionSets.map((questionSet: any, setIndex: number) => (
+                    <div key={questionSet.id || setIndex} className="space-y-4">
+                      {/* Question Set Header */}
+                      {questionSet.title && (
+                        <div className="bg-gradient-to-r from-teal-50 to-blue-50 border border-teal-200 rounded-lg p-4">
+                          <h3 className="text-lg font-semibold text-teal-900">
+                            {questionSet.title}
+                          </h3>
+                          {questionSet.description && (
+                            <p className="text-sm text-teal-700 mt-1">{questionSet.description}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Questions */}
+                      {questionSet.questions && questionSet.questions.length > 0 ? (
+                        <div className="space-y-4">
+                          {questionSet.questions.map((question: any, qIndex: number) => (
+                            <QuestionCard
+                              key={question.id || qIndex}
+                              question={question}
+                              questionNumber={question.question_number || (qIndex + 1)}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                          <p className="text-gray-600 text-sm">No questions in this set</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </main>
         </div>

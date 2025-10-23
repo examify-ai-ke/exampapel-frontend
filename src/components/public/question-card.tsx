@@ -1,110 +1,211 @@
 'use client';
 
+import { useState } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Eye, BookOpen } from 'lucide-react';
-import type { QuestionCardProps } from './types';
+import { ChevronDown, ChevronUp, MessageSquare, Eye } from 'lucide-react';
 
-/**
- * Helper to extract plain text from question blocks
- */
-function extractQuestionText(questionText: unknown): string {
-  if (typeof questionText === 'string') {
-    return questionText;
-  }
+interface QuestionCardProps {
+  question: any;
+  questionNumber: string | number;
+}
+
+export function QuestionCard({ question, questionNumber }: QuestionCardProps) {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [showAnswers, setShowAnswers] = useState(false);
+
+  const hasSubQuestions = question.children && question.children.length > 0;
+  const hasAnswers = question.answers && question.answers.length > 0;
   
-  if (Array.isArray(questionText)) {
-    return questionText
-      .map((block: unknown) => {
-        if (typeof block === 'string') return block;
-        const blockObj = block as Record<string, unknown>;
-        if (blockObj?.text) return String(blockObj.text);
-        if (blockObj?.content) {
-          if (typeof blockObj.content === 'string') return blockObj.content;
-          if (Array.isArray(blockObj.content)) {
-            return blockObj.content
-              .map((item: unknown) => {
-                const itemObj = item as Record<string, unknown>;
-                return itemObj?.text ? String(itemObj.text) : '';
-              })
-              .join(' ');
-          }
+  // Convert Roman numerals to display format
+  const displayNumber = typeof questionNumber === 'string' ? questionNumber.toUpperCase() : questionNumber;
+
+  // Render question text (handle JSON format)
+  const renderQuestionText = (text: any) => {
+    // Handle null or undefined
+    if (text === null || text === undefined) {
+      return <p className="text-gray-400 italic">No question text available</p>;
+    }
+
+    // Handle string format
+    if (typeof text === 'string') {
+      return <p className="text-gray-800 whitespace-pre-wrap">{text}</p>;
+    }
+    
+    // Handle object format
+    if (typeof text === 'object') {
+      // Handle JSON blocks format (EditorJS format)
+      if (text.blocks && Array.isArray(text.blocks)) {
+        if (text.blocks.length === 0) {
+          return <p className="text-gray-400 italic">No question text available</p>;
         }
-        return '';
-      })
-      .join(' ')
-      .trim();
-  }
-  
-  return '';
-}
+        
+        return (
+          <div className="space-y-2">
+            {text.blocks.map((block: any, index: number) => {
+              // Handle different block types
+              if (block.type === 'paragraph') {
+                return (
+                  <p key={index} className="text-gray-800 whitespace-pre-wrap">
+                    {block.data?.text || ''}
+                  </p>
+                );
+              }
+              if (block.type === 'header') {
+                const HeaderTag = `h${block.data?.level || 3}` as keyof JSX.IntrinsicElements;
+                return (
+                  <HeaderTag key={index} className="font-semibold text-gray-900">
+                    {block.data?.text || ''}
+                  </HeaderTag>
+                );
+              }
+              if (block.type === 'list') {
+                const ListTag = block.data?.style === 'ordered' ? 'ol' : 'ul';
+                return (
+                  <ListTag key={index} className="list-inside text-gray-800 space-y-1">
+                    {block.data?.items?.map((item: string, i: number) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ListTag>
+                );
+              }
+              // Fallback for unknown block types
+              return (
+                <p key={index} className="text-gray-800">
+                  {block.text || block.data?.text || JSON.stringify(block)}
+                </p>
+              );
+            })}
+          </div>
+        );
+      }
+      
+      // Fallback: render as JSON string
+      return <p className="text-gray-800 text-sm font-mono">{JSON.stringify(text)}</p>;
+    }
 
-/**
- * Truncate text to specified length
- */
-function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength).trim() + '...';
-}
-
-export function QuestionCard({ question, preview = true, onView, className = '' }: QuestionCardProps) {
-  const questionText = extractQuestionText(question.question_text);
-  const displayText = preview ? truncateText(questionText, 150) : questionText;
-  
-  // Extract metadata
-  const examPaper = question.exam_paper;
-  const institution = examPaper?.institution?.name || 'Unknown Institution';
-  const year = examPaper?.year_of_exam || 'N/A';
-  const course = examPaper?.course?.name || examPaper?.course?.code || '';
-  const paperTitle = examPaper?.title?.title || 'Exam Paper';
+    // Fallback for unexpected types
+    return <p className="text-gray-400 italic">Invalid question text format</p>;
+  };
 
   return (
-    <Card className={`hover:shadow-lg transition-shadow ${className}`}>
+    <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-base line-clamp-2 mb-1">
-              {paperTitle}
-            </h3>
-            <p className="text-sm text-gray-600">
-              {institution} • {year}
-            </p>
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3 flex-1">
+            <div className="flex-shrink-0">
+              <div className="min-w-[2rem] h-8 px-2 rounded-full bg-teal-100 flex items-center justify-center">
+                <span className="text-sm font-semibold text-teal-700">{displayNumber}</span>
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                {question.marks && (
+                  <Badge variant="secondary" className="text-xs">
+                    {question.marks} marks
+                  </Badge>
+                )}
+                {hasSubQuestions && (
+                  <Badge variant="outline" className="text-xs">
+                    {question.children.length} sub-questions
+                  </Badge>
+                )}
+              </div>
+            </div>
           </div>
-          {question.marks && (
-            <Badge variant="secondary" className="shrink-0">
-              {question.marks} marks
-            </Badge>
+          {hasSubQuestions && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="ml-2"
+            >
+              {isExpanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
           )}
         </div>
       </CardHeader>
 
-      <CardContent className="pb-3">
-        <p className="text-sm text-gray-700 line-clamp-3 mb-3">
-          {displayText || 'No question text available'}
-        </p>
-        
-        {course && (
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline" className="text-xs">
-              <BookOpen className="h-3 w-3 mr-1" />
-              {course}
-            </Badge>
+      <CardContent className="space-y-4">
+        {/* Main Question Text */}
+        <div className="prose prose-sm max-w-none">
+          {renderQuestionText(question.text)}
+        </div>
+
+        {/* Sub-questions */}
+        {hasSubQuestions && isExpanded && (
+          <div className="ml-6 space-y-3 border-l-2 border-gray-200 pl-4">
+            {question.children.map((subQuestion: any, index: number) => (
+              <div key={subQuestion.id || index} className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="font-medium text-gray-700 text-sm min-w-[1.5rem]">
+                    {subQuestion.question_number || String.fromCharCode(97 + index)})
+                  </span>
+                  <div className="flex-1">
+                    <div className="prose prose-sm max-w-none">
+                      {renderQuestionText(subQuestion.text)}
+                    </div>
+                    {subQuestion.marks && (
+                      <Badge variant="secondary" className="text-xs mt-1">
+                        {subQuestion.marks} marks
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
-      </CardContent>
 
-      <CardFooter className="pt-3 border-t">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full"
-          onClick={onView}
-        >
-          <Eye className="h-4 w-4 mr-2" />
-          View Full Question
-        </Button>
-      </CardFooter>
+        {/* Answers Section */}
+        {hasAnswers && (
+          <div className="pt-3 border-t border-gray-200">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAnswers(!showAnswers)}
+              className="text-xs"
+            >
+              <MessageSquare className="h-3 w-3 mr-1" />
+              {showAnswers ? 'Hide' : 'View'} {question.answers.length} Answer(s)
+            </Button>
+
+            {showAnswers && (
+              <div className="mt-3 space-y-2">
+                {question.answers.map((answer: any, index: number) => (
+                  <div
+                    key={answer.id || index}
+                    className="bg-blue-50 border border-blue-200 rounded-lg p-3"
+                  >
+                    <div className="prose prose-sm max-w-none text-blue-900">
+                      {renderQuestionText(answer.text || answer.content)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Question Stats */}
+        <div className="flex items-center gap-4 text-xs text-gray-500 pt-2">
+          {hasAnswers && (
+            <div className="flex items-center gap-1">
+              <MessageSquare className="h-3 w-3" />
+              <span>{question.answers.length} answers</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1">
+            <Eye className="h-3 w-3" />
+            <span>0 views</span>
+          </div>
+        </div>
+      </CardContent>
     </Card>
   );
 }

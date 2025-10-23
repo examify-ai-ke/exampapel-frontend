@@ -762,6 +762,109 @@ export const publicAPI = {
     },
 
     /**
+     * Question Sets
+     */
+    questionSets: {
+        /**
+         * Get question sets by exam paper ID
+         * Returns question sets with main questions and sub-questions
+         */
+        async getByExamPaperId(examPaperId: string) {
+            try {
+                const response = await api.GET('/api/v1/question-set/by-exam-paper/{exam_paper_id}', {
+                    params: {
+                        path: { exam_paper_id: examPaperId }
+                    }
+                });
+
+                // Handle API errors
+                if (response.error) {
+                    console.error('[API] Error fetching question sets:', response.error);
+                    return {
+                        data: [],
+                        error: response.error,
+                    };
+                }
+
+                // Validate response has data
+                if (!response.data) {
+                    console.warn('[API] Question sets response has no data');
+                    return {
+                        data: [],
+                        error: null,
+                    };
+                }
+
+                // Extract data from nested response structure
+                // Backend returns: { message, meta, data: QuestionSetReadWithQuestions[] }
+                // openapi-fetch wraps it: { data: { message, meta, data: QuestionSetReadWithQuestions[] } }
+                let extractedData: any = null;
+                
+                if (typeof response.data === 'object' && 'data' in response.data) {
+                    // Nested structure - extract inner data
+                    extractedData = (response.data as any).data;
+                } else {
+                    // Direct structure (fallback for edge cases)
+                    extractedData = response.data;
+                }
+
+                // Handle null or undefined data
+                if (extractedData === null || extractedData === undefined) {
+                    return {
+                        data: [],
+                        error: null,
+                    };
+                }
+
+                // Validate data is an array
+                if (!Array.isArray(extractedData)) {
+                    console.error('[API] Invalid question sets response format: expected array, got', typeof extractedData);
+                    return {
+                        data: [],
+                        error: { message: 'Invalid response format: expected array' } as any,
+                    };
+                }
+
+                // Validate and normalize each question set
+                const validatedData = extractedData.map((set: any, index: number) => {
+                    // Ensure questions is an array (handle null/undefined)
+                    if (!set.questions || !Array.isArray(set.questions)) {
+                        set.questions = [];
+                    }
+
+                    // Validate each question has required fields
+                    set.questions = set.questions.map((question: any) => {
+                        // Ensure children is an array
+                        if (!question.children || !Array.isArray(question.children)) {
+                            question.children = [];
+                        }
+
+                        // Ensure answers is an array
+                        if (!question.answers || !Array.isArray(question.answers)) {
+                            question.answers = [];
+                        }
+
+                        return question;
+                    });
+
+                    return set;
+                });
+
+                return {
+                    data: validatedData,
+                    error: null,
+                };
+            } catch (error) {
+                console.error('[API] Exception fetching question sets:', error);
+                return {
+                    data: [],
+                    error: error as any,
+                };
+            }
+        },
+    },
+
+    /**
      * Statistics for landing page
      */
     stats: {

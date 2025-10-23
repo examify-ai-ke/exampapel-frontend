@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (result.data) {
       const paper = result.data;
-      const title = paper.title?.title + paper.description?.description  || paper.identifying_name || 'Exam Paper';
+      const title = paper.title?.title + paper.description?.description || paper.identifying_name || 'Exam Paper';
       const description = paper.identifying_name || paper.description?.description || 'View exam paper details and questions';
       const institution = paper.institution?.name || '';
 

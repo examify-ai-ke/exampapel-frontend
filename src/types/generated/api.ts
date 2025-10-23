@@ -3064,7 +3064,7 @@ export interface paths {
         };
         /**
          * Get Question Sets By Exam Paper
-         * @description Gets all QuestionSets that belong to a specific exam paper with questions count
+         * @description Gets all QuestionSets that belong to a specific exam paper with main and sub-questions
          */
         get: operations["get_question_sets_by_exam_paper_api_v1_question_set_by_exam_paper__exam_paper_id__get"];
         put?: never;
@@ -5554,8 +5554,8 @@ export interface components {
                 [key: string]: string;
             }[] | null;
         };
-        /** IGetResponseBase[List[QuestionSetRead]] */
-        IGetResponseBase_List_QuestionSetRead__: {
+        /** IGetResponseBase[List[QuestionSetReadWithQuestions]] */
+        IGetResponseBase_List_QuestionSetReadWithQuestions__: {
             /**
              * Message
              * @default Data got correctly
@@ -5569,7 +5569,7 @@ export interface components {
                 [key: string]: unknown;
             } | unknown | null;
             /** Data */
-            data?: components["schemas"]["QuestionSetRead"][] | null;
+            data?: components["schemas"]["QuestionSetReadWithQuestions"][] | null;
         };
         /** IGetResponseBase[ProgrammeRead] */
         IGetResponseBase_ProgrammeRead_: {
@@ -7522,6 +7522,41 @@ export interface components {
              */
             is_sub_question: boolean | null;
         };
+        /** MainQuestionReadForQuestionSet */
+        MainQuestionReadForQuestionSet: {
+            text: components["schemas"]["QuestionTextSchema"] | null;
+            /** Marks */
+            marks: number | null;
+            numbering_style: components["schemas"]["NumberingStyleEnum"];
+            /** Question Number */
+            question_number: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Slug */
+            slug?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Question Set Id */
+            question_set_id?: string | null;
+            /** Exam Paper Id */
+            exam_paper_id?: string | null;
+            /**
+             * Children
+             * @default []
+             */
+            children: components["schemas"]["SubQuestionReadSimple"][] | null;
+            /**
+             * Answers
+             * @default []
+             */
+            answers: components["schemas"]["AnswerReadForQuestion"][] | null;
+        };
         /** MainQuestionUpdate */
         MainQuestionUpdate: {
             text?: components["schemas"]["QuestionTextSchema"] | null;
@@ -8399,6 +8434,33 @@ export interface components {
             /** Slug */
             slug?: string | null;
         };
+        /** QuestionSetReadWithQuestions */
+        QuestionSetReadWithQuestions: {
+            /** @default Question One */
+            title: components["schemas"]["QuestionSetTitleEnum"] | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Slug */
+            slug?: string | null;
+            /**
+             * Questions
+             * @default []
+             */
+            questions: components["schemas"]["MainQuestionReadForQuestionSet"][] | null;
+            /**
+             * Questions Count
+             * @default 0
+             */
+            questions_count: number | null;
+            /**
+             * Exam Papers Count
+             * @default 0
+             */
+            exam_papers_count: number | null;
+        };
         /**
          * QuestionSetTitleEnum
          * @enum {string}
@@ -8526,6 +8588,34 @@ export interface components {
              * @default false
              */
             is_sub_question: boolean | null;
+        };
+        /** SubQuestionReadSimple */
+        SubQuestionReadSimple: {
+            text: components["schemas"]["QuestionTextSchema"] | null;
+            /** Marks */
+            marks: number | null;
+            numbering_style: components["schemas"]["NumberingStyleEnum"];
+            /** Question Number */
+            question_number: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Slug */
+            slug?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Parent Id */
+            parent_id?: string | null;
+            /**
+             * Answers
+             * @default []
+             */
+            answers: components["schemas"]["AnswerReadForQuestion"][] | null;
         };
         /** SubQuestionUpdate */
         SubQuestionUpdate: {
@@ -14204,7 +14294,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IGetResponseBase_List_QuestionSetRead__"];
+                    "application/json": components["schemas"]["IGetResponseBase_List_QuestionSetReadWithQuestions__"];
                 };
             };
             /** @description Validation Error */
