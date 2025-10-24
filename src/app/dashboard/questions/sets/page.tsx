@@ -120,14 +120,14 @@ export default function QuestionSetsPage() {
                 adminAPI.questions.list({ limit: 100 }) // Load questions to show in hierarchy (API max limit is 100)
             ]);
 
-            console.log('Question sets API response:', questionSetsResponse);
-            console.log('Questions API response:', questionsResponse);
+            // console.log('Question sets API response:', questionSetsResponse);
+            // console.log('Questions API response:', questionsResponse);
 
             if (!questionSetsResponse.error && questionSetsResponse.data) {
                 const responseData = questionSetsResponse.data.data || questionSetsResponse.data;
                 const items = responseData.items || [];
 
-                console.log('Question sets loaded:', items);
+                // console.log('Question sets loaded:', items);
                 setQuestionSets(items);
                 setTotalItems(responseData.total || items.length);
                 setTotalPages(Math.ceil((responseData.total || items.length) / ITEMS_PER_PAGE));

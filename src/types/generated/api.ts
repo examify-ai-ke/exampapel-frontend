@@ -4674,8 +4674,8 @@ export interface components {
             /** Tags */
             tags: unknown[] | null;
             title: components["schemas"]["ExamTitleReadForExamPaperRead"] | null;
-            /** Identifying Name */
-            identifying_name: string;
+            /** Slug */
+            slug?: string | null;
         };
         /** ExamPaperReadMinimal */
         ExamPaperReadMinimal: {
