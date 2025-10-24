@@ -100,7 +100,8 @@ export function QuestionSetSelector({
     }
 
     const filteredQuestionSets = questionSets
-        .filter(qs => !excludeQuestionSetIds.includes(qs.id))
+        .filter(qs => qs.id && typeof qs.id === 'string' && qs.id.trim() !== '')
+        .filter(qs => !excludeQuestionSetIds.includes(qs.id || ''))
         .filter(qs => {
             if (!searchQuery) return true
             const query = searchQuery.toLowerCase()
@@ -144,11 +145,11 @@ export function QuestionSetSelector({
                                 <div
                                     key={qs.id}
                                     className="flex items-start space-x-3 p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors"
-                                    onClick={() => handleToggleQuestionSet(qs.id)}
+                                    onClick={() => handleToggleQuestionSet(qs.id || '')}
                                 >
                                     <Checkbox
-                                        checked={selectedQuestionSetIds.includes(qs.id)}
-                                        onCheckedChange={() => handleToggleQuestionSet(qs.id)}
+                                        checked={selectedQuestionSetIds.includes(qs.id || '')}
+                                        onCheckedChange={() => handleToggleQuestionSet(qs.id || '')}
                                         className="mt-1"
                                     />
                                     <div className="flex-1 space-y-1">

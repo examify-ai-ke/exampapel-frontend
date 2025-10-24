@@ -1422,6 +1422,14 @@ const adminAPI = {
 
     /**
      * Questions Management
+     * 
+     * Note: Questions cannot be added directly to Exam Papers.
+     * Questions must be added to Question Sets, which are then linked to Exam Papers.
+     * 
+     * Workflow to add questions to an exam paper:
+     * 1. Create or get a Question Set
+     * 2. Link the Question Set to the Exam Paper (examPapers.addQuestionSet)
+     * 3. Create questions with the question_set_id (questions.createMain)
      */
     questions: {
         async list(params?: {
@@ -1441,6 +1449,27 @@ const adminAPI = {
             const response = await api.GET('/api/v1/questions', {
                 params: {
                     query: params
+                }
+            });
+            return response;
+        },
+        
+        /**
+         * Get questions for a specific exam paper (through its question sets)
+         * This is a convenience method that fetches all questions across all question sets
+         */
+        async getByExamPaper(examPaperId: string, params?: {
+            skip?: number;
+            limit?: number;
+            include_children?: boolean;
+        }) {
+            const response = await api.GET('/api/v1/questions', {
+                params: {
+                    query: {
+                        exam_paper_id: examPaperId,
+                        question_type: 'main',
+                        ...params
+                    }
                 }
             });
             return response;

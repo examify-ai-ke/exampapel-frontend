@@ -55,7 +55,7 @@ type ExamPaperRead = components['schemas']['ExamPaperRead'];
 const mainQuestionSchema = z.object({
     text: z.string().min(10, 'Question text must be at least 10 characters'),
     marks: z.number().min(1, 'Marks must be at least 1').max(100, 'Marks cannot exceed 100'),
-    numbering_style: z.enum(['roman', 'alpha']),
+    numbering_style: z.enum(['roman', 'alpha', 'numerical']),
     question_number: z.string().min(1, 'Question number is required'),
     question_set_id: z.string().min(1, 'Question set is required'),
     exam_paper_id: z.string().min(1, 'Exam paper is required'),
@@ -64,7 +64,7 @@ const mainQuestionSchema = z.object({
 const subQuestionSchema = z.object({
     text: z.string().min(10, 'Question text must be at least 10 characters'),
     marks: z.number().min(1, 'Marks must be at least 1').max(50, 'Marks cannot exceed 50'),
-    numbering_style: z.enum(['roman', 'alpha']),
+    numbering_style: z.enum(['roman', 'alpha', 'numerical']),
     question_number: z.string().min(1, 'Question number is required'),
     parent_id: z.string().min(1, 'Parent question is required'),
 });
@@ -564,6 +564,7 @@ export default function CreateQuestionPage() {
                                                 <SelectContent>
                                                     <SelectItem value="roman">Roman (i, ii, iii)</SelectItem>
                                                     <SelectItem value="alpha">Alpha (a, b, c)</SelectItem>
+                                                    <SelectItem value="numerical">Numerical (1, 2, 3)</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -625,6 +626,7 @@ export default function CreateQuestionPage() {
                                                 <SelectContent>
                                                     <SelectItem value="roman">Roman (i, ii, iii)</SelectItem>
                                                     <SelectItem value="alpha">Alpha (a, b, c)</SelectItem>
+                                                    <SelectItem value="numerical">Numerical (1, 2, 3)</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />

@@ -54,14 +54,10 @@ import { getAuthToken } from '@/lib/api'
 import type { components } from '@/types/generated/api'
 import { useUIStore } from '@/stores/ui'
 import { QuestionSetSelector } from '@/components/features/question-set-selector'
+import { QuestionForm } from '@/components/forms/question-form'
+import { QuestionList } from '@/components/features/question-list'
 import { parseQuestionSetsResponse, sanitizeQuestionSetData } from '@/lib/api-response-utils'
 import { executeAPICall, handleAPIError, apiPerformanceMonitor } from '@/lib/api-error-handler'
-
-type ExamTitleRead = components['schemas']['ExamTitleRead']
-type ExamDescriptionRead = components['schemas']['ExamDescriptionRead']
-type InstitutionRead = components['schemas']['InstitutionRead']
-type CourseRead = components['schemas']['CourseRead']
-type InstructionRead = components['schemas']['InstructionRead']
 type QuestionRead = components['schemas']['QuestionRead'] & {
     // Add missing properties for UI compatibility
     question_text?: string
@@ -218,17 +214,19 @@ function QuestionSetItem({ questionSet, index, onRemove }: QuestionSetItemProps)
 
 interface AddQuestionDialogProps {
     availableQuestions: QuestionRead[]
-    onAddQuestion: (question: QuestionRead) => void
+    questionSets: QuestionSetRead[]
+    onAddQuestion: (question: QuestionRead, questionSetId: string) => void
 }
 
 
 
-function AddQuestionDialog({ availableQuestions, onAddQuestion }: AddQuestionDialogProps) {
+function AddQuestionDialog({ availableQuestions, questionSets, onAddQuestion }: AddQuestionDialogProps) {
     const [open, setOpen] = useState(false)
     const [selectedQuestions, setSelectedQuestions] = useState<string[]>([])
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedDifficulty, setSelectedDifficulty] = useState<string>('')
     const [selectedQuestionType, setSelectedQuestionType] = useState<string>('')
+    const [selectedQuestionSetId, setSelectedQuestionSetId] = useState<string>('')
 
     const filteredQuestions = useMemo(() => {
         return availableQuestions.filter(question => {
@@ -240,9 +238,9 @@ function AddQuestionDialog({ availableQuestions, onAddQuestion }: AddQuestionDia
 
             const matchesSearch = !searchQuery ||
                 questionText.toLowerCase().includes(searchQuery.toLowerCase())
-            const matchesDifficulty = !selectedDifficulty ||
+            const matchesDifficulty = !selectedDifficulty || selectedDifficulty === 'all' ||
                 (question.difficulty_level || 'medium') === selectedDifficulty
-            const matchesType = !selectedQuestionType ||
+            const matchesType = !selectedQuestionType || selectedQuestionType === 'all' ||
                 (question.question_type || question.numbering_style || 'Question') === selectedQuestionType
 
             return matchesSearch && matchesDifficulty && matchesType
@@ -250,13 +248,19 @@ function AddQuestionDialog({ availableQuestions, onAddQuestion }: AddQuestionDia
     }, [availableQuestions, searchQuery, selectedDifficulty, selectedQuestionType])
 
     const handleAddSelected = () => {
+        if (!selectedQuestionSetId) {
+            // Show error - need to select a question set
+            return
+        }
+
         selectedQuestions.forEach(questionId => {
             const question = availableQuestions.find(q => q.id === questionId)
             if (question) {
-                onAddQuestion(question)
+                onAddQuestion(question, selectedQuestionSetId)
             }
         })
         setSelectedQuestions([])
+        setSelectedQuestionSetId('')
         setOpen(false)
     }
 
@@ -276,11 +280,33 @@ function AddQuestionDialog({ availableQuestions, onAddQuestion }: AddQuestionDia
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Add Questions from Question Bank</DialogTitle>
+                    <DialogTitle>Add Questions to Question Set</DialogTitle>
                     <DialogDescription>
-                        Select questions to add to this exam paper. Use filters to find specific questions.
+                        Select a question set and questions to add to this exam paper. Use filters to find specific questions.
                     </DialogDescription>
                 </DialogHeader>
+
+                {/* Question Set Selection */}
+                <div className="space-y-4 border-b pb-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="question-set-select">Select Question Set</Label>
+                        <Select value={selectedQuestionSetId} onValueChange={setSelectedQuestionSetId}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Choose a question set to add questions to" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {questionSets.filter(qs => qs.id && typeof qs.id === 'string' && qs.id.trim() !== '').map((qs) => (
+                                    <SelectItem key={qs.id} value={qs.id}>
+                                        {qs.title || 'Untitled Question Set'} ({qs.questions_count || 0} questions)
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        {!selectedQuestionSetId && (
+                            <p className="text-sm text-red-600">Please select a question set first</p>
+                        )}
+                    </div>
+                </div>
 
                 {/* Search and Filter Controls */}
                 <div className="space-y-4 border-b pb-4">
@@ -307,7 +333,7 @@ function AddQuestionDialog({ availableQuestions, onAddQuestion }: AddQuestionDia
                                 <SelectValue placeholder="Difficulty" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All</SelectItem>
+                                <SelectItem value="all">All</SelectItem>
                                 <SelectItem value="easy">Easy</SelectItem>
                                 <SelectItem value="medium">Medium</SelectItem>
                                 <SelectItem value="hard">Hard</SelectItem>
@@ -319,7 +345,7 @@ function AddQuestionDialog({ availableQuestions, onAddQuestion }: AddQuestionDia
                                 <SelectValue placeholder="Type" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All Types</SelectItem>
+                                <SelectItem value="all">All Types</SelectItem>
                                 <SelectItem value="multiple_choice">MCQ</SelectItem>
                                 <SelectItem value="essay">Essay</SelectItem>
                                 <SelectItem value="short_answer">Short Answer</SelectItem>
@@ -379,7 +405,10 @@ function AddQuestionDialog({ availableQuestions, onAddQuestion }: AddQuestionDia
                     <Button variant="outline" onClick={() => setOpen(false)}>
                         Cancel
                     </Button>
-                    <Button onClick={handleAddSelected} disabled={selectedQuestions.length === 0}>
+                    <Button
+                        onClick={handleAddSelected}
+                        disabled={selectedQuestions.length === 0 || !selectedQuestionSetId}
+                    >
                         Add Selected Questions ({selectedQuestions.length})
                     </Button>
                 </DialogFooter>
@@ -436,6 +465,13 @@ export default function EditExamPaperPage() {
     const [showAddQuestionSetDialog, setShowAddQuestionSetDialog] = useState(false)
     const [selectedQuestionSetIds, setSelectedQuestionSetIds] = useState<string[]>([])
     const [addingQuestionSets, setAddingQuestionSets] = useState(false)
+    const [showAddQuestionDialog, setShowAddQuestionDialog] = useState(false)
+    const [newQuestionText, setNewQuestionText] = useState('')
+    const [newQuestionMarks, setNewQuestionMarks] = useState(1)
+    const [newQuestionSetId, setNewQuestionSetId] = useState('')
+    const [isSubQuestion, setIsSubQuestion] = useState(false)
+    const [parentQuestionId, setParentQuestionId] = useState('')
+    const [mainQuestions, setMainQuestions] = useState<any[]>([])
 
     const form = useForm<ExamPaperEditFormData>({
         resolver: zodResolver(examPaperEditSchema),
@@ -724,6 +760,28 @@ export default function EditExamPaperPage() {
         })
     }, [questionSets])
 
+    // Load main questions when dialog opens for sub-questions
+    useEffect(() => {
+        if (showAddQuestionDialog && isSubQuestion) {
+            const loadMainQuestions = async () => {
+                try {
+                    const response = await adminAPI.questions.list({
+                        question_type: 'main',
+                        exam_paper_id: params.id as string,
+                        limit: 100
+                    })
+                    if (!response.error && response.data) {
+                        const data = (response.data as any).data
+                        setMainQuestions(data?.items || [])
+                    }
+                } catch (error) {
+                    console.error('Error loading main questions:', error)
+                }
+            }
+            loadMainQuestions()
+        }
+    }, [showAddQuestionDialog, isSubQuestion, params.id])
+
     // Server-side institution search with debounce
     useEffect(() => {
         let cancelled = false
@@ -950,10 +1008,55 @@ export default function EditExamPaperPage() {
         }
     }
 
-    const handleAddQuestion = (question: QuestionRead) => {
-        // Check if question is already added
-        if (!questions.find(q => q.id === question.id)) {
-            setQuestions(prev => [...prev, { ...question, order_index: prev.length + 1 }])
+    const handleAddQuestion = async (question: QuestionRead, questionSetId: string) => {
+        try {
+            // Create the question in the question set
+            // Convert text to EditorJS format if it's a string
+            const textContent = question.text || question.question_text || ''
+            const textData = typeof textContent === 'string' ? {
+                time: Date.now(),
+                blocks: [{
+                    id: 'question-block',
+                    type: 'paragraph',
+                    data: { text: textContent }
+                }]
+            } : textContent
+
+            const questionData = {
+                question_set_id: questionSetId,
+                exam_paper_id: params.id as string,
+                text: textData,
+                marks: question.marks || 1,
+                numbering_style: question.numbering_style || 'a',
+                question_number: '1', // Will be set by backend
+            }
+
+            const response = await adminAPI.questions.createMain(questionData)
+
+            if (!response.error && response.data) {
+                addNotification({
+                    type: 'success',
+                    title: 'Question Added Successfully',
+                    message: 'Question has been added to the question set.'
+                })
+
+                // Reload question sets to show the updated count
+                await reloadQuestionSets()
+            } else {
+                const errorMessage = (response.error as any)?.message || 'Failed to add question'
+                addNotification({
+                    type: 'error',
+                    title: 'Failed to Add Question',
+                    message: errorMessage
+                })
+            }
+        } catch (error) {
+            console.error('Error adding question:', error)
+            addNotification({
+                type: 'error',
+                title: 'Error',
+                message: 'An unexpected error occurred while adding the question.'
+            })
         }
     }
 
@@ -1371,7 +1474,7 @@ export default function EditExamPaperPage() {
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
-                                                                {titles.map((title) => (
+                                                                {titles.filter(title => title.id && title.id.trim() !== '').map((title) => (
                                                                     <SelectItem key={title.id} value={title.id}>
                                                                         {title.name}
                                                                     </SelectItem>
@@ -1408,7 +1511,7 @@ export default function EditExamPaperPage() {
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
-                                                                {descriptions.map((desc) => (
+                                                                {descriptions.filter(desc => desc.id && desc.id.trim() !== '').map((desc) => (
                                                                     <SelectItem key={desc.id} value={desc.id}>
                                                                         {desc.name}
                                                                     </SelectItem>
@@ -1524,7 +1627,7 @@ export default function EditExamPaperPage() {
                                                             {institutionsLoading ? (
                                                                 <div className="px-3 py-2 text-sm text-muted-foreground">Searching...</div>
                                                             ) : institutions.length > 0 ? (
-                                                                institutions.map((institution) => (
+                                                                institutions.filter(institution => institution.id && institution.id.trim() !== '').map((institution) => (
                                                                     <SelectItem key={institution.id} value={institution.id}>
                                                                         <div className="flex flex-col w-full">
                                                                             <div className="flex items-center gap-2">
@@ -1592,7 +1695,7 @@ export default function EditExamPaperPage() {
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent className="max-h-[300px]">
-                                                                {(courses || []).map((course) => (
+                                                                {(courses || []).filter(course => course.id && course.id.trim() !== '').map((course) => (
                                                                     <SelectItem key={course.id} value={course.id}>
                                                                         <div className="flex flex-col w-full">
                                                                             <div className="flex items-center justify-between w-full">
@@ -1713,21 +1816,17 @@ export default function EditExamPaperPage() {
                                         </div>
                                     ) : (
                                         <div className="text-center py-8 text-gray-500">
-                                            <ListChecks className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                                            <h4 className="text-lg font-medium mb-2">No individual questions added</h4>
-                                            <p className="text-sm mb-4">Questions are automatically included when you add question sets above. You can also add individual questions from the question bank.</p>
-                                            <div className="text-xs text-gray-400 space-y-1">
-                                                <p>🔄 <strong>Recommended:</strong> Add question sets first for better organization</p>
-                                                <p>➕ Individual questions can be added for specific needs</p>
-                                                <p>📊 Questions from sets will appear here automatically</p>
-                                            </div>
+                                            <p className="text-sm">No Questions added yet</p>
                                         </div>
                                     )}
 
-                                    <AddQuestionDialog
-                                        availableQuestions={availableQuestions.filter(q => !questions.find(eq => eq.id === q.id))}
-                                        onAddQuestion={handleAddQuestion}
-                                    />
+                                    <Button type="button" variant="outline" className="w-full" onClick={() => {
+                                        setIsSubQuestion(false)
+                                        setShowAddQuestionDialog(true)
+                                    }}>
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Add Question
+                                    </Button>
                                 </CardContent>
                             </Card>
                         </div>
@@ -1823,7 +1922,7 @@ export default function EditExamPaperPage() {
                                     <div className="border rounded-md p-3">
                                         <Label className="text-sm font-medium mb-2 block">Available Instructions</Label>
                                         <div className="max-h-[200px] overflow-y-auto space-y-2">
-                                            {instructions.map((instruction) => {
+                                            {instructions.filter(instruction => instruction.id && instruction.id.trim() !== '').map((instruction) => {
                                                 const isSelected = (form.watch('instruction_ids') || []).includes(instruction.id)
                                                 return (
                                                     <div key={instruction.id} className="flex items-center space-x-2">
@@ -1973,6 +2072,35 @@ export default function EditExamPaperPage() {
                             Create
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Add Question Dialog */}
+            <Dialog open={showAddQuestionDialog} onOpenChange={setShowAddQuestionDialog}>
+                <DialogContent className="max-w-[70vw] w-full max-h-[85vh] overflow-y-auto mx-4">
+                    <DialogHeader>
+                        <DialogTitle>Add New Question</DialogTitle>
+                        <DialogDescription>
+                            Fill in the details to create a new question and add it to a question set.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {questionSets.length > 0 ? (
+                        <QuestionForm
+                                questionSetId={questionSets[0]?.id} // Default to the first question set
+                                examPaperId={params.id as string}
+                                availableQuestionSets={questionSets}
+                                availableMainQuestions={questions.filter(q => !q.is_sub_question)}
+                                onSuccess={() => {
+                                    setShowAddQuestionDialog(false)
+                                    reloadQuestionSets()
+                                }}
+                                onCancel={() => setShowAddQuestionDialog(false)}
+                            />
+                    ) : (
+                        <div className="py-8 text-center">
+                            <p className="text-red-600">Please add a question set to the exam paper before adding questions.</p>
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
 

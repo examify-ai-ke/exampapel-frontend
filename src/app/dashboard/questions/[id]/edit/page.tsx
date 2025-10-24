@@ -41,7 +41,7 @@ type NumberingStyleEnum = components['schemas']['NumberingStyleEnum'];
 const questionEditSchema = z.object({
     question_number: z.string().min(1, 'Question number is required'),
     marks: z.number().min(0, 'Marks must be non-negative'),
-    numbering_style: z.enum(['roman', 'alpha'] as const),
+    numbering_style: z.enum(['roman', 'alpha', 'numerical'] as const),
     question_set_id: z.string().nullable().optional(),
     exam_paper_id: z.string().nullable().optional(),
     parent_id: z.string().nullable().optional(),
@@ -516,6 +516,7 @@ export default function EditQuestionPage() {
                                         <SelectContent>
                                             <SelectItem value="roman">Roman (i, ii, iii)</SelectItem>
                                             <SelectItem value="alpha">Alphabetic (a, b, c)</SelectItem>
+                                            <SelectItem value="numerical">Numerical (1, 2, 3)</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     {form.formState.errors.numbering_style && (

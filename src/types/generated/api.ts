@@ -7681,7 +7681,7 @@ export interface components {
          * NumberingStyleEnum
          * @enum {string}
          */
-        NumberingStyleEnum: "roman" | "alpha";
+        NumberingStyleEnum: "roman" | "alpha" | "numerical";
         /** PageBase[AnswerRead] */
         PageBase_AnswerRead_: {
             /** Items */
