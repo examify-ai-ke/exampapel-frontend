@@ -41,11 +41,14 @@ interface QuestionFormProps {
     onCancel?: () => void
     availableQuestionSets?: QuestionSetRead[]
     availableMainQuestions?: QuestionRead[]
+    parentQuestionId?: string
+    isSubQuestion?: boolean
 }
 
-export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, onCancel, availableQuestionSets, availableMainQuestions }: QuestionFormProps) {
+export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, onCancel, availableQuestionSets, availableMainQuestions, parentQuestionId, isSubQuestion: isSubQuestionProp }: QuestionFormProps) {
     const { addNotification } = useUIStore()
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [editorHolderId] = useState(() => `question-editor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`)
     const isEditing = !!question
 
     const form = useForm<QuestionFormData>({
@@ -57,10 +60,10 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
                 version: '2.22.2'
             },
             marks: 1,
-            numbering_style: 'roman',
-            question_number: '1',
-            question_type: 'main',
-            parent_id: '',
+            numbering_style: isSubQuestionProp ? 'alpha' : 'roman',
+            question_number: isSubQuestionProp ? 'a' : '1',
+            question_type: isSubQuestionProp ? 'sub' : 'main',
+            parent_id: parentQuestionId || '',
             question_set_id: questionSetId || '',
         },
     })
@@ -84,6 +87,16 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
             }
         }
     }, [form.watch('numbering_style')]);
+
+    // Update form when parentQuestionId or isSubQuestion changes
+    useEffect(() => {
+        if (isSubQuestionProp && parentQuestionId) {
+            form.setValue('question_type', 'sub')
+            form.setValue('parent_id', parentQuestionId)
+            form.setValue('numbering_style', 'alpha')
+            form.setValue('question_number', 'a')
+        }
+    }, [parentQuestionId, isSubQuestionProp, form])
 
     // Populate form with existing question data for editing
     useEffect(() => {
@@ -159,116 +172,113 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
     }
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>{isEditing ? 'Edit Question' : 'Create New Question'}</CardTitle>
-                <CardDescription>
-                    {isEditing ? 'Update the question details below.' : 'Fill in the details to create a new question in this question set.'}
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        {/* Question Type */}
-                        <FormField
-                            control={form.control}
-                            name="question_type"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Question Type</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select question type" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="main">Main Question</SelectItem>
-                                            <SelectItem value="sub">Sub Question</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormDescription>
-                                        Main questions are top-level questions. Sub questions are follow-up questions.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 text-base">
+                        {/* Row 1: Question Type and Question Set/Parent */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Question Type */}
+                            <FormField
+                                control={form.control}
+                                name="question_type"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Question Type</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select question type" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="main">Main Question</SelectItem>
+                                                <SelectItem value="sub">Sub Question</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormDescription>
+                                            Main questions are top-level questions. Sub questions are follow-up questions.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Question Set (for main questions) */}
+                            {form.watch('question_type') === 'main' && availableQuestionSets && availableQuestionSets.length > 0 && (
+                                <FormField
+                                    control={form.control}
+                                    name="question_set_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Question Set</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select a question set" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {availableQuestionSets.map((qs) => (
+                                                        <SelectItem key={qs.id} value={qs.id}>
+                                                            {qs.title || 'Unnamed Set'} ({qs.questions_count || 0} questions)
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormDescription>
+                                                Choose the question set that this main question belongs to.
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             )}
-                        />
 
-                        {/* Question Set (for main questions) */}
-                        {form.watch('question_type') === 'main' && availableQuestionSets && availableQuestionSets.length > 0 && (
+                            {/* Parent Question (for sub questions) */}
+                            {form.watch('question_type') === 'sub' && availableMainQuestions && availableMainQuestions.length > 0 && (
+                                <FormField
+                                    control={form.control}
+                                    name="parent_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Parent Question</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select parent question" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {availableMainQuestions.map((q) => (
+                                                        <SelectItem key={q.id} value={q.id}>
+                                                            Q{q.question_number}: {String(q.text?.blocks?.[0]?.data?.text || 'Question')}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormDescription>
+                                                Choose the main question that this sub-question belongs to.
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
+                        </div>
+
+                        {/* Row 2: Numbering Style and Question Number */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Numbering Style */}
                             <FormField
                                 control={form.control}
-                                name="question_set_id"
+                                name="numbering_style"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Question Set</FormLabel>
+                                        <FormLabel>Numbering Style</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select a question set" />
+                                                    <SelectValue placeholder="Select numbering style" />
                                                 </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {availableQuestionSets.map((qs) => (
-                                                    <SelectItem key={qs.id} value={qs.id}>
-                                                        {qs.title || 'Unnamed Set'} ({qs.questions_count || 0} questions)
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormDescription>
-                                            Choose the question set that this main question belongs to.
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        )}
-
-                        {/* Parent Question (for sub questions) */}
-                        {form.watch('question_type') === 'sub' && availableMainQuestions && availableMainQuestions.length > 0 && (
-                            <FormField
-                                control={form.control}
-                                name="parent_id"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Parent Question</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select parent question" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {availableMainQuestions.map((q) => (
-                                                    <SelectItem key={q.id} value={q.id}>
-                                                        Q{q.question_number}: {String(q.text?.blocks?.[0]?.data?.text || 'Question')}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormDescription>
-                                            Choose the main question that this sub-question belongs to.
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        )}
-
-                        {/* Numbering Style (first field) */}
-                        <FormField
-                            control={form.control}
-                            name="numbering_style"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Numbering Style</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select numbering style" />
-                                            </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
                                             <SelectItem value="roman">Roman (i, ii, iii)</SelectItem>
@@ -284,7 +294,6 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
                             )}
                         />
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Question Number */}
                             <FormField
                                 control={form.control}
@@ -332,7 +341,10 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
                                     );
                                 }}
                             />
+                        </div>
 
+                        {/* Row 3: Marks */}
+                        <div className="grid grid-cols-1 gap-4">
                             {/* Marks */}
                             <FormField
                                 control={form.control}
@@ -380,21 +392,25 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
                             control={form.control}
                             name="text"
                             render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Question Text</FormLabel>
+                                <FormItem className="w-full">
+                                    <FormLabel className="text-base font-semibold">Question Text</FormLabel>
+                                    <FormDescription className="text-sm text-gray-600 mb-2">
+                                        Use the rich text editor below to write your question. Click inside to start typing. 
+                                        Use the toolbar that appears to format text, add lists, tables, code blocks, and more.
+                                    </FormDescription>
                                     <FormControl>
-                                        <div className="rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-within:outline-none focus-within:ring-1 focus-within:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
-                                            <div className="min-h-[200px] max-h-[300px] overflow-y-auto">
+                                        <div className="w-full rounded-md border-2 border-input bg-white hover:border-primary/50 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                                            <div className="w-full min-h-[250px] max-h-[400px] overflow-y-auto p-4">
                                                 <Editor
                                                     data={field.value}
                                                     onChange={field.onChange}
-                                                    holder="question-editor"
+                                                    holder={editorHolderId}
                                                 />
                                             </div>
                                         </div>
                                     </FormControl>
-                                    <FormDescription>
-                                        Enter the full text of the question.
+                                    <FormDescription className="text-xs text-gray-500 mt-1">
+                                        💡 Tip: Press Tab for formatting options, or use "/" to see available blocks
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
@@ -403,7 +419,7 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
 
 
                         {/* Form Actions */}
-                        <div className="flex justify-end space-x-2">
+                        <div className="flex justify-end space-x-2 pt-4 border-t">
                             {onCancel && (
                                 <Button type="button" variant="outline" onClick={onCancel}>
                                     Cancel
@@ -424,7 +440,5 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
                         </div>
                     </form>
                 </Form>
-            </CardContent>
-        </Card>
     )
 }
