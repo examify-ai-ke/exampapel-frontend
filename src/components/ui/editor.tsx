@@ -15,17 +15,29 @@ import ImageTool from '@editorjs/image';
 interface EditorProps {
   data: OutputData;
   onChange: (data: OutputData) => void;
-  holder: string;
+  holder?: string; // Make optional since we'll generate it internally
 }
 
-const Editor: React.FC<EditorProps> = ({ data, onChange, holder }) => {
+const Editor: React.FC<EditorProps> = ({ data, onChange, holder: externalHolder }) => {
   const ref = useRef<EditorJS | null>(null);
   const [isReady, setIsReady] = useState(false);
   const isInitializing = useRef(false);
+  const isMounted = useRef(true);
+  const cleanupTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Generate a stable holder ID once on mount
+  const [holder] = useState(() =>
+    externalHolder || `editorjs-${Math.random().toString(36).substr(2, 9)}`
+  );
+
+  const initialDataRef = useRef(data);
 
   useEffect(() => {
+    isMounted.current = true;
+
     // Prevent multiple initializations
     if (isInitializing.current) {
+      console.log('Editor already initializing, skipping...');
       return;
     }
 
@@ -39,21 +51,25 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, holder }) => {
 
       // Clean up any existing editor instance
       if (ref.current) {
+        console.log('Cleaning up existing editor instance');
         try {
-          await ref.current.isReady;
-          ref.current.destroy();
-          ref.current = null;
+          if (ref.current.destroy) {
+            ref.current.destroy();
+          }
         } catch (error) {
           console.warn('Error destroying previous editor:', error);
         }
+        ref.current = null;
       }
 
       isInitializing.current = true;
+      console.log('Initializing Editor.js with data:', data);
 
       try {
         const editor = new EditorJS({
           holder: holder,
           placeholder: 'Click here to start writing your question...',
+          data: initialDataRef.current,
           tools: {
             header: {
               class: Header as any,
@@ -223,7 +239,6 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, holder }) => {
               },
             },
           },
-          data,
           async onChange(api) {
             try {
               const data = await api.saver.save();
@@ -236,8 +251,18 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, holder }) => {
         });
 
         await editor.isReady;
-        ref.current = editor;
-        setIsReady(true);
+
+        if (isMounted.current) {
+          ref.current = editor;
+          setIsReady(true);
+        } else {
+          // Component unmounted during initialization, cleanup immediately
+          try {
+            editor.destroy();
+          } catch (e) {
+            console.warn('Cleanup during init:', e);
+          }
+        }
       } catch (error) {
         console.error('Error initializing editor:', error);
       } finally {
@@ -251,22 +276,33 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, holder }) => {
     }, 100);
 
     return () => {
+      isMounted.current = false;
       clearTimeout(timeoutId);
-      if (ref.current) {
-        ref.current.isReady
-          .then(() => {
-            if (ref.current && ref.current.destroy) {
-              ref.current.destroy();
-              ref.current = null;
-            }
-          })
-          .catch((error) => {
-            console.warn('Error during editor cleanup:', error);
-          });
+
+      // Clear any pending cleanup
+      if (cleanupTimeout.current) {
+        clearTimeout(cleanupTimeout.current);
+        cleanupTimeout.current = null;
       }
-      isInitializing.current = false;
+
+      // Immediate cleanup - don't wait
+      if (ref.current) {
+        const editorInstance = ref.current;
+        ref.current = null;
+        setIsReady(false);
+        isInitializing.current = false;
+
+        // Destroy synchronously without waiting
+        try {
+          if (editorInstance && typeof editorInstance.destroy === 'function') {
+            editorInstance.destroy();
+          }
+        } catch (error) {
+          // Ignore all cleanup errors
+        }
+      }
     };
-  }, [holder]);
+  }, []); // Empty dependency array - initialize only once!
 
   return (
     <div className="w-full">

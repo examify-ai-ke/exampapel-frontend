@@ -446,6 +446,7 @@ export default function EditExamPaperPage() {
     const [isSubQuestion, setIsSubQuestion] = useState(false)
     const [parentQuestionId, setParentQuestionId] = useState('')
     const [mainQuestions, setMainQuestions] = useState<any[]>([])
+    const [editingQuestion, setEditingQuestion] = useState<QuestionRead | null>(null)
 
     const form = useForm<ExamPaperEditFormData>({
         resolver: zodResolver(examPaperEditSchema),
@@ -1374,8 +1375,11 @@ export default function EditExamPaperPage() {
 
     // Handler for editing a question
     const handleEditQuestion = (question: QuestionRead) => {
-        // Navigate to the question edit page
-        router.push(`/dashboard/questions/${question.id}/edit`)
+        // Open the edit dialog with the question data
+        setEditingQuestion(question)
+        setIsSubQuestion(question.is_sub_question || false)
+        setParentQuestionId(question.parent_id || '')
+        setShowAddQuestionDialog(true)
     }
 
     // Handler for deleting a question
@@ -2154,8 +2158,16 @@ export default function EditExamPaperPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Add Question Dialog */}
-            <Dialog open={showAddQuestionDialog} onOpenChange={setShowAddQuestionDialog}>
+            {/* Add/Edit Question Dialog */}
+            <Dialog open={showAddQuestionDialog} onOpenChange={(open) => {
+                if (!open) {
+                    // Immediately reset to trigger unmount
+                    setEditingQuestion(null)
+                    setIsSubQuestion(false)
+                    setParentQuestionId('')
+                }
+                setShowAddQuestionDialog(open)
+            }}>
                 <DialogContent className="
                     w-[90vw]                 /* Base: almost full width on small screens */
                     sm:max-w-[450px]         /* Small screens (≥640px): up to 450px */
@@ -2165,38 +2177,59 @@ export default function EditExamPaperPage() {
                     max-h-[90vh]             /* Limit height */
                     overflow-y-auto          /* Scroll if content too tall */
                     ">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl">{isSubQuestion ? 'Add Sub-question' : 'Add New Question'}</DialogTitle>
-                        <DialogDescription className="text-base">
-                            {isSubQuestion
-                                ? 'Fill in the details to create a sub-question for the selected main question.'
-                                : 'Fill in the details to create a new question and add it to a question set.'}
-                        </DialogDescription>
-                    </DialogHeader>
-                    {questionSets.length > 0 ? (
-                        <QuestionForm
-                            questionSetId={questionSets[0]?.id} // Default to the first question set
-                            examPaperId={params.id as string}
-                            availableQuestionSets={questionSets}
-                            availableMainQuestions={questionSetQuestions.filter(q => !q.parent_id && !q.is_sub_question)}
-                            parentQuestionId={isSubQuestion ? parentQuestionId : undefined}
-                            isSubQuestion={isSubQuestion}
-                            onSuccess={() => {
-                                setShowAddQuestionDialog(false)
-                                setIsSubQuestion(false)
-                                setParentQuestionId('')
-                                reloadQuestionSets()
-                            }}
-                            onCancel={() => {
-                                setShowAddQuestionDialog(false)
-                                setIsSubQuestion(false)
-                                setParentQuestionId('')
-                            }}
-                        />
-                    ) : (
-                        <div className="py-8 text-center">
-                            <p className="text-red-600">Please add a question set to the exam paper before adding questions.</p>
-                        </div>
+                    {showAddQuestionDialog && (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle className="text-2xl">
+                                    {editingQuestion 
+                                        ? 'Edit Question' 
+                                        : isSubQuestion 
+                                            ? 'Add Sub-question' 
+                                            : 'Add New Question'}
+                                </DialogTitle>
+                                <DialogDescription className="text-base">
+                                    {editingQuestion
+                                        ? 'Update the question details below.'
+                                        : isSubQuestion
+                                            ? 'Fill in the details to create a sub-question for the selected main question.'
+                                            : 'Fill in the details to create a new question and add it to a question set.'}
+                                </DialogDescription>
+                            </DialogHeader>
+                            {questionSetsLoading || loadingQuestions ? (
+                                <div className="py-8 text-center">
+                                    <LoadingSpinner className="mx-auto mb-4" />
+                                    <p className="text-sm text-gray-500">Loading question data...</p>
+                                </div>
+                            ) : questionSets.length > 0 ? (
+                                <QuestionForm
+                                    key={editingQuestion?.id || 'new'}
+                                    question={editingQuestion || undefined}
+                                    questionSetId={editingQuestion?.question_set_id || questionSets[0]?.id}
+                                    examPaperId={params.id as string}
+                                    availableQuestionSets={questionSets || []}
+                                    availableMainQuestions={(questionSetQuestions || []).filter(q => !q.parent_id && !q.is_sub_question)}
+                                    parentQuestionId={isSubQuestion ? parentQuestionId : undefined}
+                                    isSubQuestion={isSubQuestion}
+                                    onSuccess={() => {
+                                        setShowAddQuestionDialog(false)
+                                        setEditingQuestion(null)
+                                        setIsSubQuestion(false)
+                                        setParentQuestionId('')
+                                        reloadQuestionSets()
+                                    }}
+                                    onCancel={() => {
+                                        setShowAddQuestionDialog(false)
+                                        setEditingQuestion(null)
+                                        setIsSubQuestion(false)
+                                        setParentQuestionId('')
+                                    }}
+                                />
+                            ) : (
+                                <div className="py-8 text-center">
+                                    <p className="text-red-600">Please add a question set to the exam paper before adding questions.</p>
+                                </div>
+                            )}
+                        </>
                     )}
                 </DialogContent>
             </Dialog>

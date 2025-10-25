@@ -59,8 +59,8 @@ const EditorRenderer: React.FC<EditorRendererProps> = ({ data, className = '' })
 
       case 'list':
         const ListTag = block.data.style === 'ordered' ? 'ol' : 'ul';
-        const listClass = block.data.style === 'ordered' 
-          ? 'list-decimal list-inside mb-4 space-y-1' 
+        const listClass = block.data.style === 'ordered'
+          ? 'list-decimal list-inside mb-4 space-y-1'
           : 'list-disc list-inside mb-4 space-y-1';
         return (
           <ListTag key={key} className={listClass}>

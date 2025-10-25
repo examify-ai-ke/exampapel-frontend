@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -48,12 +48,37 @@ interface QuestionFormProps {
 export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, onCancel, availableQuestionSets, availableMainQuestions, parentQuestionId, isSubQuestion: isSubQuestionProp }: QuestionFormProps) {
     const { addNotification } = useUIStore()
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [editorHolderId] = useState(() => `question-editor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`)
+    // Generate stable editor ID that only changes when question ID changes
+    const editorHolderId = useMemo(() => 
+        `question-editor-${question?.id || 'new'}`,
+        [question?.id]
+    )
     const isEditing = !!question
+    
+    // Debug logging
+    useEffect(() => {
+        console.log('🔍 QuestionForm mounted/updated:', {
+            isEditing,
+            questionId: question?.id,
+            questionSetId,
+            parentQuestionId,
+            isSubQuestionProp,
+            hasQuestion: !!question,
+            questionData: question
+        });
+    }, [question?.id, isEditing])
 
     const form = useForm<QuestionFormData>({
         resolver: zodResolver(questionFormSchema),
-        defaultValues: {
+        defaultValues: question ? {
+            text: question.text || { time: Date.now(), blocks: [], version: '2.22.2' },
+            marks: question.marks || 1,
+            numbering_style: (question.numbering_style || 'roman') as 'roman' | 'alpha' | 'numerical',
+            question_number: question.question_number || '1',
+            question_type: (question.is_sub_question ? 'sub' : 'main') as 'main' | 'sub',
+            parent_id: question.parent_id || '',
+            question_set_id: question.question_set_id || '',
+        } : {
             text: {
                 time: Date.now(),
                 blocks: [],
@@ -101,17 +126,22 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
     // Populate form with existing question data for editing
     useEffect(() => {
         if (question) {
-            form.reset({
-                text: question.text,
+            console.log('📝 Populating form with question data:', question);
+            const formData = {
+                text: question.text || { time: Date.now(), blocks: [], version: '2.22.2' },
                 marks: question.marks || 1,
-                numbering_style: question.numbering_style || 'roman',
+                numbering_style: (question.numbering_style || 'roman') as 'roman' | 'alpha' | 'numerical',
                 question_number: question.question_number || '1',
-                question_type: question.is_sub_question ? 'sub' : 'main',
+                question_type: (question.is_sub_question ? 'sub' : 'main') as 'main' | 'sub',
                 parent_id: question.parent_id || '',
                 question_set_id: question.question_set_id || '',
-            })
+            };
+            console.log('📝 Form data to set:', formData);
+            form.reset(formData);
+        } else {
+            console.log('📝 No question data, using defaults');
         }
-    }, [question, form])
+    }, [question?.id])
 
     const onSubmit = async (data: QuestionFormData) => {
         try {
@@ -218,7 +248,7 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        {availableQuestionSets.map((qs) => (
+                                                        {(availableQuestionSets || []).map((qs) => (
                                                             <SelectItem key={qs.id} value={qs.id}>
                                                                 {qs.title || 'Unnamed Set'} ({qs.questions_count || 0} questions)
                                                             </SelectItem>
@@ -248,7 +278,7 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        {availableMainQuestions.map((q) => (
+                                                        {(availableMainQuestions || []).map((q) => (
                                                             <SelectItem key={q.id} value={q.id}>
                                                                 Q{q.question_number}: {String(q.text?.blocks?.[0]?.data?.text || 'Question')}
                                                             </SelectItem>
