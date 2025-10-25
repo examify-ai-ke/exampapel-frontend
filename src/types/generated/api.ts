@@ -3356,6 +3356,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/questions/image/url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Question Image By Url
+         * @description Upload an image from URL for use in Editor.js question content.
+         *
+         *     This endpoint fetches an image from a URL and stores it in S3/Minio.
+         *     Designed for Editor.js uploadByUrl functionality.
+         */
+        post: operations["upload_question_image_by_url_api_v1_questions_image_url_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/questions/stats": {
         parameters: {
             query?: never;
@@ -4127,6 +4150,11 @@ export interface components {
              * Format: binary
              */
             image_file: string;
+        };
+        /** Body_upload_question_image_by_url_api_v1_questions_image_url_post */
+        Body_upload_question_image_by_url_api_v1_questions_image_url_post: {
+            /** Url */
+            url: string;
         };
         /** Body_upload_user_image_api_v1_user__user_id__image_post */
         Body_upload_user_image_api_v1_user__user_id__image_post: {
@@ -14810,6 +14838,39 @@ export interface operations {
         requestBody: {
             content: {
                 "multipart/form-data": components["schemas"]["Body_upload_question_image_api_v1_questions_image_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IPostResponseBase_dict_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_question_image_by_url_api_v1_questions_image_url_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Body_upload_question_image_by_url_api_v1_questions_image_url_post"];
             };
         };
         responses: {

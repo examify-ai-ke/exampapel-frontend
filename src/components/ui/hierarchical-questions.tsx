@@ -30,6 +30,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { formatDate } from '@/lib/utils';
+import EditorRenderer from '@/components/ui/editor-renderer';
 import type { components } from '@/types/generated/api';
 
 // Type definitions
@@ -117,7 +118,6 @@ const SubQuestionDisplay: React.FC<SubQuestionDisplayProps> = ({
     showActions = true,
 }) => {
     const [showAnswers, setShowAnswers] = useState(false);
-    const questionText = extractQuestionText(question);
     const hasAnswers = question.answers && question.answers.length > 0;
 
     return (
@@ -142,7 +142,10 @@ const SubQuestionDisplay: React.FC<SubQuestionDisplayProps> = ({
                             </div>
                         </div>
 
-                        <p className="text-sm text-gray-800 mb-2 font-medium">{questionText}</p>
+                        {/* Render question content using EditorRenderer */}
+                        <div className="text-sm text-gray-800 mb-2">
+                            {question.text && <EditorRenderer data={question.text} className="prose-sm" />}
+                        </div>
 
                         <div className="flex items-center space-x-4 text-xs text-gray-500">
                             <span>Created: {formatDate(question.created_at)}</span>
@@ -262,7 +265,6 @@ const MainQuestionDisplay: React.FC<MainQuestionDisplayProps> = ({
 }) => {
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
     const [showAnswers, setShowAnswers] = useState(false);
-    const questionText = extractQuestionText(question);
     const hasAnswers = question.answers && question.answers.length > 0;
     const hasSubQuestions = subQuestions.length > 0;
 
@@ -311,7 +313,10 @@ const MainQuestionDisplay: React.FC<MainQuestionDisplayProps> = ({
                             )}
                         </div>
 
-                        <p className="text-gray-800 mb-3 font-medium">{questionText}</p>
+                        {/* Render question content using EditorRenderer */}
+                        <div className="text-gray-800 mb-3">
+                            {question.text && <EditorRenderer data={question.text} className="prose-sm" />}
+                        </div>
 
                         <div className="flex items-center space-x-4 text-xs text-gray-500">
                             <span>Created: {formatDate(question.created_at)}</span>

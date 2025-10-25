@@ -101,10 +101,125 @@ const Editor: React.FC<EditorProps> = ({ data, onChange, holder }) => {
             image: {
               class: ImageTool as any,
               config: {
-                endpoints: {
-                  byFile: 'http://localhost:3001/api/upload-image',
-                  byUrl: 'http://localhost:3001/api/fetch-image',
+                uploader: {
+                  /**
+                   * Upload file to the server and return an uploaded image data
+                   * @param {File} file - file selected from the device or pasted by drag-n-drop
+                   * @return {Promise.<{success, file: {url}}>}
+                   */
+                  async uploadByFile(file: File) {
+                    try {
+                      console.log('Starting image upload:', file.name, file.type, file.size);
+
+                      // Use the admin API client for image upload
+                      const { default: adminAPI } = await import('@/lib/api-admin');
+                      const response = await adminAPI.questions.uploadImage(file);
+
+                      console.log('Upload response:', response);
+
+                      // Check for errors
+                      if (response.error) {
+                        console.error('Upload failed with error:', response.error);
+                        throw new Error('Upload failed');
+                      }
+
+                      // The API returns data wrapped in { message, meta, data: { success, file } }
+                      const result = response.data;
+                      console.log('Upload successful, result:', result);
+
+                      // Check if result has the expected structure
+                      if (result && typeof result === 'object') {
+                        // Check if it's wrapped in data property
+                        if ('data' in result && result.data && typeof result.data === 'object') {
+                          const innerData = result.data as any;
+                          if ('success' in innerData && 'file' in innerData) {
+                            // Return the inner data which has Editor.js format
+                            return {
+                              success: innerData.success,
+                              file: innerData.file
+                            };
+                          }
+                        }
+                        // Check if it's already in Editor.js format (direct success and file)
+                        if ('success' in result && 'file' in result) {
+                          return result as { success: number; file: { url: string; name?: string; size?: number; width?: number; height?: number } };
+                        }
+                      }
+
+                      console.error('Unexpected API response format:', result);
+                      throw new Error('Invalid response format from server');
+                    } catch (error) {
+                      console.error('Image upload error:', error);
+                      return {
+                        success: 0,
+                        file: {
+                          url: '',
+                        },
+                      };
+                    }
+                  },
+
+                  /**
+                   * Send URL-string to the server, return uploaded image data
+                   * @param {string} url - pasted image URL
+                   * @return {Promise.<{success, file: {url}}>}
+                   */
+                  async uploadByUrl(url: string): Promise<{ success: number; file: { url: string } }> {
+                    try {
+                      console.log('Starting image upload by URL:', url);
+
+                      // Use the admin API client for image upload by URL
+                      const { default: adminAPI } = await import('@/lib/api-admin');
+                      const response = await adminAPI.questions.uploadImageByUrl(url);
+
+                      console.log('Upload by URL response:', response);
+
+                      // Check for errors
+                      if (response.error) {
+                        console.error('Upload by URL failed with error:', response.error);
+                        throw new Error('Upload failed');
+                      }
+
+                      // The API returns data wrapped in { message, meta, data: { success, file } }
+                      const result = response.data;
+                      console.log('Upload by URL successful, result:', result);
+
+                      // Check if result has the expected structure
+                      if (result && typeof result === 'object') {
+                        // Check if it's wrapped in data property
+                        if ('data' in result && result.data && typeof result.data === 'object') {
+                          const innerData = result.data as any;
+                          if ('success' in innerData && 'file' in innerData) {
+                            // Return the inner data which has Editor.js format
+                            return {
+                              success: innerData.success,
+                              file: innerData.file
+                            };
+                          }
+                        }
+                        // Check if it's already in Editor.js format (direct success and file)
+                        if ('success' in result && 'file' in result) {
+                          return result as { success: number; file: { url: string; name?: string; size?: number; width?: number; height?: number } };
+                        }
+                      }
+
+                      console.error('Unexpected API response format:', result);
+                      throw new Error('Invalid response format from server');
+                    } catch (error) {
+                      console.error('Image upload by URL error:', error);
+                      return {
+                        success: 0,
+                        file: {
+                          url: '',
+                        },
+                      };
+                    }
+                  },
                 },
+                field: 'image',
+                types: 'image/*',
+                captionPlaceholder: 'Enter image caption',
+                buttonContent: 'Select an Image',
               },
             },
           },

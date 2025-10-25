@@ -1609,6 +1609,72 @@ const adminAPI = {
             });
             return response;
         },
+
+        /**
+         * Upload an image file for use in Editor.js question content
+         * Returns the image URL that can be embedded in question text JSON
+         * 
+         * Note: Uses direct fetch instead of API client because FormData uploads
+         * need the browser to set Content-Type header automatically (with boundary)
+         */
+        async uploadImage(imageFile: File) {
+            try {
+                const formData = new FormData();
+                formData.append('image_file', imageFile); // API expects 'image_file' field name
+
+                // Get auth token
+                const token = typeof window !== 'undefined' ? localStorage.getItem('auth-token') : null;
+                
+                // Get base URL
+                const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://fastapi.localhost';
+
+                // Use direct fetch for FormData upload
+                const response = await fetch(`${baseUrl}/api/v1/questions/image`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        // Don't set Content-Type - let browser set it with boundary
+                    },
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    return {
+                        data: undefined,
+                        error: errorData,
+                        response: response as any
+                    };
+                }
+
+                const data = await response.json();
+                return {
+                    data,
+                    error: undefined,
+                    response: response as any
+                };
+            } catch (error) {
+                console.error('Image upload error:', error);
+                return {
+                    data: undefined,
+                    error: error,
+                    response: undefined as any
+                };
+            }
+        },
+
+        /**
+         * Upload an image from URL for use in Editor.js question content
+         * Fetches the image from the URL and stores it in S3/Minio
+         */
+        async uploadImageByUrl(imageUrl: string) {
+            const response = await api.POST('/api/v1/questions/image/url', {
+                body: {
+                    url: imageUrl
+                }
+            });
+            return response;
+        },
     },
 
 

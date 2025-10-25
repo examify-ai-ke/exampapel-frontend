@@ -1,0 +1,181 @@
+'use client';
+
+import React from 'react';
+import type { OutputData } from '@editorjs/editorjs';
+import Image from 'next/image';
+
+interface EditorRendererProps {
+  data: OutputData;
+  className?: string;
+}
+
+/**
+ * EditorRenderer - Renders Editor.js content in read-only mode
+ * 
+ * Supports all Editor.js blocks:
+ * - Paragraph
+ * - Header (h1-h4)
+ * - List (ordered/unordered)
+ * - Quote
+ * - Code
+ * - Image
+ * - Delimiter
+ * - Table
+ * - Embed
+ */
+const EditorRenderer: React.FC<EditorRendererProps> = ({ data, className = '' }) => {
+  if (!data || !data.blocks || data.blocks.length === 0) {
+    return null;
+  }
+
+  const renderBlock = (block: any, index: number) => {
+    const key = `${block.type}-${index}`;
+
+    switch (block.type) {
+      case 'paragraph':
+        return (
+          <p
+            key={key}
+            className="mb-4 text-base leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: block.data.text }}
+          />
+        );
+
+      case 'header':
+        const HeaderTag = `h${block.data.level}` as keyof JSX.IntrinsicElements;
+        const headerClasses = {
+          1: 'text-3xl font-bold mb-4 mt-6',
+          2: 'text-2xl font-bold mb-3 mt-5',
+          3: 'text-xl font-semibold mb-3 mt-4',
+          4: 'text-lg font-semibold mb-2 mt-3',
+        };
+        return (
+          <HeaderTag
+            key={key}
+            className={headerClasses[block.data.level as keyof typeof headerClasses] || headerClasses[1]}
+            dangerouslySetInnerHTML={{ __html: block.data.text }}
+          />
+        );
+
+      case 'list':
+        const ListTag = block.data.style === 'ordered' ? 'ol' : 'ul';
+        const listClass = block.data.style === 'ordered' 
+          ? 'list-decimal list-inside mb-4 space-y-1' 
+          : 'list-disc list-inside mb-4 space-y-1';
+        return (
+          <ListTag key={key} className={listClass}>
+            {block.data.items.map((item: string, i: number) => (
+              <li key={i} dangerouslySetInnerHTML={{ __html: item }} />
+            ))}
+          </ListTag>
+        );
+
+      case 'quote':
+        return (
+          <blockquote key={key} className="border-l-4 border-gray-300 pl-4 py-2 mb-4 italic">
+            <p dangerouslySetInnerHTML={{ __html: block.data.text }} />
+            {block.data.caption && (
+              <cite className="block mt-2 text-sm text-gray-600 not-italic">
+                — {block.data.caption}
+              </cite>
+            )}
+          </blockquote>
+        );
+
+      case 'code':
+        return (
+          <pre key={key} className="bg-gray-100 rounded p-4 mb-4 overflow-x-auto">
+            <code className="text-sm font-mono">{block.data.code}</code>
+          </pre>
+        );
+
+      case 'image':
+        return (
+          <figure key={key} className="mb-4">
+            <div className="relative w-full">
+              {block.data.file?.url && (
+                <img
+                  src={block.data.file.url}
+                  alt={block.data.caption || 'Image'}
+                  className={`
+                    max-w-full h-auto rounded
+                    ${block.data.stretched ? 'w-full' : 'mx-auto'}
+                    ${block.data.withBorder ? 'border border-gray-300' : ''}
+                    ${block.data.withBackground ? 'bg-gray-100 p-4' : ''}
+                  `}
+                  loading="lazy"
+                />
+              )}
+            </div>
+            {block.data.caption && (
+              <figcaption className="text-sm text-gray-600 text-center mt-2">
+                {block.data.caption}
+              </figcaption>
+            )}
+          </figure>
+        );
+
+      case 'delimiter':
+        return (
+          <div key={key} className="flex justify-center my-6">
+            <div className="flex space-x-2">
+              <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+              <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+              <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+            </div>
+          </div>
+        );
+
+      case 'table':
+        return (
+          <div key={key} className="mb-4 overflow-x-auto">
+            <table className="min-w-full border-collapse border border-gray-300">
+              <tbody>
+                {block.data.content?.map((row: string[], rowIndex: number) => (
+                  <tr key={rowIndex}>
+                    {row.map((cell: string, cellIndex: number) => (
+                      <td
+                        key={cellIndex}
+                        className="border border-gray-300 px-4 py-2"
+                        dangerouslySetInnerHTML={{ __html: cell }}
+                      />
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+
+      case 'embed':
+        return (
+          <div key={key} className="mb-4">
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <iframe
+                src={block.data.embed}
+                className="absolute top-0 left-0 w-full h-full rounded"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+            {block.data.caption && (
+              <p className="text-sm text-gray-600 text-center mt-2">{block.data.caption}</p>
+            )}
+          </div>
+        );
+
+      default:
+        console.warn(`Unsupported block type: ${block.type}`);
+        return null;
+    }
+  };
+
+  return (
+    <div className={`prose prose-sm max-w-none ${className}`}>
+      {data.blocks.map((block, index) => renderBlock(block, index))}
+    </div>
+  );
+};
+
+export default EditorRenderer;
