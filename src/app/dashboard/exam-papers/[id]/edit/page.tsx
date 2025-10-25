@@ -564,25 +564,10 @@ export default function EditExamPaperPage() {
                     console.log('📋 [EDIT PAGE] Loading question sets for exam paper:', params.id)
 
                     // Load question sets with nested questions using the dedicated endpoint
-                    console.log('📋 [EDIT PAGE] Loading question sets with questions for exam paper:', params.id)
                     const questionSetsResponse = await adminAPI.questionSets.getByExamPaper(params.id as string)
                     
                     if (!questionSetsResponse.error && questionSetsResponse.data) {
                         const questionSetsData = (questionSetsResponse.data as any).data || []
-                        console.log('📋 [EDIT PAGE] Loaded question sets with nested questions:', {
-                            count: questionSetsData.length,
-                            sets: questionSetsData.map((qs: any) => ({
-                                id: qs.id,
-                                title: qs.title,
-                                questionsCount: qs.questions?.length || 0,
-                                questions: qs.questions?.map((q: any) => ({
-                                    id: q.id,
-                                    number: q.question_number,
-                                    childrenCount: q.children?.length || 0
-                                }))
-                            }))
-                        })
-                        
                         setQuestionSets(questionSetsData as QuestionSetRead[])
                         
                         // Extract all questions (main and sub) from the nested structure
@@ -599,15 +584,8 @@ export default function EditExamPaperPage() {
                             }
                         })
                         
-                        console.log('📋 [EDIT PAGE] Extracted questions from nested structure:', {
-                            total: allQuestions.length,
-                            mainQuestions: allQuestions.filter(q => !q.parent_id).length,
-                            subQuestions: allQuestions.filter(q => q.parent_id).length
-                        })
-                        
                         setQuestionSetQuestions(allQuestions)
                     } else {
-                        console.log('📋 [EDIT PAGE] No question sets found or error loading')
                         setQuestionSets([])
                         setQuestionSetQuestions([])
                     }
@@ -762,13 +740,7 @@ export default function EditExamPaperPage() {
         loadExamPaper()
     }, [params.id, form, addNotification, router])
 
-    // Debug: Log when questionSets state changes
-    useEffect(() => {
-        console.log('📋 [EDIT PAGE] questionSets state changed:', {
-            length: questionSets.length,
-            items: questionSets.map(qs => ({ id: qs.id, title: qs.title }))
-        })
-    }, [questionSets])
+
 
     // Note: Questions are now loaded with question sets in the nested structure
     // No need for separate loading since getByExamPaper returns questions with children
@@ -1290,25 +1262,6 @@ export default function EditExamPaperPage() {
                 new Map(allQuestions.map(q => [q.id, q])).values()
             )
 
-            // Log details about main questions and sub-questions
-            const mainQs = uniqueQuestions.filter(q => !q.parent_id)
-            const subQs = uniqueQuestions.filter(q => q.parent_id)
-            console.log('✅ Loaded questions for question sets:', {
-                questionSetCount: questionSetIds.length,
-                totalQuestions: allQuestions.length,
-                uniqueQuestions: uniqueQuestions.length,
-                mainQuestions: mainQs.length,
-                subQuestions: subQs.length,
-                subQuestionDetails: subQs.map(sq => ({ id: sq.id, parent_id: sq.parent_id, number: sq.question_number })),
-                mainQuestionDetails: mainQs.map(mq => ({ 
-                    id: mq.id, 
-                    number: mq.question_number, 
-                    hasChildren: !!mq.children && mq.children.length > 0,
-                    childrenCount: mq.children?.length || 0
-                })),
-                duplicatesRemoved: allQuestions.length - uniqueQuestions.length
-            })
-
             setQuestionSetQuestions(uniqueQuestions as QuestionRead[])
         } catch (error) {
             console.error('❌ Error loading question set questions:', error)
@@ -1323,22 +1276,11 @@ export default function EditExamPaperPage() {
         setQuestionSetsLoading(true)
 
         try {
-            console.log('🔄 Reloading question sets with nested questions')
-
             // Load question sets with nested questions using the dedicated endpoint
             const questionSetsResponse = await adminAPI.questionSets.getByExamPaper(params.id as string)
             
             if (!questionSetsResponse.error && questionSetsResponse.data) {
                 const questionSetsData = (questionSetsResponse.data as any).data || []
-                console.log('✅ Reloaded question sets with nested questions:', {
-                    count: questionSetsData.length,
-                    sets: questionSetsData.map((qs: any) => ({
-                        id: qs.id,
-                        title: qs.title,
-                        questionsCount: qs.questions?.length || 0
-                    }))
-                })
-                
                 setQuestionSets(questionSetsData as QuestionSetRead[])
                 
                 // Extract all questions (main and sub) from the nested structure
@@ -1355,23 +1297,13 @@ export default function EditExamPaperPage() {
                     }
                 })
                 
-                console.log('✅ Extracted questions after reload:', {
-                    total: allQuestions.length,
-                    mainQuestions: allQuestions.filter(q => !q.parent_id).length,
-                    subQuestions: allQuestions.filter(q => q.parent_id).length
-                })
-                
                 setQuestionSetQuestions(allQuestions)
-            } else {
-                console.error('❌ Failed to reload question sets:', questionSetsResponse.error)
-                // Keep existing question sets if reload fails
             }
 
             // Also reload available question sets to ensure the QuestionSetSelector has updated data
             await reloadAvailableQuestionSets()
         } catch (error) {
-            console.error('❌ Exception reloading question sets:', error)
-            // Keep existing question sets on error
+            console.error('Error reloading question sets:', error)
         } finally {
             setQuestionSetsLoading(false)
         }

@@ -507,16 +507,6 @@ const QuestionSetDisplay: React.FC<QuestionSetDisplayProps> = ({
     const setQuestions = questions.filter(q => q.question_set_id === questionSet.id);
     const mainQuestions = setQuestions.filter(q => !q.parent_id);
 
-    // Debug logging
-    console.log(`📊 Question Set "${questionSet.title}":`, {
-        questionSetId: questionSet.id,
-        totalQuestionsAvailable: questions.length,
-        setQuestions: setQuestions.length,
-        mainQuestions: mainQuestions.length,
-        setQuestionIds: setQuestions.map(q => ({ id: q.id, parent_id: q.parent_id, number: q.question_number })),
-        mainQuestionIds: mainQuestions.map(q => q.id)
-    });
-
     // Calculate total marks
     const totalMarks = setQuestions.reduce((sum, q) => sum + (q.marks || 0), 0);
 
@@ -611,15 +601,7 @@ const QuestionSetDisplay: React.FC<QuestionSetDisplayProps> = ({
                                 const subQuestions = mainQuestion.children && mainQuestion.children.length > 0
                                     ? mainQuestion.children
                                     : setQuestions.filter(q => q.parent_id === mainQuestion.id);
-                                
-                                console.log(`🔍 Main Question ${mainQuestion.question_number}:`, {
-                                    id: mainQuestion.id,
-                                    hasChildrenProp: !!mainQuestion.children,
-                                    childrenCount: mainQuestion.children?.length || 0,
-                                    filteredSubQuestionsCount: setQuestions.filter(q => q.parent_id === mainQuestion.id).length,
-                                    finalSubQuestionsCount: subQuestions.length
-                                });
-                                
+
                                 return (
                                     <MainQuestionDisplay
                                         key={mainQuestion.id}
