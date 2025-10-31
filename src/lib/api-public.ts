@@ -914,6 +914,61 @@ export const publicAPI = {
             }
         },
     },
+
+    /**
+     * Answers
+     */
+    answers: {
+        /**
+         * Update answer likes
+         */
+        async updateLikes(answerId: string, likes: number) {
+            try {
+                const response = await api.PUT('/api/v1/answer/{answer_id}/likes', {
+                    params: {
+                        path: { answer_id: answerId },
+                        query: { likes }
+                    }
+                });
+
+                return {
+                    data: response.data,
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error updating answer likes:', error);
+                return {
+                    data: null,
+                    error: error as any,
+                };
+            }
+        },
+
+        /**
+         * Update answer dislikes
+         */
+        async updateDislikes(answerId: string, dislikes: number) {
+            try {
+                const response = await api.PUT('/api/v1/answer/{answer_id}/dislikes', {
+                    params: {
+                        path: { answer_id: answerId },
+                        query: { dislikes }
+                    }
+                });
+
+                return {
+                    data: response.data,
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error updating answer dislikes:', error);
+                return {
+                    data: null,
+                    error: error as any,
+                };
+            }
+        },
+    },
 };
 
 export default publicAPI;

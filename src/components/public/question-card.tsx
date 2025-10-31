@@ -4,7 +4,10 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, MessageSquare } from 'lucide-react';
+import { ChevronDown, MessageSquare, ThumbsUp, ThumbsDown } from 'lucide-react';
+import EditorRenderer from '@/components/ui/editor-renderer';
+import { publicAPI } from '@/lib/api-public';
+import { useUIStore } from '@/stores/ui';
 
 interface QuestionCardProps {
   question: any;
@@ -160,21 +163,13 @@ export function QuestionCard({ question, questionNumber }: QuestionCardProps) {
                       className="text-xs"
                     >
                       <MessageSquare className="h-3 w-3 mr-1" />
-                      {showMainAnswer ? 'Hide' : 'View'} Answer{question.answers.length > 1 ? 's' : ''}
+                      {showMainAnswer ? 'Hide' : 'View'} Answer{question.answers.length > 1 ? 's' : ''} ({question.answers.length})
                     </Button>
 
                     {showMainAnswer && (
-                      <div className="mt-3 space-y-2">
+                      <div className="mt-3 space-y-3">
                         {question.answers.map((answer: any, index: number) => (
-                          <div
-                            key={answer.id || index}
-                            className="bg-blue-50 border border-blue-200 rounded-lg p-4"
-                          >
-                            <div className="text-xs font-semibold text-blue-700 mb-2">Answer:</div>
-                            <div className="prose prose-sm max-w-none text-blue-900">
-                              {renderQuestionText(answer.text || answer.content)}
-                            </div>
-                          </div>
+                          <AnswerDisplay key={answer.id || index} answer={answer} index={index} />
                         ))}
                       </div>
                     )}
@@ -244,21 +239,13 @@ export function QuestionCard({ question, questionNumber }: QuestionCardProps) {
                             className="text-xs"
                           >
                             <MessageSquare className="h-3 w-3 mr-1" />
-                            {showSubAnswers[subQuestionId] ? 'Hide' : 'View'} Answer{subQuestion.answers.length > 1 ? 's' : ''}
+                            {showSubAnswers[subQuestionId] ? 'Hide' : 'View'} Answer{subQuestion.answers.length > 1 ? 's' : ''} ({subQuestion.answers.length})
                           </Button>
 
                           {showSubAnswers[subQuestionId] && (
-                            <div className="mt-3 space-y-2">
+                            <div className="mt-3 space-y-3">
                               {subQuestion.answers.map((answer: any, ansIndex: number) => (
-                                <div
-                                  key={answer.id || ansIndex}
-                                  className="bg-blue-50 border border-blue-200 rounded-lg p-3"
-                                >
-                                  <div className="text-xs font-semibold text-blue-700 mb-2">Answer:</div>
-                                  <div className="prose prose-sm max-w-none text-blue-900">
-                                    {renderQuestionText(answer.text || answer.content)}
-                                  </div>
-                                </div>
+                                <AnswerDisplay key={answer.id || ansIndex} answer={answer} index={ansIndex} />
                               ))}
                             </div>
                           )}
@@ -274,6 +261,152 @@ export function QuestionCard({ question, questionNumber }: QuestionCardProps) {
               </Card>
             );
           })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Answer Display Component with Like/Dislike and Replies
+function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
+  const { addNotification } = useUIStore();
+  const [likes, setLikes] = useState(answer.likes || 0);
+  const [dislikes, setDislikes] = useState(answer.dislikes || 0);
+  const [showReplies, setShowReplies] = useState(false);
+
+  const handleLike = async () => {
+    try {
+      const newLikes = likes + 1;
+      const response = await publicAPI.answers.updateLikes(answer.id, newLikes);
+      if (!response.error) {
+        setLikes(newLikes);
+        addNotification({
+          type: 'success',
+          title: 'Success',
+          message: 'Answer liked!'
+        });
+      }
+    } catch (error) {
+      console.error('Error liking answer:', error);
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to like answer'
+      });
+    }
+  };
+
+  const handleDislike = async () => {
+    try {
+      const newDislikes = dislikes + 1;
+      const response = await publicAPI.answers.updateDislikes(answer.id, newDislikes);
+      if (!response.error) {
+        setDislikes(newDislikes);
+        addNotification({
+          type: 'success',
+          title: 'Success',
+          message: 'Answer disliked!'
+        });
+      }
+    } catch (error) {
+      console.error('Error disliking answer:', error);
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to dislike answer'
+      });
+    }
+  };
+
+  const hasReplies = answer.children && answer.children.length > 0;
+
+  return (
+    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+      {/* Answer Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Badge className="text-xs bg-green-600">Answer {index + 1}</Badge>
+          {answer.reviewed && (
+            <Badge variant="outline" className="text-xs border-green-600 text-green-700">
+              Reviewed
+            </Badge>
+          )}
+        </div>
+        
+        {/* Like/Dislike Buttons */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLike}
+            className="h-7 px-2 text-xs hover:bg-green-100"
+          >
+            <ThumbsUp className="h-3 w-3 mr-1" />
+            {likes}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDislike}
+            className="h-7 px-2 text-xs hover:bg-red-100"
+          >
+            <ThumbsDown className="h-3 w-3 mr-1" />
+            {dislikes}
+          </Button>
+        </div>
+      </div>
+
+      {/* Answer Content */}
+      <div className="prose prose-sm max-w-none text-gray-800">
+        {answer.text && <EditorRenderer data={answer.text} />}
+      </div>
+
+      {/* Answer Metadata */}
+      {answer.created_by && (
+        <div className="mt-3 text-xs text-gray-600">
+          By: {answer.created_by.name || 'Unknown'} • {new Date(answer.created_at).toLocaleDateString()}
+        </div>
+      )}
+
+      {/* Replies Section */}
+      {hasReplies && (
+        <div className="mt-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowReplies(!showReplies)}
+            className="text-xs text-blue-600 hover:text-blue-800"
+          >
+            <MessageSquare className="h-3 w-3 mr-1" />
+            {showReplies ? 'Hide' : 'Show'} Replies ({answer.children.length})
+          </Button>
+
+          {showReplies && (
+            <div className="mt-3 ml-4 space-y-2">
+              {answer.children.map((reply: any, replyIndex: number) => (
+                <div
+                  key={reply.id || replyIndex}
+                  className="bg-white border border-gray-200 rounded-lg p-3"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <Badge variant="outline" className="text-xs">Reply {replyIndex + 1}</Badge>
+                    <div className="flex items-center gap-1 text-xs text-gray-600">
+                      <span>👍 {reply.likes || 0}</span>
+                      <span>👎 {reply.dislikes || 0}</span>
+                    </div>
+                  </div>
+                  <div className="prose prose-sm max-w-none text-gray-800">
+                    {reply.text && <EditorRenderer data={reply.text} />}
+                  </div>
+                  {reply.created_by && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      By: {reply.created_by.name || 'Unknown'} • {new Date(reply.created_at).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

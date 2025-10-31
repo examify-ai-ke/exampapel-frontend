@@ -130,6 +130,7 @@ const SubQuestionDisplay: React.FC<SubQuestionDisplayProps> = ({
     const [showAnswers, setShowAnswers] = useState(false);
     const [showAnswerForm, setShowAnswerForm] = useState(false);
     const [editingAnswer, setEditingAnswer] = useState<any>(null);
+    const [replyingToAnswer, setReplyingToAnswer] = useState<string | null>(null);
     const hasAnswers = question.answers && question.answers.length > 0;
 
     const handleDeleteAnswer = async (answerId: string) => {
@@ -164,6 +165,50 @@ const SubQuestionDisplay: React.FC<SubQuestionDisplayProps> = ({
         // Small delay to ensure data is persisted
         await new Promise(resolve => setTimeout(resolve, 500));
         onAnswersChange?.();
+    };
+
+    const handleLikeAnswer = async (answerId: string, newLikes: number) => {
+        try {
+            const response = await adminAPI.answers.updateLikes(answerId, newLikes);
+            if (!response.error) {
+                addNotification({
+                    type: 'success',
+                    title: 'Success',
+                    message: 'Answer liked!'
+                });
+                onAnswersChange?.();
+            } else {
+                throw new Error('Failed to update likes');
+            }
+        } catch (error) {
+            addNotification({
+                type: 'error',
+                title: 'Error',
+                message: 'Failed to update likes'
+            });
+        }
+    };
+
+    const handleDislikeAnswer = async (answerId: string, newDislikes: number) => {
+        try {
+            const response = await adminAPI.answers.updateDislikes(answerId, newDislikes);
+            if (!response.error) {
+                addNotification({
+                    type: 'success',
+                    title: 'Success',
+                    message: 'Answer disliked!'
+                });
+                onAnswersChange?.();
+            } else {
+                throw new Error('Failed to update dislikes');
+            }
+        } catch (error) {
+            addNotification({
+                type: 'error',
+                title: 'Error',
+                message: 'Failed to update dislikes'
+            });
+        }
     };
 
     return (
@@ -293,9 +338,26 @@ const SubQuestionDisplay: React.FC<SubQuestionDisplayProps> = ({
                                     )}
                                 </div>
                                 <div className="flex items-center space-x-2">
-                                    <div className="flex items-center space-x-3 text-xs text-gray-600">
-                                        <span>👍 {answer.likes || 0}</span>
-                                        <span>👎 {answer.dislikes || 0}</span>
+                                    {/* Like/Dislike Buttons */}
+                                    <div className="flex items-center space-x-1">
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleLikeAnswer(answer.id, (answer.likes || 0) + 1)}
+                                            className="h-6 px-2 text-xs hover:bg-green-100"
+                                        >
+                                            👍 {answer.likes || 0}
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleDislikeAnswer(answer.id, (answer.dislikes || 0) + 1)}
+                                            className="h-6 px-2 text-xs hover:bg-red-100"
+                                        >
+                                            👎 {answer.dislikes || 0}
+                                        </Button>
                                     </div>
                                     {showActions && (
                                         <div className="flex items-center space-x-1">
@@ -344,6 +406,67 @@ const SubQuestionDisplay: React.FC<SubQuestionDisplayProps> = ({
                                     {answer.created_by && (
                                         <div className="mt-2 text-xs text-gray-500">
                                             By: {answer.created_by.name || 'Unknown'} • {formatDate(answer.created_at)}
+                                        </div>
+                                    )}
+                                    
+                                    {/* Reply Button */}
+                                    {showActions && (
+                                        <div className="mt-2">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setReplyingToAnswer(answer.id);
+                                                }}
+                                                className="h-6 text-xs"
+                                            >
+                                                <MessageSquarePlus className="mr-1 h-3 w-3" />
+                                                Reply
+                                            </Button>
+                                        </div>
+                                    )}
+                                    
+                                    {/* Reply Form */}
+                                    {replyingToAnswer === answer.id && (
+                                        <div className="mt-2 ml-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                                            <AnswerForm
+                                                questionId={question.id}
+                                                parentAnswerId={answer.id}
+                                                onSuccess={async () => {
+                                                    setReplyingToAnswer(null);
+                                                    await handleAnswerSuccess();
+                                                }}
+                                                onCancel={() => setReplyingToAnswer(null)}
+                                            />
+                                        </div>
+                                    )}
+                                    
+                                    {/* Display Replies */}
+                                    {answer.children && answer.children.length > 0 && (
+                                        <div className="mt-3 ml-4 space-y-2">
+                                            <div className="text-xs font-semibold text-gray-600 mb-2">
+                                                Replies ({answer.children.length})
+                                            </div>
+                                            {answer.children.map((reply: any) => (
+                                                <div
+                                                    key={reply.id}
+                                                    className="bg-white border border-gray-200 rounded p-2"
+                                                >
+                                                    <div className="text-sm text-gray-800">
+                                                        {reply.text && <EditorRenderer data={reply.text} className="prose-sm" />}
+                                                    </div>
+                                                    <div className="mt-1 flex items-center justify-between">
+                                                        <div className="text-xs text-gray-500">
+                                                            {reply.created_by?.name || 'Unknown'} • {formatDate(reply.created_at)}
+                                                        </div>
+                                                        <div className="flex items-center space-x-1 text-xs">
+                                                            <span>👍 {reply.likes || 0}</span>
+                                                            <span>👎 {reply.dislikes || 0}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     )}
                                 </>
@@ -397,6 +520,7 @@ const MainQuestionDisplay: React.FC<MainQuestionDisplayProps> = ({
     const [showAnswers, setShowAnswers] = useState(false);
     const [showAnswerForm, setShowAnswerForm] = useState(false);
     const [editingAnswer, setEditingAnswer] = useState<any>(null);
+    const [replyingToAnswer, setReplyingToAnswer] = useState<string | null>(null);
     const hasAnswers = question.answers && question.answers.length > 0;
     const hasSubQuestions = subQuestions.length > 0;
 
@@ -432,6 +556,50 @@ const MainQuestionDisplay: React.FC<MainQuestionDisplayProps> = ({
         // Small delay to ensure data is persisted
         await new Promise(resolve => setTimeout(resolve, 500));
         onAnswersChange?.();
+    };
+
+    const handleLikeAnswer = async (answerId: string, newLikes: number) => {
+        try {
+            const response = await adminAPI.answers.updateLikes(answerId, newLikes);
+            if (!response.error) {
+                addNotification({
+                    type: 'success',
+                    title: 'Success',
+                    message: 'Answer liked!'
+                });
+                onAnswersChange?.();
+            } else {
+                throw new Error('Failed to update likes');
+            }
+        } catch (error) {
+            addNotification({
+                type: 'error',
+                title: 'Error',
+                message: 'Failed to update likes'
+            });
+        }
+    };
+
+    const handleDislikeAnswer = async (answerId: string, newDislikes: number) => {
+        try {
+            const response = await adminAPI.answers.updateDislikes(answerId, newDislikes);
+            if (!response.error) {
+                addNotification({
+                    type: 'success',
+                    title: 'Success',
+                    message: 'Answer disliked!'
+                });
+                onAnswersChange?.();
+            } else {
+                throw new Error('Failed to update dislikes');
+            }
+        } catch (error) {
+            addNotification({
+                type: 'error',
+                title: 'Error',
+                message: 'Failed to update dislikes'
+            });
+        }
     };
 
     return (
@@ -592,9 +760,32 @@ const MainQuestionDisplay: React.FC<MainQuestionDisplayProps> = ({
                                                 )}
                                             </div>
                                             <div className="flex items-center space-x-2">
-                                                <div className="flex items-center space-x-3 text-xs text-gray-600">
-                                                    <span>👍 {answer.likes || 0}</span>
-                                                    <span>👎 {answer.dislikes || 0}</span>
+                                                {/* Like/Dislike Buttons */}
+                                                <div className="flex items-center space-x-1">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleLikeAnswer(answer.id, (answer.likes || 0) + 1);
+                                                        }}
+                                                        className="h-6 px-2 text-xs hover:bg-green-100"
+                                                    >
+                                                        👍 {answer.likes || 0}
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDislikeAnswer(answer.id, (answer.dislikes || 0) + 1);
+                                                        }}
+                                                        className="h-6 px-2 text-xs hover:bg-red-100"
+                                                    >
+                                                        👎 {answer.dislikes || 0}
+                                                    </Button>
                                                 </div>
                                                 {showActions && (
                                                     <div className="flex items-center space-x-1">
@@ -647,6 +838,68 @@ const MainQuestionDisplay: React.FC<MainQuestionDisplayProps> = ({
                                                 {answer.created_by && (
                                                     <div className="mt-2 text-xs text-gray-500">
                                                         By: {answer.created_by.name || 'Unknown'} • {formatDate(answer.created_at)}
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Reply Button */}
+                                                {showActions && (
+                                                    <div className="mt-2">
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setReplyingToAnswer(answer.id);
+                                                            }}
+                                                            className="h-6 text-xs"
+                                                        >
+                                                            <MessageSquarePlus className="mr-1 h-3 w-3" />
+                                                            Reply
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Reply Form */}
+                                                {replyingToAnswer === answer.id && (
+                                                    <div className="mt-2 ml-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                                                        <AnswerForm
+                                                            questionId={question.id}
+                                                            parentAnswerId={answer.id}
+                                                            onSuccess={async () => {
+                                                                setReplyingToAnswer(null);
+                                                                await handleAnswerSuccess();
+                                                            }}
+                                                            onCancel={() => setReplyingToAnswer(null)}
+                                                        />
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Display Replies */}
+                                                {answer.children && answer.children.length > 0 && (
+                                                    <div className="mt-3 ml-4 space-y-2">
+                                                        <div className="text-xs font-semibold text-gray-600 mb-2">
+                                                            Replies ({answer.children.length})
+                                                        </div>
+                                                        {answer.children.map((reply: any) => (
+                                                            <div
+                                                                key={reply.id}
+                                                                className="bg-white border border-gray-200 rounded p-2"
+                                                            >
+                                                                <div className="text-sm text-gray-800">
+                                                                    {reply.text && <EditorRenderer data={reply.text} className="prose-sm" />}
+                                                                </div>
+                                                                <div className="mt-1 flex items-center justify-between">
+                                                                    <div className="text-xs text-gray-500">
+                                                                        {reply.created_by?.name || 'Unknown'} • {formatDate(reply.created_at)}
+                                                                    </div>
+                                                                    <div className="flex items-center space-x-1 text-xs">
+                                                                        <span>👍 {reply.likes || 0}</span>
+                                                                        <span>👎 {reply.dislikes || 0}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 )}
                                             </>

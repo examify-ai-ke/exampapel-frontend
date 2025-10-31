@@ -31,11 +31,12 @@ type AnswerFormData = z.infer<typeof answerFormSchema>
 interface AnswerFormProps {
     questionId: string
     answer?: AnswerRead
+    parentAnswerId?: string  // For creating replies
     onSuccess?: () => void
     onCancel?: () => void
 }
 
-export function AnswerForm({ questionId, answer, onSuccess, onCancel }: AnswerFormProps) {
+export function AnswerForm({ questionId, answer, parentAnswerId, onSuccess, onCancel }: AnswerFormProps) {
     const { addNotification } = useUIStore()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const isEditing = !!answer
@@ -93,7 +94,11 @@ export function AnswerForm({ questionId, answer, onSuccess, onCancel }: AnswerFo
             let response
             if (isEditing && answer) {
                 response = await adminAPI.answers.update(answer.id, answerPayload as any)
+            } else if (parentAnswerId) {
+                // Creating a reply to an existing answer
+                response = await adminAPI.answers.createReply(parentAnswerId, answerPayload as any)
             } else {
+                // Creating a new answer
                 response = await adminAPI.answers.create(answerPayload as any)
             }
 
@@ -101,11 +106,11 @@ export function AnswerForm({ questionId, answer, onSuccess, onCancel }: AnswerFo
                 addNotification({
                     type: 'success',
                     title: 'Success',
-                    message: `Answer ${isEditing ? 'updated' : 'created'} successfully!`
+                    message: `${parentAnswerId ? 'Reply' : 'Answer'} ${isEditing ? 'updated' : 'created'} successfully!`
                 })
                 onSuccess?.()
             } else {
-                const errorMessage = (response.error as any)?.message || 'Failed to save answer'
+                const errorMessage = (response.error as any)?.message || `Failed to save ${parentAnswerId ? 'reply' : 'answer'}`
                 addNotification({
                     type: 'error',
                     title: 'Error',

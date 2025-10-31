@@ -1791,6 +1791,33 @@ const adminAPI = {
                 }
             });
         },
+
+        async createReply(answerId: string, replyData: components['schemas']['AnswerCreate']) {
+            return api.POST('/api/v1/answer/{answer_id}/reply', {
+                params: {
+                    path: { answer_id: answerId }
+                },
+                body: replyData
+            });
+        },
+
+        async updateLikes(answerId: string, likes: number) {
+            return api.PUT('/api/v1/answer/{answer_id}/likes', {
+                params: {
+                    path: { answer_id: answerId },
+                    query: { likes }
+                }
+            });
+        },
+
+        async updateDislikes(answerId: string, dislikes: number) {
+            return api.PUT('/api/v1/answer/{answer_id}/dislikes', {
+                params: {
+                    path: { answer_id: answerId },
+                    query: { dislikes }
+                }
+            });
+        },
     },
 
 };
