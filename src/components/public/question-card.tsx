@@ -8,6 +8,7 @@ import { ChevronDown, MessageSquare, ThumbsUp, ThumbsDown } from 'lucide-react';
 import EditorRenderer from '@/components/ui/editor-renderer';
 import { publicAPI } from '@/lib/api-public';
 import { useUIStore } from '@/stores/ui';
+import { formatRelativeTime } from '@/lib/utils';
 
 interface QuestionCardProps {
   question: any;
@@ -327,23 +328,39 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
   return (
     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
       {/* Answer Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-2 mb-3">
+        <Badge className="text-xs bg-green-600">Answer {index + 1}</Badge>
+        {answer.reviewed && (
+          <Badge variant="outline" className="text-xs border-green-600 text-green-700">
+            Reviewed
+          </Badge>
+        )}
+      </div>
+
+      {/* Answer Content */}
+      <div className="prose prose-sm max-w-none text-gray-800">
+        {answer.text && <EditorRenderer data={answer.text} />}
+      </div>
+
+      {/* Answer Metadata with Like/Dislike */}
+      <div className="mt-3 flex items-center justify-between text-xs text-gray-600">
         <div className="flex items-center gap-2">
-          <Badge className="text-xs bg-green-600">Answer {index + 1}</Badge>
-          {answer.reviewed && (
-            <Badge variant="outline" className="text-xs border-green-600 text-green-700">
-              Reviewed
-            </Badge>
-          )}
+          <span>
+            By: {answer.created_by?.first_name || answer.created_by?.last_name
+              ? `${answer.created_by.first_name || ''} ${answer.created_by.last_name || ''}`.trim()
+              : answer.created_by?.name || 'Anonymous'}
+          </span>
+          <span>clock_icon</span>
+          <span>{formatRelativeTime(answer.created_at)}</span>
         </div>
 
         {/* Like/Dislike Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleLike}
-            className="h-7 px-2 text-xs hover:bg-green-100"
+            className="h-6 px-2 text-xs hover:bg-green-100"
           >
             <ThumbsUp className="h-3 w-3 mr-1" />
             {likes}
@@ -352,25 +369,13 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
             variant="ghost"
             size="sm"
             onClick={handleDislike}
-            className="h-7 px-2 text-xs hover:bg-red-100"
+            className="h-6 px-2 text-xs hover:bg-red-100"
           >
             <ThumbsDown className="h-3 w-3 mr-1" />
             {dislikes}
           </Button>
         </div>
       </div>
-
-      {/* Answer Content */}
-      <div className="prose prose-sm max-w-none text-gray-800">
-        {answer.text && <EditorRenderer data={answer.text} />}
-      </div>
-
-      {/* Answer Metadata */}
-      {answer.created_by && (
-        <div className="mt-3 text-xs text-gray-600">
-          By: {answer.created_by.name || 'Unknown'} • {new Date(answer.created_at).toLocaleDateString()}
-        </div>
-      )}
 
       {/* Replies Section */}
       {hasReplies && (
@@ -392,21 +397,25 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
                   key={reply.id || replyIndex}
                   className="bg-white border border-gray-200 rounded-lg p-3"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="outline" className="text-xs">Reply {replyIndex + 1}</Badge>
-                    <div className="flex items-center gap-1 text-xs text-gray-600">
+                  <Badge variant="outline" className="text-xs mb-2">Reply {replyIndex + 1}</Badge>
+                  <div className="prose prose-sm max-w-none text-gray-800">
+                    {reply.text && <EditorRenderer data={reply.text} />}
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <span>
+                        By: {reply.created_by?.first_name || reply.created_by?.last_name
+                          ? `${reply.created_by.first_name || ''} ${reply.created_by.last_name || ''}`.trim()
+                          : reply.created_by?.name || 'Anonymous'}
+                      </span>
+                      <span>•</span>
+                      <span>{formatRelativeTime(reply.created_at)}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
                       <span>👍 {reply.likes || 0}</span>
                       <span>👎 {reply.dislikes || 0}</span>
                     </div>
                   </div>
-                  <div className="prose prose-sm max-w-none text-gray-800">
-                    {reply.text && <EditorRenderer data={reply.text} />}
-                  </div>
-                  {reply.created_by && (
-                    <div className="mt-2 text-xs text-gray-500">
-                      By: {reply.created_by.name || 'Unknown'} • {new Date(reply.created_at).toLocaleDateString()}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

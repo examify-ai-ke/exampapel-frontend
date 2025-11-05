@@ -30,7 +30,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatRelativeTime } from '@/lib/utils';
 import EditorRenderer from '@/components/ui/editor-renderer';
 import { AnswerForm } from '@/components/forms/answer-form';
 import { adminAPI } from '@/lib/api-admin';
@@ -393,11 +393,11 @@ const SubQuestionDisplay: React.FC<SubQuestionDisplayProps> = ({
                                     <div className="text-sm text-gray-800">
                                         {answer.text && <EditorRenderer data={answer.text} className="prose-sm" />}
                                     </div>
-                                    {answer.created_by && (
-                                        <div className="mt-2 text-xs text-gray-500">
-                                            By: {answer.created_by.name || 'Unknown'} • {formatDate(answer.created_at)}
-                                        </div>
-                                    )}
+                                    <div className="mt-2 text-xs text-gray-500">
+                                        By: {answer.created_by?.first_name || answer.created_by?.last_name 
+                                          ? `${answer.created_by.first_name || ''} ${answer.created_by.last_name || ''}`.trim()
+                                          : answer.created_by?.name || 'Anonymous'} • {formatRelativeTime(answer.created_at)}
+                                    </div>
                                     
                                     {/* Reply Button */}
                                     {showActions && (
@@ -448,7 +448,9 @@ const SubQuestionDisplay: React.FC<SubQuestionDisplayProps> = ({
                                                     </div>
                                                     <div className="mt-1 flex items-center justify-between">
                                                         <div className="text-xs text-gray-500">
-                                                            {reply.created_by?.name || 'Unknown'} • {formatDate(reply.created_at)}
+                                                            By: {reply.created_by?.first_name || reply.created_by?.last_name 
+                                                              ? `${reply.created_by.first_name || ''} ${reply.created_by.last_name || ''}`.trim()
+                                                              : reply.created_by?.name || 'Anonymous'} • {formatRelativeTime(reply.created_at)}
                                                         </div>
                                                         <div className="flex items-center space-x-1 text-xs">
                                                             <span>👍 {reply.likes || 0}</span>
@@ -815,11 +817,11 @@ const MainQuestionDisplay: React.FC<MainQuestionDisplayProps> = ({
                                                 <div className="text-sm text-gray-800">
                                                     {answer.text && <EditorRenderer data={answer.text} className="prose-sm" />}
                                                 </div>
-                                                {answer.created_by && (
-                                                    <div className="mt-2 text-xs text-gray-500">
-                                                        By: {answer.created_by.name || 'Unknown'} • {formatDate(answer.created_at)}
-                                                    </div>
-                                                )}
+                                                <div className="mt-2 text-xs text-gray-500">
+                                                    By: {answer.created_by?.first_name || answer.created_by?.last_name 
+                                                      ? `${answer.created_by.first_name || ''} ${answer.created_by.last_name || ''}`.trim()
+                                                      : answer.created_by?.name || 'Anonymous'} • {formatRelativeTime(answer.created_at)}
+                                                </div>
                                                 
                                                 {/* Reply Button */}
                                                 {showActions && (
@@ -871,7 +873,9 @@ const MainQuestionDisplay: React.FC<MainQuestionDisplayProps> = ({
                                                                 </div>
                                                                 <div className="mt-1 flex items-center justify-between">
                                                                     <div className="text-xs text-gray-500">
-                                                                        {reply.created_by?.name || 'Unknown'} • {formatDate(reply.created_at)}
+                                                                        By: {reply.created_by?.first_name || reply.created_by?.last_name 
+                                                                          ? `${reply.created_by.first_name || ''} ${reply.created_by.last_name || ''}`.trim()
+                                                                          : reply.created_by?.name || 'Anonymous'} • {formatRelativeTime(reply.created_at)}
                                                                     </div>
                                                                     <div className="flex items-center space-x-1 text-xs">
                                                                         <span>👍 {reply.likes || 0}</span>
