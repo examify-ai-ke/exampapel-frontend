@@ -1801,20 +1801,18 @@ const adminAPI = {
             });
         },
 
-        async updateLikes(answerId: string, likes: number) {
-            return api.PUT('/api/v1/answer/{answer_id}/likes', {
+        async toggleLike(answerId: string) {
+            return api.POST('/api/v1/answer/{answer_id}/like', {
                 params: {
-                    path: { answer_id: answerId },
-                    query: { likes }
+                    path: { answer_id: answerId }
                 }
             });
         },
 
-        async updateDislikes(answerId: string, dislikes: number) {
-            return api.PUT('/api/v1/answer/{answer_id}/dislikes', {
+        async toggleDislike(answerId: string) {
+            return api.POST('/api/v1/answer/{answer_id}/dislike', {
                 params: {
-                    path: { answer_id: answerId },
-                    query: { dislikes }
+                    path: { answer_id: answerId }
                 }
             });
         },

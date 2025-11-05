@@ -205,62 +205,62 @@ export function QuestionCard({ question, questionNumber }: QuestionCardProps) {
               return numA.localeCompare(numB, undefined, { numeric: true });
             })
             .map((subQuestion: any, index: number) => {
-            const subQuestionId = subQuestion.id || `sub-${index}`;
-            const hasSubAnswer = subQuestion.answers && subQuestion.answers.length > 0;
+              const subQuestionId = subQuestion.id || `sub-${index}`;
+              const hasSubAnswer = subQuestion.answers && subQuestion.answers.length > 0;
 
-            return (
-              <Card
-                key={subQuestionId}
-                className="bg-gray-50/50 border-gray-200 hover:bg-gray-100/50 transition-colors"
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <span className="text-lg font-semibold text-teal-600 min-w-fit">
-                      ({subQuestion.question_number || String.fromCharCode(97 + index)})
-                    </span>
-                    <div className="flex-1">
-                      {/* Sub-question Text as H4 */}
-                      {renderQuestionText(subQuestion.text, false)}
+              return (
+                <Card
+                  key={subQuestionId}
+                  className="bg-gray-50/50 border-gray-200 hover:bg-gray-100/50 transition-colors"
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <span className="text-lg font-semibold text-teal-600 min-w-fit">
+                        ({subQuestion.question_number || String.fromCharCode(97 + index)})
+                      </span>
+                      <div className="flex-1">
+                        {/* Sub-question Text as H4 */}
+                        {renderQuestionText(subQuestion.text, false)}
 
-                      {/* Marks Badge */}
-                      {subQuestion.marks && (
-                        <Badge className="text-xs bg-orange-500 hover:bg-orange-600 text-white mt-2">
-                          {subQuestion.marks} marks
-                        </Badge>
-                      )}
+                        {/* Marks Badge */}
+                        {subQuestion.marks && (
+                          <Badge className="text-xs bg-orange-500 hover:bg-orange-600 text-white mt-2">
+                            {subQuestion.marks} marks
+                          </Badge>
+                        )}
 
-                      {/* Sub-question Answer Section */}
-                      {hasSubAnswer ? (
-                        <div className="mt-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleSubAnswer(subQuestionId)}
-                            className="text-xs"
-                          >
-                            <MessageSquare className="h-3 w-3 mr-1" />
-                            {showSubAnswers[subQuestionId] ? 'Hide' : 'View'} Answer{subQuestion.answers.length > 1 ? 's' : ''} ({subQuestion.answers.length})
-                          </Button>
+                        {/* Sub-question Answer Section */}
+                        {hasSubAnswer ? (
+                          <div className="mt-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleSubAnswer(subQuestionId)}
+                              className="text-xs"
+                            >
+                              <MessageSquare className="h-3 w-3 mr-1" />
+                              {showSubAnswers[subQuestionId] ? 'Hide' : 'View'} Answer{subQuestion.answers.length > 1 ? 's' : ''} ({subQuestion.answers.length})
+                            </Button>
 
-                          {showSubAnswers[subQuestionId] && (
-                            <div className="mt-3 space-y-3">
-                              {subQuestion.answers.map((answer: any, ansIndex: number) => (
-                                <AnswerDisplay key={answer.id || ansIndex} answer={answer} index={ansIndex} />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="mt-3 text-sm text-gray-500 italic">
-                          No answer available yet
-                        </div>
-                      )}
+                            {showSubAnswers[subQuestionId] && (
+                              <div className="mt-3 space-y-3">
+                                {subQuestion.answers.map((answer: any, ansIndex: number) => (
+                                  <AnswerDisplay key={answer.id || ansIndex} answer={answer} index={ansIndex} />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="mt-3 text-sm text-gray-500 italic">
+                            No answer available yet
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  </CardContent>
+                </Card>
+              );
+            })}
         </div>
       )}
     </div>
@@ -276,44 +276,48 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
 
   const handleLike = async () => {
     try {
-      const newLikes = likes + 1;
-      const response = await publicAPI.answers.updateLikes(answer.id, newLikes);
+      const response = await publicAPI.answers.toggleLike(answer.id);
       if (!response.error) {
-        setLikes(newLikes);
-        addNotification({
-          type: 'success',
-          title: 'Success',
-          message: 'Answer liked!'
-        });
+        // Update counts from response
+        const data = response.data && typeof response.data === 'object' && 'data' in response.data
+          ? (response.data as any).data
+          : response.data;
+
+        if (data) {
+          setLikes(data.likes || 0);
+          setDislikes(data.dislikes || 0);
+        }
       }
     } catch (error) {
-      console.error('Error liking answer:', error);
+      console.error('Error toggling like:', error);
       addNotification({
         type: 'error',
         title: 'Error',
-        message: 'Failed to like answer'
+        message: 'Failed to toggle like'
       });
     }
   };
 
   const handleDislike = async () => {
     try {
-      const newDislikes = dislikes + 1;
-      const response = await publicAPI.answers.updateDislikes(answer.id, newDislikes);
+      const response = await publicAPI.answers.toggleDislike(answer.id);
       if (!response.error) {
-        setDislikes(newDislikes);
-        addNotification({
-          type: 'success',
-          title: 'Success',
-          message: 'Answer disliked!'
-        });
+        // Update counts from response
+        const data = response.data && typeof response.data === 'object' && 'data' in response.data
+          ? (response.data as any).data
+          : response.data;
+
+        if (data) {
+          setLikes(data.likes || 0);
+          setDislikes(data.dislikes || 0);
+        }
       }
     } catch (error) {
-      console.error('Error disliking answer:', error);
+      console.error('Error toggling dislike:', error);
       addNotification({
         type: 'error',
         title: 'Error',
-        message: 'Failed to dislike answer'
+        message: 'Failed to toggle dislike'
       });
     }
   };
@@ -332,7 +336,7 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
             </Badge>
           )}
         </div>
-        
+
         {/* Like/Dislike Buttons */}
         <div className="flex items-center gap-2">
           <Button

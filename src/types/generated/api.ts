@@ -3499,7 +3499,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/answer/{answer_id}/likes": {
+    "/api/v1/answer/{answer_id}/like": {
         parameters: {
             query?: never;
             header?: never;
@@ -3507,19 +3507,22 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        put?: never;
         /**
-         * Update Answer Likes
-         * @description Updates the likes count for an answer
+         * Toggle Answer Like
+         * @description Toggle like for an answer
+         *     - If user hasn't voted: adds a like
+         *     - If user already liked: removes the like
+         *     - If user disliked: changes to like (removes dislike, adds like)
          */
-        put: operations["update_answer_likes_api_v1_answer__answer_id__likes_put"];
-        post?: never;
+        post: operations["toggle_answer_like_api_v1_answer__answer_id__like_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/answer/{answer_id}/dislikes": {
+    "/api/v1/answer/{answer_id}/dislike": {
         parameters: {
             query?: never;
             header?: never;
@@ -3527,12 +3530,15 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        put?: never;
         /**
-         * Update Answer Dislikes
-         * @description Updates the dislikes count for an answer
+         * Toggle Answer Dislike
+         * @description Toggle dislike for an answer
+         *     - If user hasn't voted: adds a dislike
+         *     - If user already disliked: removes the dislike
+         *     - If user liked: changes to dislike (removes like, adds dislike)
          */
-        put: operations["update_answer_dislikes_api_v1_answer__answer_id__dislikes_put"];
-        post?: never;
+        post: operations["toggle_answer_dislike_api_v1_answer__answer_id__dislike_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -15177,12 +15183,9 @@ export interface operations {
             };
         };
     };
-    update_answer_likes_api_v1_answer__answer_id__likes_put: {
+    toggle_answer_like_api_v1_answer__answer_id__like_post: {
         parameters: {
-            query: {
-                /** @description Number of likes */
-                likes: number;
-            };
+            query?: never;
             header?: never;
             path: {
                 answer_id: string;
@@ -15197,7 +15200,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IPutResponseBase_AnswerRead_"];
+                    "application/json": components["schemas"]["IPostResponseBase_AnswerRead_"];
                 };
             };
             /** @description Validation Error */
@@ -15211,12 +15214,9 @@ export interface operations {
             };
         };
     };
-    update_answer_dislikes_api_v1_answer__answer_id__dislikes_put: {
+    toggle_answer_dislike_api_v1_answer__answer_id__dislike_post: {
         parameters: {
-            query: {
-                /** @description Number of dislikes */
-                dislikes: number;
-            };
+            query?: never;
             header?: never;
             path: {
                 answer_id: string;
@@ -15231,7 +15231,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IPutResponseBase_AnswerRead_"];
+                    "application/json": components["schemas"]["IPostResponseBase_AnswerRead_"];
                 };
             };
             /** @description Validation Error */

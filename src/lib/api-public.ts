@@ -920,14 +920,13 @@ export const publicAPI = {
      */
     answers: {
         /**
-         * Update answer likes
+         * Toggle answer like (add/remove like, or switch from dislike)
          */
-        async updateLikes(answerId: string, likes: number) {
+        async toggleLike(answerId: string) {
             try {
-                const response = await api.PUT('/api/v1/answer/{answer_id}/likes', {
+                const response = await api.POST('/api/v1/answer/{answer_id}/like', {
                     params: {
-                        path: { answer_id: answerId },
-                        query: { likes }
+                        path: { answer_id: answerId }
                     }
                 });
 
@@ -936,7 +935,7 @@ export const publicAPI = {
                     error: response.error,
                 };
             } catch (error) {
-                console.error('Error updating answer likes:', error);
+                console.error('Error toggling answer like:', error);
                 return {
                     data: null,
                     error: error as any,
@@ -945,14 +944,13 @@ export const publicAPI = {
         },
 
         /**
-         * Update answer dislikes
+         * Toggle answer dislike (add/remove dislike, or switch from like)
          */
-        async updateDislikes(answerId: string, dislikes: number) {
+        async toggleDislike(answerId: string) {
             try {
-                const response = await api.PUT('/api/v1/answer/{answer_id}/dislikes', {
+                const response = await api.POST('/api/v1/answer/{answer_id}/dislike', {
                     params: {
-                        path: { answer_id: answerId },
-                        query: { dislikes }
+                        path: { answer_id: answerId }
                     }
                 });
 
@@ -961,7 +959,7 @@ export const publicAPI = {
                     error: response.error,
                 };
             } catch (error) {
-                console.error('Error updating answer dislikes:', error);
+                console.error('Error toggling answer dislike:', error);
                 return {
                     data: null,
                     error: error as any,

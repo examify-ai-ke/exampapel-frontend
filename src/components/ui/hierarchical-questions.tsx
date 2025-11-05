@@ -167,46 +167,36 @@ const SubQuestionDisplay: React.FC<SubQuestionDisplayProps> = ({
         onAnswersChange?.();
     };
 
-    const handleLikeAnswer = async (answerId: string, newLikes: number) => {
+    const handleLikeAnswer = async (answerId: string) => {
         try {
-            const response = await adminAPI.answers.updateLikes(answerId, newLikes);
+            const response = await adminAPI.answers.toggleLike(answerId);
             if (!response.error) {
-                addNotification({
-                    type: 'success',
-                    title: 'Success',
-                    message: 'Answer liked!'
-                });
                 onAnswersChange?.();
             } else {
-                throw new Error('Failed to update likes');
+                throw new Error('Failed to toggle like');
             }
         } catch (error) {
             addNotification({
                 type: 'error',
                 title: 'Error',
-                message: 'Failed to update likes'
+                message: 'Failed to toggle like'
             });
         }
     };
 
-    const handleDislikeAnswer = async (answerId: string, newDislikes: number) => {
+    const handleDislikeAnswer = async (answerId: string) => {
         try {
-            const response = await adminAPI.answers.updateDislikes(answerId, newDislikes);
+            const response = await adminAPI.answers.toggleDislike(answerId);
             if (!response.error) {
-                addNotification({
-                    type: 'success',
-                    title: 'Success',
-                    message: 'Answer disliked!'
-                });
                 onAnswersChange?.();
             } else {
-                throw new Error('Failed to update dislikes');
+                throw new Error('Failed to toggle dislike');
             }
         } catch (error) {
             addNotification({
                 type: 'error',
                 title: 'Error',
-                message: 'Failed to update dislikes'
+                message: 'Failed to toggle dislike'
             });
         }
     };
@@ -344,7 +334,7 @@ const SubQuestionDisplay: React.FC<SubQuestionDisplayProps> = ({
                                             type="button"
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleLikeAnswer(answer.id, (answer.likes || 0) + 1)}
+                                            onClick={() => handleLikeAnswer(answer.id)}
                                             className="h-6 px-2 text-xs hover:bg-green-100"
                                         >
                                             👍 {answer.likes || 0}
@@ -353,7 +343,7 @@ const SubQuestionDisplay: React.FC<SubQuestionDisplayProps> = ({
                                             type="button"
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleDislikeAnswer(answer.id, (answer.dislikes || 0) + 1)}
+                                            onClick={() => handleDislikeAnswer(answer.id)}
                                             className="h-6 px-2 text-xs hover:bg-red-100"
                                         >
                                             👎 {answer.dislikes || 0}
@@ -558,46 +548,36 @@ const MainQuestionDisplay: React.FC<MainQuestionDisplayProps> = ({
         onAnswersChange?.();
     };
 
-    const handleLikeAnswer = async (answerId: string, newLikes: number) => {
+    const handleLikeAnswer = async (answerId: string) => {
         try {
-            const response = await adminAPI.answers.updateLikes(answerId, newLikes);
+            const response = await adminAPI.answers.toggleLike(answerId);
             if (!response.error) {
-                addNotification({
-                    type: 'success',
-                    title: 'Success',
-                    message: 'Answer liked!'
-                });
                 onAnswersChange?.();
             } else {
-                throw new Error('Failed to update likes');
+                throw new Error('Failed to toggle like');
             }
         } catch (error) {
             addNotification({
                 type: 'error',
                 title: 'Error',
-                message: 'Failed to update likes'
+                message: 'Failed to toggle like'
             });
         }
     };
 
-    const handleDislikeAnswer = async (answerId: string, newDislikes: number) => {
+    const handleDislikeAnswer = async (answerId: string) => {
         try {
-            const response = await adminAPI.answers.updateDislikes(answerId, newDislikes);
+            const response = await adminAPI.answers.toggleDislike(answerId);
             if (!response.error) {
-                addNotification({
-                    type: 'success',
-                    title: 'Success',
-                    message: 'Answer disliked!'
-                });
                 onAnswersChange?.();
             } else {
-                throw new Error('Failed to update dislikes');
+                throw new Error('Failed to toggle dislike');
             }
         } catch (error) {
             addNotification({
                 type: 'error',
                 title: 'Error',
-                message: 'Failed to update dislikes'
+                message: 'Failed to toggle dislike'
             });
         }
     };
@@ -768,7 +748,7 @@ const MainQuestionDisplay: React.FC<MainQuestionDisplayProps> = ({
                                                         size="sm"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            handleLikeAnswer(answer.id, (answer.likes || 0) + 1);
+                                                            handleLikeAnswer(answer.id);
                                                         }}
                                                         className="h-6 px-2 text-xs hover:bg-green-100"
                                                     >
@@ -780,7 +760,7 @@ const MainQuestionDisplay: React.FC<MainQuestionDisplayProps> = ({
                                                         size="sm"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            handleDislikeAnswer(answer.id, (answer.dislikes || 0) + 1);
+                                                            handleDislikeAnswer(answer.id);
                                                         }}
                                                         className="h-6 px-2 text-xs hover:bg-red-100"
                                                     >
