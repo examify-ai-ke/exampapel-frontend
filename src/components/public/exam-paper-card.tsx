@@ -66,7 +66,7 @@ export function ExamPaperCard({
     'bg-amber-600 hover:bg-amber-700 border-amber-600',
     'bg-teal-600 hover:bg-teal-700 border-teal-600',
   ];
-
+  const logo_url = institution.logo?.media?.path || '/placeholder.svg';
   if (variant === 'list') {
     return (
       <Card
@@ -76,13 +76,14 @@ export function ExamPaperCard({
         <div className="flex flex-col sm:flex-row">
           {/* Institution Logo */}
           <div className="sm:w-32 sm:shrink-0 p-6 flex items-center justify-center bg-gray-50">
-            {institution?.logo_url ? (
-              <Image
-                src={institution.logo_url}
-                alt={institutionName}
+            {institution?.logo ? (
+              <img
+                src={logo_url}
+                alt={institution.logo?.media?.title || 'Institution logo'}
                 width={80}
                 height={80}
                 className="object-contain"
+              
               />
             ) : (
               <div className="w-20 h-20 rounded-full bg-teal-100 flex items-center justify-center">
@@ -208,13 +209,14 @@ export function ExamPaperCard({
         {/* Institution Logo */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            {institution?.logo_url ? (
+            {institution?.logo?.media?.link ? (
               <Image
-                src={institution.logo_url}
+                src={institution.logo.media.link}
                 alt={institution.name || 'Institution'}
                 width={40}
                 height={40}
                 className="object-contain rounded"
+                unoptimized
               />
             ) : (
               <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
@@ -310,3 +312,4 @@ export function ExamPaperCard({
     </Card>
   );
 }
+

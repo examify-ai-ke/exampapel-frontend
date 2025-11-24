@@ -16,7 +16,21 @@ const nextConfig: NextConfig = {
     // Enable experimental features if needed
   },
   images: {
-    domains: ['localhost', 'fastapi.localhost','exampapel-images-bucket2025.s3.amazonaws.com'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'http',
+        hostname: 'fastapi.localhost',
+      },
+      {
+        protocol: 'https',
+        hostname: 'exampapel-images-bucket2025.s3.amazonaws.com',
+        pathname: '/**',
+      },
+    ],
   },
   async rewrites() {
     return [

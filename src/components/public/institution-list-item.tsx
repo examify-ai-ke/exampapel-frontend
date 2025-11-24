@@ -14,7 +14,7 @@ interface InstitutionListItemProps {
 
 export function InstitutionListItem({ institution, className = '' }: InstitutionListItemProps) {
   const router = useRouter();
-  
+  console.log(institution);
   const handleViewInstitution = () => {
     router.push(`/institutions/${institution.slug}`);
   };
@@ -36,7 +36,8 @@ export function InstitutionListItem({ institution, className = '' }: Institution
   };
 
   const InstitutionIcon = getInstitutionIcon(institution.institution_type || '');
-
+  const src = institution.logo?.media?.path
+   
   return (
     <div className={`flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow ${className}`}>
       {/* Left side - Institution info */}
@@ -44,13 +45,14 @@ export function InstitutionListItem({ institution, className = '' }: Institution
         {/* Institution Logo/Icon */}
         <div className="flex-shrink-0">
           <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
-            {(institution as any).logo?.media?.link ? (
+            {(institution as any).logo ? (
               <Image
-                src={(institution as any).logo.media.link}
-                alt={institution.name}
-                width={64}
-                height={64}
+                src={src || '/placeholder.svg'}
+                alt={institution.logo?.media?.title || 'Institution logo'}
+                width={64}  
+                height={64}                
                 className="rounded-full object-cover"
+                unoptimized={true}
               />
             ) : (
               <InstitutionIcon className="h-8 w-8 text-blue-600" />
