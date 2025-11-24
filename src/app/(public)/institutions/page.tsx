@@ -4,17 +4,19 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { InstitutionCard } from '@/components/public';
+import { InstitutionListItem } from '@/components/public/institution-list-item';
 import { BaseSearch } from '@/components/public/base-search';
 import { Pagination } from '@/components/public/pagination';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { publicAPI } from '@/lib/api-public';
 import type { InstitutionRead } from '@/components/public/types';
-import { Building2, GraduationCap, School } from 'lucide-react';
+import { Building2, GraduationCap, School, List, Grid } from 'lucide-react';
 
-type InstitutionType = 'all' | 'University' | 'College' | 'Institute' | 'School';
+type InstitutionType = 'all' | 'Public' | 'Private' | 'Other';
+type InstitutionCategory = 'all' | 'University' | 'College' | 'TVET' | 'TVC' | 'TTI' | 'Other';
 type SortOption = 'alphabetical' | 'most-papers';
+type ViewMode = 'list' | 'grid';
 
 export default function InstitutionsPage() {
   const router = useRouter();
@@ -25,15 +27,21 @@ export default function InstitutionsPage() {
   const [institutionType, setInstitutionType] = useState<InstitutionType>(
     (searchParams.get('type') as InstitutionType) || 'all'
   );
+  const [institutionCategory, setInstitutionCategory] = useState<InstitutionCategory>(
+    (searchParams.get('category') as InstitutionCategory) || 'all'
+  );
   const [sortBy, setSortBy] = useState<SortOption>(
     (searchParams.get('sort') as SortOption) || 'alphabetical'
   );
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
-  const [pageSize] = useState(24); // Fixed page size for grid layout
+  const [pageSize] = useState(12); // Smaller page size for list view
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    (searchParams.get('view') as ViewMode) || 'list' // Default to list view
+  );
 
   // Fetch institutions
   const { data, isLoading } = useQuery({
-    queryKey: ['institutions', searchQuery, institutionType, sortBy, currentPage, pageSize],
+    queryKey: ['institutions', searchQuery, institutionType, institutionCategory, sortBy, currentPage, pageSize],
     queryFn: async () => {
       // Use search if we have filters, otherwise use list
       const result = searchQuery || institutionType !== 'all'
@@ -52,8 +60,13 @@ export default function InstitutionsPage() {
         throw new Error('Failed to fetch institutions');
       }
       
-      // Sort on client side if needed
+      // Filter by category on client side (until backend adds category support)
       let institutions = result.data || [];
+      if (institutionCategory !== 'all') {
+        institutions = institutions.filter((inst: any) => inst.category === institutionCategory);
+      }
+      
+      // Sort on client side if needed
       if (sortBy === 'most-papers') {
         institutions = [...institutions].sort((a: any, b: any) => 
           (b.exams_count || 0) - (a.exams_count || 0)
@@ -66,7 +79,7 @@ export default function InstitutionsPage() {
       
       return {
         data: institutions,
-        total: result.total,
+        total: institutions.length, // Update total after filtering
         pagination: result.pagination,
       };
     },
@@ -78,12 +91,14 @@ export default function InstitutionsPage() {
     
     if (searchQuery) params.set('q', searchQuery);
     if (institutionType !== 'all') params.set('type', institutionType);
+    if (institutionCategory !== 'all') params.set('category', institutionCategory);
     if (sortBy !== 'alphabetical') params.set('sort', sortBy);
     if (currentPage > 1) params.set('page', currentPage.toString());
+    if (viewMode !== 'list') params.set('view', viewMode);
 
     const newUrl = params.toString() ? `/institutions?${params.toString()}` : '/institutions';
     router.replace(newUrl, { scroll: false });
-  }, [searchQuery, institutionType, sortBy, currentPage, router]);
+  }, [searchQuery, institutionType, institutionCategory, sortBy, currentPage, viewMode, router]);
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
@@ -95,8 +110,18 @@ export default function InstitutionsPage() {
     setCurrentPage(1);
   };
 
+  const handleCategoryFilter = (category: InstitutionCategory) => {
+    setInstitutionCategory(category);
+    setCurrentPage(1);
+  };
+
   const handleSortChange = (sort: SortOption) => {
     setSortBy(sort);
+    setCurrentPage(1);
+  };
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
     setCurrentPage(1);
   };
 
@@ -111,10 +136,9 @@ export default function InstitutionsPage() {
 
   const institutionTypes: { value: InstitutionType; label: string; icon: any }[] = [
     { value: 'all', label: 'All Types', icon: Building2 },
-    { value: 'University', label: 'Universities', icon: GraduationCap },
-    { value: 'College', label: 'Colleges', icon: School },
-    { value: 'Institute', label: 'Institutes', icon: Building2 },
-    { value: 'School', label: 'Schools', icon: School },
+    { value: 'Public', label: 'Public', icon: Building2 },
+    { value: 'Private', label: 'Private', icon: GraduationCap },
+    { value: 'Other', label: 'Other', icon: School },
   ];
 
   return (
@@ -163,7 +187,7 @@ export default function InstitutionsPage() {
             </div>
           </div>
 
-          {/* Sort Options */}
+          {/* Results Count, Category, Sort and View Mode Toggle */}
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
               {isLoading ? (
@@ -172,16 +196,57 @@ export default function InstitutionsPage() {
                 `${totalResults.toLocaleString()} ${totalResults === 1 ? 'institution' : 'institutions'} found`
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Sort by:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => handleSortChange(e.target.value as SortOption)}
-                className="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
-              >
-                <option value="alphabetical">Alphabetical</option>
-                <option value="most-papers">Most Papers</option>
-              </select>
+            <div className="flex items-center gap-4">
+              {/* Category Dropdown */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Category:</span>
+                <select
+                  value={institutionCategory}
+                  onChange={(e) => handleCategoryFilter(e.target.value as InstitutionCategory)}
+                  className="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="all">All Categories</option>
+                  <option value="University">Universities</option>
+                  <option value="College">Colleges</option>
+                  <option value="TVET">TVET</option>
+                  <option value="TVC">TVC</option>
+                  <option value="TTI">TTI</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              {/* Sort Dropdown */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Sort by:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => handleSortChange(e.target.value as SortOption)}
+                  className="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="alphabetical">Alphabetical</option>
+                  <option value="most-papers">Most Papers</option>
+                </select>
+              </div>
+
+              {/* View Mode Toggle */}
+              <div className="flex items-center gap-2 border border-gray-300 rounded-md p-1">
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => handleViewModeChange('list')}
+                  className={viewMode === 'list' ? 'bg-teal-500 hover:bg-teal-600' : ''}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => handleViewModeChange('grid')}
+                  className={viewMode === 'grid' ? 'bg-teal-500 hover:bg-teal-600' : ''}
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -204,6 +269,7 @@ export default function InstitutionsPage() {
               onClick={() => {
                 setSearchQuery('');
                 setInstitutionType('all');
+                setInstitutionCategory('all');
                 setCurrentPage(1);
               }}
               variant="outline"
@@ -213,17 +279,32 @@ export default function InstitutionsPage() {
           </div>
         )}
 
-        {/* Results Grid */}
+        {/* Results - Grid or List View */}
         {!isLoading && institutions.length > 0 && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {institutions.map((institution: InstitutionRead) => (
-                <InstitutionCard
-                  key={institution.id}
-                  institution={institution}
-                />
-              ))}
-            </div>
+            {/* Grid View */}
+            {viewMode === 'grid' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {institutions.map((institution: InstitutionRead) => (
+                  <InstitutionCard
+                    key={institution.id}
+                    institution={institution}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* List View */}
+            {viewMode === 'list' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {institutions.map((institution: InstitutionRead) => (
+                  <InstitutionListItem
+                    key={institution.id}
+                    institution={institution}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Pagination */}
             {totalPages > 1 && (

@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Building2, FileText, MapPin } from 'lucide-react';
 import type { InstitutionCardProps } from './types';
-import type { InstitutionRead } from '@/types/generated/api';
+import type { InstitutionRead } from '@/components/public/types';
 
 export function InstitutionCard({ institution, className = '' }: InstitutionCardProps) {
   const router = useRouter();
   
-  const handleViewPapers = () => {
+  const handleViewInstitution = () => {
     router.push(`/institutions/${institution.slug}`);
   };
 
@@ -77,11 +77,11 @@ export function InstitutionCard({ institution, className = '' }: InstitutionCard
 
       <CardFooter className="pt-0">
         <Button
-          onClick={handleViewPapers}
+          onClick={handleViewInstitution}
           variant="outline"
           className="w-full"
         >
-          View Papers
+          View Institution
         </Button>
       </CardFooter>
     </Card>
