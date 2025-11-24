@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, MessageSquare, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { ChevronDown, MessageSquare, ThumbsUp, ThumbsDown, Clock } from 'lucide-react';
 import EditorRenderer from '@/components/ui/editor-renderer';
 import { publicAPI } from '@/lib/api-public';
 import { useUIStore } from '@/stores/ui';
@@ -350,7 +350,7 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
               ? `${answer.created_by.first_name || ''} ${answer.created_by.last_name || ''}`.trim()
               : answer.created_by?.name || 'Anonymous'}
           </span>
-          <span>clock_icon</span>
+          <Clock className="h-3 w-3" />
           <span>{formatRelativeTime(answer.created_at)}</span>
         </div>
 
@@ -408,7 +408,7 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
                           ? `${reply.created_by.first_name || ''} ${reply.created_by.last_name || ''}`.trim()
                           : reply.created_by?.name || 'Anonymous'}
                       </span>
-                      <span>•</span>
+                      <Clock className="h-3 w-3" />
                       <span>{formatRelativeTime(reply.created_at)}</span>
                     </div>
                     <div className="flex items-center gap-1">

@@ -17,6 +17,7 @@ import {
     BookOpen,
     FileText,
     MessageSquarePlus,
+    Clock,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -393,10 +394,14 @@ const SubQuestionDisplay: React.FC<SubQuestionDisplayProps> = ({
                                     <div className="text-sm text-gray-800">
                                         {answer.text && <EditorRenderer data={answer.text} className="prose-sm" />}
                                     </div>
-                                    <div className="mt-2 text-xs text-gray-500">
-                                        By: {answer.created_by?.first_name || answer.created_by?.last_name 
-                                          ? `${answer.created_by.first_name || ''} ${answer.created_by.last_name || ''}`.trim()
-                                          : answer.created_by?.name || 'Anonymous'} • {formatRelativeTime(answer.created_at)}
+                                    <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                                        <span>
+                                            By: {answer.created_by?.first_name || answer.created_by?.last_name 
+                                              ? `${answer.created_by.first_name || ''} ${answer.created_by.last_name || ''}`.trim()
+                                              : answer.created_by?.name || 'Anonymous'}
+                                        </span>
+                                        <Clock className="h-3 w-3" />
+                                        <span>{formatRelativeTime(answer.created_at)}</span>
                                     </div>
                                     
                                     {/* Reply Button */}
@@ -447,10 +452,14 @@ const SubQuestionDisplay: React.FC<SubQuestionDisplayProps> = ({
                                                         {reply.text && <EditorRenderer data={reply.text} className="prose-sm" />}
                                                     </div>
                                                     <div className="mt-1 flex items-center justify-between">
-                                                        <div className="text-xs text-gray-500">
-                                                            By: {reply.created_by?.first_name || reply.created_by?.last_name 
-                                                              ? `${reply.created_by.first_name || ''} ${reply.created_by.last_name || ''}`.trim()
-                                                              : reply.created_by?.name || 'Anonymous'} • {formatRelativeTime(reply.created_at)}
+                                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                            <span>
+                                                                By: {reply.created_by?.first_name || reply.created_by?.last_name 
+                                                                  ? `${reply.created_by.first_name || ''} ${reply.created_by.last_name || ''}`.trim()
+                                                                  : reply.created_by?.name || 'Anonymous'}
+                                                            </span>
+                                                            <Clock className="h-3 w-3" />
+                                                            <span>{formatRelativeTime(reply.created_at)}</span>
                                                         </div>
                                                         <div className="flex items-center space-x-1 text-xs">
                                                             <span>👍 {reply.likes || 0}</span>
@@ -817,10 +826,14 @@ const MainQuestionDisplay: React.FC<MainQuestionDisplayProps> = ({
                                                 <div className="text-sm text-gray-800">
                                                     {answer.text && <EditorRenderer data={answer.text} className="prose-sm" />}
                                                 </div>
-                                                <div className="mt-2 text-xs text-gray-500">
-                                                    By: {answer.created_by?.first_name || answer.created_by?.last_name 
-                                                      ? `${answer.created_by.first_name || ''} ${answer.created_by.last_name || ''}`.trim()
-                                                      : answer.created_by?.name || 'Anonymous'} • {formatRelativeTime(answer.created_at)}
+                                                <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                                                    <span>
+                                                        By: {answer.created_by?.first_name || answer.created_by?.last_name 
+                                                          ? `${answer.created_by.first_name || ''} ${answer.created_by.last_name || ''}`.trim()
+                                                          : answer.created_by?.name || 'Anonymous'}
+                                                    </span>
+                                                    <Clock className="h-3 w-3" />
+                                                    <span>{formatRelativeTime(answer.created_at)}</span>
                                                 </div>
                                                 
                                                 {/* Reply Button */}
@@ -872,10 +885,14 @@ const MainQuestionDisplay: React.FC<MainQuestionDisplayProps> = ({
                                                                     {reply.text && <EditorRenderer data={reply.text} className="prose-sm" />}
                                                                 </div>
                                                                 <div className="mt-1 flex items-center justify-between">
-                                                                    <div className="text-xs text-gray-500">
-                                                                        By: {reply.created_by?.first_name || reply.created_by?.last_name 
-                                                                          ? `${reply.created_by.first_name || ''} ${reply.created_by.last_name || ''}`.trim()
-                                                                          : reply.created_by?.name || 'Anonymous'} • {formatRelativeTime(reply.created_at)}
+                                                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                                        <span>
+                                                                            By: {reply.created_by?.first_name || reply.created_by?.last_name 
+                                                                              ? `${reply.created_by.first_name || ''} ${reply.created_by.last_name || ''}`.trim()
+                                                                              : reply.created_by?.name || 'Anonymous'}
+                                                                        </span>
+                                                                        <Clock className="h-3 w-3" />
+                                                                        <span>{formatRelativeTime(reply.created_at)}</span>
                                                                     </div>
                                                                     <div className="flex items-center space-x-1 text-xs">
                                                                         <span>👍 {reply.likes || 0}</span>
