@@ -72,6 +72,11 @@ export function InstitutionListItem({ institution, className = '' }: Institution
           </div>
           
           <div className="flex flex-wrap gap-2 mb-2">
+            {(institution as any).category && (
+              <Badge className="text-xs bg-teal-600">
+                {(institution as any).category}
+              </Badge>
+            )}
             {institution.institution_type && (
               <Badge variant="secondary" className="text-xs">
                 {institution.institution_type}
@@ -84,6 +89,22 @@ export function InstitutionListItem({ institution, className = '' }: Institution
               </Badge>
             )}
           </div>
+
+          {/* Tags */}
+          {(institution as any).tags && (institution as any).tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {(institution as any).tags.slice(0, 5).map((tag: string, index: number) => (
+                <Badge key={index} variant="outline" className="text-xs bg-gray-50">
+                  {tag}
+                </Badge>
+              ))}
+              {(institution as any).tags.length > 5 && (
+                <Badge variant="outline" className="text-xs bg-gray-50">
+                  +{(institution as any).tags.length - 5} more
+                </Badge>
+              )}
+            </div>
+          )}
 
           {/* Additional properties */}
           <div className="flex items-center gap-4 text-sm text-gray-600">

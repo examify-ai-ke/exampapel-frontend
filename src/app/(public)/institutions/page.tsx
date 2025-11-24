@@ -34,7 +34,7 @@ export default function InstitutionsPage() {
     (searchParams.get('sort') as SortOption) || 'alphabetical'
   );
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
-  const [pageSize] = useState(12); // Smaller page size for list view
+  const [pageSize, setPageSize] = useState(Number(searchParams.get('pageSize')) || 12);
   const [viewMode, setViewMode] = useState<ViewMode>(
     (searchParams.get('view') as ViewMode) || 'list' // Default to list view
   );
@@ -97,11 +97,12 @@ export default function InstitutionsPage() {
     if (institutionCategory !== 'all') params.set('category', institutionCategory);
     if (sortBy !== 'alphabetical') params.set('sort', sortBy);
     if (currentPage > 1) params.set('page', currentPage.toString());
+    if (pageSize !== 12) params.set('pageSize', pageSize.toString());
     if (viewMode !== 'list') params.set('view', viewMode);
 
     const newUrl = params.toString() ? `/institutions?${params.toString()}` : '/institutions';
     router.replace(newUrl, { scroll: false });
-  }, [searchQuery, institutionType, institutionCategory, sortBy, currentPage, viewMode, router]);
+  }, [searchQuery, institutionType, institutionCategory, sortBy, currentPage, pageSize, viewMode, router]);
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
@@ -125,6 +126,11 @@ export default function InstitutionsPage() {
 
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
+    setCurrentPage(1);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
     setCurrentPage(1);
   };
 
@@ -190,8 +196,8 @@ export default function InstitutionsPage() {
             </div>
           </div>
 
-          {/* Results Count, Category, Sort and View Mode Toggle */}
-          <div className="flex items-center justify-between">
+          {/* Results Count, Page Size, Category, Sort and View Mode Toggle */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="text-sm text-gray-600">
               {isLoading ? (
                 'Loading...'
@@ -199,7 +205,22 @@ export default function InstitutionsPage() {
                 `${totalResults.toLocaleString()} ${totalResults === 1 ? 'institution' : 'institutions'} found`
               )}
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Page Size Dropdown */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Show:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  className="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="12">12</option>
+                  <option value="24">24</option>
+                  <option value="48">48</option>
+                  <option value="96">96</option>
+                </select>
+              </div>
+
               {/* Category Dropdown */}
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Category:</span>
@@ -220,7 +241,7 @@ export default function InstitutionsPage() {
 
               {/* Sort Dropdown */}
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Sort by:</span>
+                <span className="text-sm text-gray-600">Sort:</span>
                 <select
                   value={sortBy}
                   onChange={(e) => handleSortChange(e.target.value as SortOption)}
@@ -318,7 +339,7 @@ export default function InstitutionsPage() {
                   pageSize={pageSize}
                   totalItems={totalResults}
                   onPageChange={handlePageChange}
-                  onPageSizeChange={() => {}} // Fixed page size
+                  onPageSizeChange={handlePageSizeChange}
                 />
               </div>
             )}

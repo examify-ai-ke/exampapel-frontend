@@ -4571,7 +4571,7 @@ export interface components {
              * Exam Duration
              * @default 120
              */
-            exam_duration: number;
+            exam_duration: number | null;
             /** Exam Date */
             exam_date: string | null;
             /** Instruction Ids */
@@ -4612,7 +4612,7 @@ export interface components {
              * Exam Duration
              * @default 120
              */
-            exam_duration: number;
+            exam_duration: number | null;
             /** Exam Date */
             exam_date: string | null;
             /**
@@ -4665,7 +4665,7 @@ export interface components {
              * Exam Duration
              * @default 120
              */
-            exam_duration: number;
+            exam_duration: number | null;
             /** Exam Date */
             exam_date: string | null;
             /**
@@ -4728,7 +4728,7 @@ export interface components {
              * Exam Duration
              * @default 120
              */
-            exam_duration: number;
+            exam_duration: number | null;
             /** Exam Date */
             exam_date: string | null;
             /**
@@ -5567,6 +5567,22 @@ export interface components {
             } | unknown | null;
             data?: components["schemas"]["InstitutionDetailedStatistics"] | null;
         };
+        /** IGetResponseBase[InstitutionRead] */
+        IGetResponseBase_InstitutionRead_: {
+            /**
+             * Message
+             * @default Data got correctly
+             */
+            message: string | null;
+            /**
+             * Meta
+             * @default {}
+             */
+            meta: {
+                [key: string]: unknown;
+            } | unknown | null;
+            data?: components["schemas"]["InstitutionRead"] | null;
+        };
         /** IGetResponseBase[InstructionRead] */
         IGetResponseBase_InstructionRead_: {
             /**
@@ -5848,6 +5864,22 @@ export interface components {
                 [key: string]: unknown;
             };
             data: components["schemas"]["PageBase_ExamDescriptionRead_"];
+        };
+        /** IGetResponsePaginated[ExamPaperReadForInstitution] */
+        IGetResponsePaginated_ExamPaperReadForInstitution_: {
+            /**
+             * Message
+             * @default Item retreived successfully
+             */
+            message: string | null;
+            /**
+             * Meta
+             * @default {}
+             */
+            meta: {
+                [key: string]: unknown;
+            };
+            data: components["schemas"]["PageBase_ExamPaperReadForInstitution_"];
         };
         /** IGetResponsePaginated[ExamPaperRead] */
         IGetResponsePaginated_ExamPaperRead_: {
@@ -6146,22 +6178,10 @@ export interface components {
         };
         /** IImageMediaRead */
         IImageMediaRead: {
-            /** File Format */
-            file_format?: string | null;
-            /** Width */
-            width?: number | null;
-            /** Height */
-            height?: number | null;
-            media: components["schemas"]["IMediaRead"] | null;
+            media: components["schemas"]["IMediaReadForInstituion"] | null;
         };
-        /** IMediaRead */
-        IMediaRead: {
-            /** Title */
-            title?: string | null;
-            /** Description */
-            description?: string | null;
-            /** Path */
-            path?: string | null;
+        /** IMediaReadForInstituion */
+        IMediaReadForInstituion: {
             /** Id */
             id: string;
             /** Link */
@@ -7850,6 +7870,29 @@ export interface components {
         PageBase_ExamDescriptionRead_: {
             /** Items */
             items: components["schemas"]["ExamDescriptionRead"][];
+            /** Total */
+            total?: number | null;
+            /** Page */
+            page: number | null;
+            /** Size */
+            size: number | null;
+            /** Pages */
+            pages?: number | null;
+            /**
+             * Previous Page
+             * @description Page number of the previous page
+             */
+            previous_page?: number | null;
+            /**
+             * Next Page
+             * @description Page number of the next page
+             */
+            next_page?: number | null;
+        };
+        /** PageBase[ExamPaperReadForInstitution] */
+        PageBase_ExamPaperReadForInstitution_: {
+            /** Items */
+            items: components["schemas"]["ExamPaperReadForInstitution"][];
             /** Total */
             total?: number | null;
             /** Page */
@@ -10688,7 +10731,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["IGetResponsePaginated_InstitutionRead_"];
                 };
             };
             /** @description Validation Error */
@@ -10773,7 +10816,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["IGetResponsePaginated_InstitutionRead_"];
                 };
             };
             /** @description Validation Error */
@@ -10806,7 +10849,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["IGetResponseBase_List_Dict_str__str___"];
                 };
             };
             /** @description Validation Error */
@@ -10871,7 +10914,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["IGetResponseBase_InstitutionRead_"];
                 };
             };
             /** @description Validation Error */
@@ -10902,7 +10945,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["IGetResponseBase_InstitutionRead_"];
                 };
             };
             /** @description Validation Error */
@@ -10936,7 +10979,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["IGetResponsePaginated_ExamPaperReadForInstitution_"];
                 };
             };
             /** @description Validation Error */
