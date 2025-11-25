@@ -15,6 +15,8 @@ import { SearchAndSort } from '@/components/public/search-and-sort';
 import { FilterSidebar } from '@/components/public/filter-sidebar';
 import { MobileFilterDrawer } from '@/components/public/mobile-filter-drawer';
 import { Button } from '@/components/ui/button';
+import { LoadingOverlay } from '@/components/ui/loading-overlay';
+import { QuestionsListSkeleton } from '@/components/ui/skeleton-loaders';
 import { X } from 'lucide-react';
 import type { FilterOption } from '@/types/search-filters';
 
@@ -312,18 +314,22 @@ export default function PublicQuestionsContent() {
 
           {/* Questions List */}
           <div className="bg-white shadow-lg rounded-lg p-0 relative min-h-[400px]">
-            {/* Loading Overlay */}
-            {isFetching && (
-              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-500"></div>
-                  <p className="text-sm text-gray-600">Loading questions...</p>
-                </div>
-              </div>
+            {/* Initial Loading State - Skeleton */}
+            {isLoading && (
+              <QuestionsListSkeleton count={5} />
+            )}
+            
+            {/* Loading Overlay for Refetch */}
+            {!isLoading && isFetching && (
+              <LoadingOverlay
+                isVisible={true}
+                message="Updating questions..."
+                variant="overlay"
+              />
             )}
             
             {/* Error State */}
-            {isError && (
+            {isError && !isLoading && (
               <div className="p-8 text-center">
                 <p className="text-red-500 mb-4">Error loading questions.</p>
                 <Button onClick={() => refetch()} variant="outline">
@@ -349,8 +355,8 @@ export default function PublicQuestionsContent() {
             )}
             
             {/* Questions List with Fade Transition */}
-            {!isError && questions.length > 0 && (
-              <div className={`transition-opacity duration-300 ${isFetching ? 'opacity-50' : 'opacity-100'}`}>
+            {!isError && !isLoading && questions.length > 0 && (
+              <div className={`transition-opacity duration-300 ${isFetching ? 'opacity-70' : 'opacity-100'}`}>
                 <RecentQuestionsSection
                   questions={questions}
                   currentPage={page}
