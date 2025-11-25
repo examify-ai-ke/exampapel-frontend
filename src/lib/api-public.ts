@@ -424,10 +424,22 @@ export const publicAPI = {
                 if ((filters as any).sort_by) searchParams.sort_by = (filters as any).sort_by;
                 if ((filters as any).sort_order) searchParams.sort_order = (filters as any).sort_order;
 
+                console.log('🔍 Questions Search API Call:', {
+                    endpoint: '/api/v1/questions/search',
+                    searchParams,
+                    filters
+                });
+
                 const response = await api.GET('/api/v1/questions/search', {
                     params: {
                         query: searchParams
                     }
+                });
+
+                console.log('📦 Questions Search Response:', {
+                    dataCount: extractItems<QuestionRead>(response).length,
+                    total: extractTotal(response),
+                    hasError: !!response.error
                 });
 
                 return {
