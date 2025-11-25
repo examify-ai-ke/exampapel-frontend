@@ -63,6 +63,7 @@ export interface InstitutionFilters {
     search?: string;
     search_term?: string;
     institution_type?: 'Public' | 'Private' | 'Other';
+    category?: string;
     location?: string;
     limit?: number;
     skip?: number;
@@ -605,6 +606,7 @@ export const publicAPI = {
                 if (filters?.search_term) queryParams.search_term = filters.search_term;
                 if (filters?.search) queryParams.search_term = filters.search;
                 if (filters?.institution_type) queryParams.institution_type = filters.institution_type;
+                if (filters?.category) queryParams.category = filters.category;
                 if (filters?.location) queryParams.location = filters.location;
 
                 const response = await api.GET('/api/v1/institution', {

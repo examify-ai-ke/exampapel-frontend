@@ -44,29 +44,24 @@ export default function InstitutionsPageContent() {
   const { data, isLoading } = useQuery({
     queryKey: ['institutions', searchQuery, institutionType, institutionCategory, sortBy, currentPage, pageSize],
     queryFn: async () => {
-      // Call list endpoint with filters - it handles all filtering
+      // Call list endpoint with all filters - backend handles filtering
       const result = await publicAPI.institutions.list({
         skip: (currentPage - 1) * pageSize,
         limit: pageSize,
         search: searchQuery || undefined,
         // Convert institution type to uppercase for API (enum values are "Public", "Private", "Other")
         institution_type: institutionType !== 'all' ? (institutionType as any) : undefined,
+        // Pass category filter to backend
+        category: institutionCategory !== 'all' ? institutionCategory : undefined,
       });
       
       if (result.error) {
         throw new Error('Failed to fetch institutions');
       }
       
-      // Filter by category on client side (until backend adds category support)
-      // Note: Client-side filtering only filters the current page, so pagination
-      // will show all pages but filtered results only appear on current page
+      // Sort on client side if needed
       let institutions = result.data || [];
       
-      if (institutionCategory !== 'all') {
-        institutions = institutions.filter((inst: any) => inst.category === institutionCategory);
-      }
-      
-      // Sort on client side if needed
       if (sortBy === 'most-papers') {
         institutions = [...institutions].sort((a: any, b: any) => 
           (b.exams_count || 0) - (a.exams_count || 0)
@@ -79,7 +74,7 @@ export default function InstitutionsPageContent() {
       
       return {
         data: institutions,
-        total: result.total, // Keep original total for pagination
+        total: result.total,
         pagination: result.pagination,
       };
     },
