@@ -23,7 +23,7 @@ export function QuestionsHeroSection({ stats, onSearchClick }: QuestionsHeroSect
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full opacity-20 blur-3xl -mr-48 -mt-48" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-purple-100 to-indigo-100 rounded-full opacity-20 blur-3xl -ml-48 -mb-48" />
       
-      <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
+      <div className="container mx-auto px-4 py-16 md:py-10 relative z-10">
         <div className="max-w-4xl mx-auto">
           {/* Main Headline */}
           <div className="text-center space-y-6 mb-12">
