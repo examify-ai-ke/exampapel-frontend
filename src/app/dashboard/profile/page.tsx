@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { DashboardBreadcrumb } from '@/components/ui/breadcrumb';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
 import {
     User,
     Mail,
@@ -21,47 +29,263 @@ import {
     Camera,
     Shield,
     Bell,
-    Globe
+    Globe,
+    AlertCircle,
+    CheckCircle,
+    Eye,
+    EyeOff,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/stores/auth';
+import { useUIStore } from '@/stores/ui';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import type { components } from '@/types/generated/api';
+
+type IUserUpdate = components['schemas']['IUserUpdate'];
+type PasswordChange = components['schemas']['PasswordChange'];
 
 export default function ProfilePage() {
     const { user } = useAuth();
+    const { setUser } = useAuthStore();
+    const { addNotification } = useUIStore();
     const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({
-        firstName: user?.first_name || '',
-        lastName: user?.last_name || '',
+    const [isSaving, setIsSaving] = useState(false);
+    const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+    const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+    const autoSaveTimeoutRef = useRef<NodeJS.Timeout>();
+    
+    const [formData, setFormData] = useState<IUserUpdate>({
+        first_name: user?.first_name || '',
+        last_name: user?.last_name || '',
         email: user?.email || '',
         phone: user?.phone || '',
-        bio: user?.bio || '',
-        location: user?.location || '',
-        institution: user?.institution || '',
+        address: user?.address || '',
+        state: user?.state || '',
+        country: user?.country || '',
     });
+
+    const [passwordData, setPasswordData] = useState({
+        current_password: '',
+        new_password: '',
+        confirmPassword: '',
+    });
+
+    const [showPasswords, setShowPasswords] = useState({
+        current: false,
+        new: false,
+        confirm: false,
+    });
+
+    // Update form data when user changes
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                first_name: user.first_name || '',
+                last_name: user.last_name || '',
+                email: user.email || '',
+                phone: user.phone || '',
+                address: user.address || '',
+                state: user.state || '',
+                country: user.country || '',
+            });
+        }
+    }, [user]);
 
     const handleInputChange = (field: string, value: string) => {
         setFormData(prev => ({
             ...prev,
             [field]: value
         }));
+
+        // Trigger autosave when editing
+        if (isEditing) {
+            setAutoSaveStatus('saving');
+            
+            // Clear existing timeout
+            if (autoSaveTimeoutRef.current) {
+                clearTimeout(autoSaveTimeoutRef.current);
+            }
+
+            // Set new timeout for autosave (2 seconds after last change)
+            autoSaveTimeoutRef.current = setTimeout(() => {
+                handleAutoSave({
+                    ...formData,
+                    [field]: value
+                });
+            }, 2000);
+        }
     };
 
-    const handleSave = () => {
-        // Implement save logic here
-        console.log('Saving profile:', formData);
-        setIsEditing(false);
+    const handlePasswordChange = (field: string, value: string) => {
+        setPasswordData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const handleAutoSave = async (dataToSave: IUserUpdate) => {
+        try {
+            console.log('Auto-saving profile with data:', dataToSave);
+            const { data, error } = await api.PUT('/api/v1/user', {
+                body: dataToSave,
+            });
+
+            console.log('Auto-save response:', { data, error });
+
+            if (error) {
+                console.error('Auto-save error:', error);
+                setAutoSaveStatus('idle');
+                return;
+            }
+
+            if (data?.data) {
+                // Update the auth store with new user data
+                setUser(data.data);
+                setAutoSaveStatus('saved');
+                
+                // Reset status after 2 seconds
+                setTimeout(() => {
+                    setAutoSaveStatus('idle');
+                }, 2000);
+            }
+        } catch (err) {
+            console.error('Auto-save exception:', err);
+            setAutoSaveStatus('idle');
+        }
+    };
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            console.log('Manual save with data:', formData);
+            const { data, error } = await api.PUT('/api/v1/user', {
+                body: formData,
+            });
+
+            console.log('Save response:', { data, error });
+
+            if (error) {
+                console.error('Save error:', error);
+                const errorMessage = typeof error.detail === 'string'
+                    ? error.detail
+                    : Array.isArray(error.detail)
+                        ? error.detail.map((e: any) => e.msg).join(', ')
+                        : 'Failed to update profile';
+                
+                addNotification({
+                    type: 'error',
+                    title: 'Update Failed',
+                    message: errorMessage,
+                });
+                return;
+            }
+
+            if (data?.data) {
+                // Update the auth store with new user data
+                setUser(data.data);
+                addNotification({
+                    type: 'success',
+                    title: 'Profile Updated',
+                    message: 'Your profile has been updated successfully.',
+                });
+                setIsEditing(false);
+            }
+        } catch (err) {
+            console.error('Save exception:', err);
+            addNotification({
+                type: 'error',
+                title: 'Error',
+                message: 'An unexpected error occurred while updating your profile.',
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleChangePassword = async () => {
+        if (passwordData.new_password !== passwordData.confirmPassword) {
+            addNotification({
+                type: 'error',
+                title: 'Password Mismatch',
+                message: 'New passwords do not match.',
+            });
+            return;
+        }
+
+        if (passwordData.new_password.length < 8) {
+            addNotification({
+                type: 'error',
+                title: 'Weak Password',
+                message: 'Password must be at least 8 characters long.',
+            });
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const { data, error } = await api.POST('/api/v1/login/change_password', {
+                body: {
+                    current_password: passwordData.current_password,
+                    new_password: passwordData.new_password,
+                } as PasswordChange,
+            });
+
+            if (error) {
+                const errorMessage = typeof error.detail === 'string'
+                    ? error.detail
+                    : Array.isArray(error.detail)
+                        ? error.detail.map(e => e.msg).join(', ')
+                        : 'Failed to change password';
+                
+                addNotification({
+                    type: 'error',
+                    title: 'Password Change Failed',
+                    message: errorMessage,
+                });
+                return;
+            }
+
+            addNotification({
+                type: 'success',
+                title: 'Password Changed',
+                message: 'Your password has been changed successfully.',
+            });
+            setShowPasswordDialog(false);
+            setPasswordData({
+                current_password: '',
+                new_password: '',
+                confirmPassword: '',
+            });
+        } catch (err) {
+            addNotification({
+                type: 'error',
+                title: 'Error',
+                message: 'An unexpected error occurred while changing your password.',
+            });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleCancel = () => {
-        setFormData({
-            firstName: user?.first_name || '',
-            lastName: user?.last_name || '',
-            email: user?.email || '',
-            phone: user?.phone || '',
-            bio: user?.bio || '',
-            location: user?.location || '',
-            institution: user?.institution || '',
-        });
+        // Clear autosave timeout
+        if (autoSaveTimeoutRef.current) {
+            clearTimeout(autoSaveTimeoutRef.current);
+        }
+        
+        if (user) {
+            setFormData({
+                first_name: user.first_name || '',
+                last_name: user.last_name || '',
+                email: user.email || '',
+                phone: user.phone || '',
+                address: user.address || '',
+                state: user.state || '',
+                country: user.country || '',
+            });
+        }
+        setAutoSaveStatus('idle');
         setIsEditing(false);
     };
 
@@ -77,6 +301,22 @@ export default function ProfilePage() {
                     <p className="text-muted-foreground">
                         Manage your account settings and preferences
                     </p>
+                    {isEditing && autoSaveStatus !== 'idle' && (
+                        <div className="flex items-center space-x-2 mt-2">
+                            {autoSaveStatus === 'saving' && (
+                                <span className="text-sm text-yellow-600 flex items-center space-x-1">
+                                    <div className="w-2 h-2 bg-yellow-600 rounded-full animate-pulse"></div>
+                                    <span>Auto-saving...</span>
+                                </span>
+                            )}
+                            {autoSaveStatus === 'saved' && (
+                                <span className="text-sm text-green-600 flex items-center space-x-1">
+                                    <CheckCircle className="w-4 h-4" />
+                                    <span>Auto-saved</span>
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
                 <Button
                     onClick={() => setIsEditing(!isEditing)}
@@ -85,7 +325,7 @@ export default function ProfilePage() {
                     {isEditing ? (
                         <>
                             <X className="h-4 w-4" />
-                            <span>Cancel</span>
+                            <span>Done</span>
                         </>
                     ) : (
                         <>
@@ -123,7 +363,7 @@ export default function ProfilePage() {
                             </CardTitle>
                             <div className="flex items-center justify-center space-x-2">
                                 <Badge variant="secondary" className="capitalize">
-                                    {user?.role || 'Student'}
+                                    {user?.role?.name || 'Student'}
                                 </Badge>
                                 <Badge variant="outline">
                                     Member since {new Date(user?.created_at || Date.now()).getFullYear()}
@@ -189,8 +429,8 @@ export default function ProfilePage() {
                                     <Label htmlFor="firstName">First Name</Label>
                                     <Input
                                         id="firstName"
-                                        value={formData.firstName}
-                                        onChange={(e) => handleInputChange('firstName', e.target.value)}
+                                        value={formData.first_name || ''}
+                                        onChange={(e) => handleInputChange('first_name', e.target.value)}
                                         disabled={!isEditing}
                                     />
                                 </div>
@@ -198,8 +438,8 @@ export default function ProfilePage() {
                                     <Label htmlFor="lastName">Last Name</Label>
                                     <Input
                                         id="lastName"
-                                        value={formData.lastName}
-                                        onChange={(e) => handleInputChange('lastName', e.target.value)}
+                                        value={formData.last_name || ''}
+                                        onChange={(e) => handleInputChange('last_name', e.target.value)}
                                         disabled={!isEditing}
                                     />
                                 </div>
@@ -209,7 +449,7 @@ export default function ProfilePage() {
                                 <Input
                                     id="email"
                                     type="email"
-                                    value={formData.email}
+                                    value={formData.email || ''}
                                     onChange={(e) => handleInputChange('email', e.target.value)}
                                     disabled={!isEditing}
                                 />
@@ -219,39 +459,39 @@ export default function ProfilePage() {
                                 <Input
                                     id="phone"
                                     type="tel"
-                                    value={formData.phone}
+                                    value={formData.phone || ''}
                                     onChange={(e) => handleInputChange('phone', e.target.value)}
                                     disabled={!isEditing}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="location">Location</Label>
+                                <Label htmlFor="address">Address</Label>
                                 <Input
-                                    id="location"
-                                    value={formData.location}
-                                    onChange={(e) => handleInputChange('location', e.target.value)}
+                                    id="address"
+                                    value={formData.address || ''}
+                                    onChange={(e) => handleInputChange('address', e.target.value)}
                                     disabled={!isEditing}
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="institution">Institution</Label>
-                                <Input
-                                    id="institution"
-                                    value={formData.institution}
-                                    onChange={(e) => handleInputChange('institution', e.target.value)}
-                                    disabled={!isEditing}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="bio">Bio</Label>
-                                <Textarea
-                                    id="bio"
-                                    value={formData.bio}
-                                    onChange={(e) => handleInputChange('bio', e.target.value)}
-                                    disabled={!isEditing}
-                                    placeholder="Tell us about yourself..."
-                                    rows={3}
-                                />
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="state">State/Province</Label>
+                                    <Input
+                                        id="state"
+                                        value={formData.state || ''}
+                                        onChange={(e) => handleInputChange('state', e.target.value)}
+                                        disabled={!isEditing}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="country">Country</Label>
+                                    <Input
+                                        id="country"
+                                        value={formData.country || ''}
+                                        onChange={(e) => handleInputChange('country', e.target.value)}
+                                        disabled={!isEditing}
+                                    />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -270,7 +510,11 @@ export default function ProfilePage() {
                                         <p className="text-sm text-muted-foreground">Update your password</p>
                                     </div>
                                 </div>
-                                <Button variant="outline" size="sm">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setShowPasswordDialog(true)}
+                                >
                                     Change
                                 </Button>
                             </div>
@@ -282,7 +526,7 @@ export default function ProfilePage() {
                                         <p className="text-sm text-muted-foreground">Manage your notifications</p>
                                     </div>
                                 </div>
-                                <Button variant="outline" size="sm">
+                                <Button variant="outline" size="sm" disabled>
                                     Configure
                                 </Button>
                             </div>
@@ -294,27 +538,124 @@ export default function ProfilePage() {
                                         <p className="text-sm text-muted-foreground">Control your privacy</p>
                                     </div>
                                 </div>
-                                <Button variant="outline" size="sm">
+                                <Button variant="outline" size="sm" disabled>
                                     Manage
                                 </Button>
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* Save/Cancel Buttons */}
+                    {/* Info about autosave */}
                     {isEditing && (
-                        <div className="flex items-center justify-end space-x-3">
-                            <Button variant="outline" onClick={handleCancel}>
-                                Cancel
-                            </Button>
-                            <Button onClick={handleSave} className="flex items-center space-x-2">
-                                <Save className="h-4 w-4" />
-                                <span>Save Changes</span>
-                            </Button>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <p className="text-sm text-blue-800">
+                                💾 Changes are automatically saved as you type. Click "Done" when finished.
+                            </p>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Change Password Dialog */}
+            <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Change Password</DialogTitle>
+                        <DialogDescription>
+                            Enter your current password and choose a new password.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="current-password">Current Password</Label>
+                            <div className="relative">
+                                <Input
+                                    id="current-password"
+                                    type={showPasswords.current ? 'text' : 'password'}
+                                    value={passwordData.current_password}
+                                    onChange={(e) => handlePasswordChange('current_password', e.target.value)}
+                                    placeholder="Enter your current password"
+                                    className="pr-10"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    {showPasswords.current ? (
+                                        <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                        <Eye className="h-4 w-4" />
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="new-password">New Password</Label>
+                            <div className="relative">
+                                <Input
+                                    id="new-password"
+                                    type={showPasswords.new ? 'text' : 'password'}
+                                    value={passwordData.new_password}
+                                    onChange={(e) => handlePasswordChange('new_password', e.target.value)}
+                                    placeholder="Enter new password (min 8 characters)"
+                                    className="pr-10"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    {showPasswords.new ? (
+                                        <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                        <Eye className="h-4 w-4" />
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="confirm-password">Confirm Password</Label>
+                            <div className="relative">
+                                <Input
+                                    id="confirm-password"
+                                    type={showPasswords.confirm ? 'text' : 'password'}
+                                    value={passwordData.confirmPassword}
+                                    onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                                    placeholder="Confirm new password"
+                                    className="pr-10"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    {showPasswords.confirm ? (
+                                        <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                        <Eye className="h-4 w-4" />
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setShowPasswordDialog(false)}
+                            disabled={isSaving}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={handleChangePassword}
+                            disabled={isSaving}
+                        >
+                            {isSaving ? 'Changing...' : 'Change Password'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 } 
