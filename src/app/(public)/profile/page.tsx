@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { DashboardBreadcrumb } from '@/components/ui/breadcrumb';
 import {
     Dialog,
     DialogContent,
@@ -51,19 +50,17 @@ export default function ProfilePage() {
     const { setUser } = useAuthStore();
     const { addNotification } = useUIStore();
 
-    // Dashboard profile is for admins/managers only
-    // Regular users should use /profile
-    if (user && user.role?.name !== 'admin' && user.role?.name !== 'manager') {
+    // Check if user is admin or manager - redirect them to dashboard
+    if (user && (user.role?.name === 'admin' || user.role?.name === 'manager')) {
         return (
-            <div className="space-y-6">
-                <DashboardBreadcrumb currentPage="Profile" />
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-                    <h2 className="text-xl font-bold text-blue-900 mb-2">Use Public Profile</h2>
-                    <p className="text-blue-800 mb-4">
-                        Please use the public profile page to manage your account.
+            <div className="container mx-auto px-4 py-8">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                    <h2 className="text-xl font-bold text-yellow-900 mb-2">Access Restricted</h2>
+                    <p className="text-yellow-800 mb-4">
+                        Admins and managers should use the dashboard profile page.
                     </p>
                     <Button asChild>
-                        <Link href="/profile">Go to Profile</Link>
+                        <Link href="/dashboard/profile">Go to Dashboard Profile</Link>
                     </Button>
                 </div>
             </div>
@@ -310,14 +307,11 @@ export default function ProfilePage() {
     };
 
     return (
-        <div className="space-y-6">
-            {/* Breadcrumb */}
-            <DashboardBreadcrumb currentPage="Profile" />
-
+        <div className="container mx-auto px-4 py-8 space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
                     <p className="text-muted-foreground">
                         Manage your account settings and preferences
                     </p>
@@ -678,4 +672,4 @@ export default function ProfilePage() {
             </Dialog>
         </div>
     );
-} 
+}
