@@ -22,7 +22,36 @@ type QuestionRead = components['schemas']['QuestionRead']
 
 // Question form schema
 const questionFormSchema = z.object({
-    text: z.custom<OutputData>(data => data && (data as OutputData).blocks.length > 0, 'Question text cannot be empty'),
+    text: z.custom<OutputData>(
+        data => {
+            console.log('🔍 Validating question text:', data);
+            
+            if (!data) {
+                console.log('❌ No data');
+                return false;
+            }
+            
+            const blocks = (data as OutputData).blocks;
+            if (!blocks || !Array.isArray(blocks)) {
+                console.log('❌ No blocks or not an array');
+                return false;
+            }
+            
+            console.log('📦 Blocks:', blocks);
+            
+            // Check if there's at least one block with content
+            const hasContent = blocks.some(block => {
+                const text = block.data?.text;
+                const hasText = text && typeof text === 'string' && text.trim().length > 0;
+                console.log('Block:', block.type, 'has text:', hasText, 'text:', text);
+                return hasText;
+            });
+            
+            console.log('✅ Has content:', hasContent);
+            return hasContent;
+        },
+        'Question text cannot be empty'
+    ),
     marks: z.coerce.number().min(0, 'Marks must be positive'),
     numbering_style: z.enum(['roman', 'alpha', 'numerical']),
     question_number: z.string().min(1, 'Question number is required'),
@@ -49,6 +78,7 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
     const { addNotification } = useUIStore()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const isEditing = !!question
+    const editorRef = React.useRef<any>(null)
     
     // Debug logging
     useEffect(() => {
@@ -65,6 +95,7 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
 
     const form = useForm<QuestionFormData>({
         resolver: zodResolver(questionFormSchema),
+        mode: 'onSubmit', // Only validate on submit, not on change
         defaultValues: question ? {
             text: question.text || { time: Date.now(), blocks: [], version: '2.22.2' },
             marks: question.marks || 1,
@@ -141,9 +172,28 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
     const onSubmit = async (data: QuestionFormData) => {
         try {
             setIsSubmitting(true)
+            
+            console.log('🚀 Form submitted with data:', data);
+            console.log('📝 Text data:', data.text);
+            console.log('📦 Blocks:', data.text?.blocks);
+            
+            // Try to get fresh data from the editor if available
+            let editorData = data.text;
+            if (editorRef.current) {
+                try {
+                    console.log('🔄 Getting fresh data from editor...');
+                    const freshData = await editorRef.current.save();
+                    console.log('✅ Fresh editor data:', freshData);
+                    editorData = freshData;
+                    // Update the form value with fresh data
+                    form.setValue('text', freshData);
+                } catch (error) {
+                    console.error('❌ Error getting editor data:', error);
+                }
+            }
 
             const questionPayload = {
-                text: { ...data.text, time: data.text.time || Date.now() },
+                text: { ...editorData, time: editorData.time || Date.now() },
                 marks: data.marks,
                 numbering_style: data.numbering_style,
                 question_number: data.question_number,
@@ -426,7 +476,11 @@ export function QuestionForm({ questionSetId, examPaperId, question, onSuccess, 
                                             <div className="w-full min-h-[200px] max-h-[300px] overflow-y-auto p-4">
                                                 <Editor
                                                     data={field.value}
-                                                    onChange={field.onChange}
+                                                    onChange={(data) => {
+                                                        console.log('📝 Editor onChange called with:', data);
+                                                        field.onChange(data);
+                                                    }}
+                                                    editorRef={editorRef}
                                                 />
                                             </div>
                                         </div>

@@ -5769,6 +5769,22 @@ export interface components {
             /** Data */
             data?: components["schemas"]["CampusRead"][] | null;
         };
+        /** IGetResponsePaginated */
+        IGetResponsePaginated: {
+            /**
+             * Message
+             * @default Item retreived successfully
+             */
+            message: string | null;
+            /**
+             * Meta
+             * @default {}
+             */
+            meta: {
+                [key: string]: unknown;
+            };
+            data: components["schemas"]["PageBase"];
+        };
         /** IGetResponsePaginated[AnswerRead] */
         IGetResponsePaginated_AnswerRead_: {
             /**
@@ -7758,6 +7774,29 @@ export interface components {
          * @enum {string}
          */
         NumberingStyleEnum: "roman" | "alpha" | "numerical";
+        /** PageBase */
+        PageBase: {
+            /** Items */
+            items: unknown[];
+            /** Total */
+            total?: number | null;
+            /** Page */
+            page: number | null;
+            /** Size */
+            size: number | null;
+            /** Pages */
+            pages?: number | null;
+            /**
+             * Previous Page
+             * @description Page number of the previous page
+             */
+            previous_page?: number | null;
+            /**
+             * Next Page
+             * @description Page number of the next page
+             */
+            next_page?: number | null;
+        };
         /** PageBase[AnswerRead] */
         PageBase_AnswerRead_: {
             /** Items */
@@ -10823,7 +10862,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IGetResponsePaginated_InstitutionRead_"];
+                    "application/json": components["schemas"]["IGetResponsePaginated"];
                 };
             };
             /** @description Validation Error */

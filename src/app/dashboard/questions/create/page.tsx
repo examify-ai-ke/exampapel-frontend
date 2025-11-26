@@ -823,7 +823,17 @@ export default function CreateQuestionPage() {
             {/* Form Container */}
             <Card className="max-w-4xl mx-auto">
                 <CardContent className="p-8">
-                    {renderStepContent()}
+                    {questionType === QuestionType.MAIN ? (
+                        <Form {...mainQuestionForm}>
+                            {renderStepContent()}
+                        </Form>
+                    ) : questionType === QuestionType.SUB ? (
+                        <Form {...subQuestionForm}>
+                            {renderStepContent()}
+                        </Form>
+                    ) : (
+                        renderStepContent()
+                    )}
 
                     {/* Navigation Buttons */}
                     <div className="flex items-center justify-between mt-8 pt-6 border-t">
