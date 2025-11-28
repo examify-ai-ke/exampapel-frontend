@@ -61,8 +61,8 @@ const institutionEditSchema = z.object({
     category: z.enum(['University', 'College', 'TVET', 'TVC', 'TTI', 'Other']),
     key: z.string()
         .optional()
-        .refine((val) => !val || val.length <= 10, {
-            message: 'Key must not exceed 10 characters'
+        .refine((val) => !val || val.length <= 25, {
+            message: 'Key must not exceed 25 characters'
         }),
     location: z.string()
         .optional()
@@ -775,7 +775,7 @@ export default function EditInstitutionPage() {
                                     <FormItem>
                                         <FormLabel>Institution Key</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Enter institution key (max 10 characters)" {...field} />
+                                            <Input placeholder="Enter institution key (max 25 characters)" {...field} />
                                         </FormControl>
                                         <FormDescription>
                                             Short identifier for the institution (e.g., "UON" for University of Nairobi).
