@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import EditorJsRenderer from '@/components/ui/editor-js-renderer';
 import { QuestionActions } from './QuestionActions';
 import { SubQuestionCard } from './SubQuestionCard';
+import { AnswerList } from './AnswerList';
 import type { MainQuestionCardProps, QuestionRead } from './types';
 
 export function MainQuestionCard({
@@ -26,6 +27,8 @@ export function MainQuestionCard({
   onDelete,
   onAddSubQuestion,
   onAnswersChange,
+  onEditQuestion,
+  onDeleteQuestion,
 }: MainQuestionCardProps) {
   // Use internal state if not controlled
   const [internalExpanded, setInternalExpanded] = useState(false);
@@ -49,23 +52,7 @@ export function MainQuestionCard({
     ? JSON.parse(questionText) 
     : questionText;
 
-  // Handler for sub-question edit
-  const handleSubQuestionEdit = (subQuestion: QuestionRead) => {
-    // This would typically open a dialog - for now we'll call the parent's onEdit
-    // The parent component should handle this appropriately
-    if (onAnswersChange) {
-      onAnswersChange();
-    }
-  };
 
-  // Handler for sub-question delete
-  const handleSubQuestionDelete = (_subQuestionId: string) => {
-    // This would typically trigger a delete confirmation
-    // The parent component should handle this appropriately
-    if (onAnswersChange) {
-      onAnswersChange();
-    }
-  };
 
   return (
     <div className="border rounded-lg p-4 bg-white hover:shadow-sm transition-shadow">
@@ -149,6 +136,13 @@ export function MainQuestionCard({
         )}
       </div>
 
+      {/* Answers (when expanded) */}
+      {isExpanded && (
+        <div className="ml-9">
+          <AnswerList answers={question.answers} />
+        </div>
+      )}
+
       {/* Sub-questions (when expanded) */}
       {isExpanded && subQuestionsCount > 0 && (
         <div className="mt-4 space-y-2">
@@ -156,8 +150,18 @@ export function MainQuestionCard({
             <SubQuestionCard
               key={subQuestion.id}
               question={subQuestion}
-              onEdit={() => handleSubQuestionEdit(subQuestion)}
-              onDelete={() => handleSubQuestionDelete(subQuestion.id)}
+              onEdit={() => {
+                console.log('📝 Sub-question edit clicked:', subQuestion.id)
+                if (onEditQuestion) {
+                  onEditQuestion(subQuestion)
+                }
+              }}
+              onDelete={() => {
+                console.log('🗑️ Sub-question delete clicked:', subQuestion.id)
+                if (onDeleteQuestion) {
+                  onDeleteQuestion(subQuestion.id)
+                }
+              }}
               onAnswersChange={onAnswersChange}
             />
           ))}

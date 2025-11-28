@@ -71,6 +71,19 @@ export function QuestionSetCard({
   const mainQuestions = questions.filter(q => !q.parent_id);
   const subQuestionsMap = new Map<string, QuestionRead[]>();
   
+  // Debug logging
+  console.log('QuestionSetCard - Questions:', {
+    total: questions.length,
+    mainCount: mainQuestions.length,
+    questions: questions.map(q => ({
+      id: q.id,
+      number: q.question_number,
+      parent_id: q.parent_id,
+      hasChildren: !!q.children,
+      childrenCount: q.children?.length || 0
+    }))
+  });
+  
   questions.forEach(q => {
     if (q.parent_id) {
       const existing = subQuestionsMap.get(q.parent_id) ?? [];
@@ -81,6 +94,11 @@ export function QuestionSetCard({
       subQuestionsMap.set(q.id, q.children);
     }
   });
+  
+  console.log('QuestionSetCard - SubQuestionsMap:', Array.from(subQuestionsMap.entries()).map(([key, value]) => ({
+    parentId: key,
+    subQuestions: value.length
+  })));
 
   return (
     <Card>
@@ -206,6 +224,8 @@ export function QuestionSetCard({
                 onDelete={() => onDeleteQuestion(question.id)}
                 onAddSubQuestion={() => onAddSubQuestion(question.id)}
                 onAnswersChange={onAnswersChange}
+                onEditQuestion={onEditQuestion}
+                onDeleteQuestion={onDeleteQuestion}
               />
             ))
           )}

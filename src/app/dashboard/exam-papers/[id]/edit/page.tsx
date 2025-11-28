@@ -9,21 +9,13 @@ import {
     ArrowLeft,
     Check,
     FileText,
-    Calendar,
-    Clock,
-    Building2,
-    BookOpen,
     Layers,
-    ListChecks,
     Plus,
     Save,
-    Edit,
-    Trash2,
-    GripVertical,
     X,
-    Search,
-    Filter,
     History,
+    Trash2,
+    Building2,
     MapPin,
 } from 'lucide-react'
 
@@ -33,10 +25,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import {
@@ -55,11 +45,9 @@ import type { components } from '@/types/generated/api'
 import { useUIStore } from '@/stores/ui'
 import { QuestionSetSelector } from '@/components/features/question-set-selector'
 import { QuestionForm } from '@/components/forms/question-form'
-import { QuestionList } from '@/components/features/question-list'
-import { parseQuestionSetsResponse, sanitizeQuestionSetData } from '@/lib/api-response-utils'
-import { executeAPICall, handleAPIError, apiPerformanceMonitor } from '@/lib/api-error-handler'
-import { HierarchicalQuestions } from '@/components/ui/hierarchical-questions'
-import { QuestionSetList, QuestionDialog } from '@/components/questions'
+import { parseQuestionSetsResponse } from '@/lib/api-response-utils'
+import { executeAPICall, handleAPIError } from '@/lib/api-error-handler'
+import { QuestionSetList } from '@/components/questions'
 import type { QuestionSetWithQuestions } from '@/components/questions'
 type QuestionRead = components['schemas']['QuestionRead'] & {
     // Add missing properties for UI compatibility
@@ -89,317 +77,8 @@ const examPaperEditSchema = z.object({
 
 type ExamPaperEditFormData = z.infer<typeof examPaperEditSchema>
 
-// No mock data - using real API endpoints
-
-interface QuestionItemProps {
-    question: QuestionRead
-    index: number
-    onRemove: (questionId: string) => void
-    onMoveUp: (index: number) => void
-    onMoveDown: (index: number) => void
-    isFirst: boolean
-    isLast: boolean
-}
-
-function QuestionItem({ question, index, onRemove, onMoveUp, onMoveDown, isFirst, isLast }: QuestionItemProps) {
-    const getDifficultyColor = (difficulty: string) => {
-        switch (difficulty) {
-            case 'easy': return 'bg-green-100 text-green-800'
-            case 'medium': return 'bg-yellow-100 text-yellow-800'
-            case 'hard': return 'bg-red-100 text-red-800'
-            default: return 'bg-gray-100 text-gray-800'
-        }
-    }
-
-    // Extract question text from the API structure
-    const questionText = question.question_text ||
-        (question.text && typeof question.text === 'object' ?
-            question.text.blocks?.map((block: any) => block.data?.text || '').join(' ') || 'Question text' :
-            question.text || 'Question text')
-
-    const difficulty = question.difficulty_level || 'medium'
-    const marks = question.marks || 0
-    const questionType = question.question_type || question.numbering_style || 'Question'
-
-    return (
-        <Card className="mb-4">
-            <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-3 flex-1">
-                        <div className="flex flex-col space-y-1">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onMoveUp(index)}
-                                disabled={isFirst}
-                                className="p-1 h-6 w-6"
-                            >
-                                <GripVertical className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                                <Badge variant="outline">Q{index + 1}</Badge>
-                                <Badge className={getDifficultyColor(difficulty)}>
-                                    {difficulty}
-                                </Badge>
-                                <Badge variant="secondary">{marks} marks</Badge>
-                                <Badge variant="outline">{questionType}</Badge>
-                            </div>
-                            <p className="text-sm text-gray-700 mb-2">{questionText}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <div className="flex flex-col space-y-1">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onMoveUp(index)}
-                                disabled={isFirst}
-                                className="p-1 h-6 w-6"
-                            >
-                                ↑
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onMoveDown(index)}
-                                disabled={isLast}
-                                className="p-1 h-6 w-6"
-                            >
-                                ↓
-                            </Button>
-                        </div>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onRemove(question.id)}
-                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
-    )
-}
-
-interface AddQuestionDialogProps {
-    availableQuestions: QuestionRead[]
-    questionSets: QuestionSetRead[]
-    onAddQuestion: (question: QuestionRead, questionSetId: string) => void
-}
-
-
-
-function AddQuestionDialog({ availableQuestions, questionSets, onAddQuestion }: AddQuestionDialogProps) {
-    const [open, setOpen] = useState(false)
-    const [selectedQuestions, setSelectedQuestions] = useState<string[]>([])
-    const [searchQuery, setSearchQuery] = useState('')
-    const [selectedDifficulty, setSelectedDifficulty] = useState<string>('')
-    const [selectedQuestionType, setSelectedQuestionType] = useState<string>('')
-    const [selectedQuestionSetId, setSelectedQuestionSetId] = useState<string>('')
-
-    const filteredQuestions = useMemo(() => {
-        return availableQuestions.filter(question => {
-            // Extract question text for search
-            const questionText = question.question_text ||
-                (question.text && typeof question.text === 'object' ?
-                    question.text.blocks?.map((block: any) => block.data?.text || '').join(' ') || '' :
-                    question.text || '')
-
-            const matchesSearch = !searchQuery ||
-                questionText.toLowerCase().includes(searchQuery.toLowerCase())
-            const matchesDifficulty = !selectedDifficulty || selectedDifficulty === 'all' ||
-                (question.difficulty_level || 'medium') === selectedDifficulty
-            const matchesType = !selectedQuestionType || selectedQuestionType === 'all' ||
-                (question.question_type || question.numbering_style || 'Question') === selectedQuestionType
-
-            return matchesSearch && matchesDifficulty && matchesType
-        })
-    }, [availableQuestions, searchQuery, selectedDifficulty, selectedQuestionType])
-
-    const handleAddSelected = () => {
-        if (!selectedQuestionSetId) {
-            // Show error - need to select a question set
-            return
-        }
-
-        selectedQuestions.forEach(questionId => {
-            const question = availableQuestions.find(q => q.id === questionId)
-            if (question) {
-                onAddQuestion(question, selectedQuestionSetId)
-            }
-        })
-        setSelectedQuestions([])
-        setSelectedQuestionSetId('')
-        setOpen(false)
-    }
-
-    const resetFilters = () => {
-        setSearchQuery('')
-        setSelectedDifficulty('')
-        setSelectedQuestionType('')
-    }
-
-    return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" className="w-full">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Questions from Question Bank
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Add Questions to Question Set</DialogTitle>
-                    <DialogDescription>
-                        Select a question set and questions to add to this exam paper. Use filters to find specific questions.
-                    </DialogDescription>
-                </DialogHeader>
-
-                {/* Question Set Selection */}
-                <div className="space-y-4 border-b pb-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="question-set-select">Select Question Set</Label>
-                        <Select value={selectedQuestionSetId} onValueChange={setSelectedQuestionSetId}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Choose a question set to add questions to" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {questionSets.filter(qs => qs.id && typeof qs.id === 'string' && qs.id.trim() !== '').map((qs) => (
-                                    <SelectItem key={qs.id} value={qs.id}>
-                                        {qs.title || 'Untitled Question Set'} ({qs.questions_count || 0} questions)
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {!selectedQuestionSetId && (
-                            <p className="text-sm text-red-600">Please select a question set first</p>
-                        )}
-                    </div>
-                </div>
-
-                {/* Search and Filter Controls */}
-                <div className="space-y-4 border-b pb-4">
-                    <div className="flex space-x-2">
-                        <div className="flex-1">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                                <Input
-                                    placeholder="Search questions..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={resetFilters}>
-                            Clear Filters
-                        </Button>
-                    </div>
-
-                    <div className="flex space-x-2">
-                        <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-                            <SelectTrigger className="w-32">
-                                <SelectValue placeholder="Difficulty" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All</SelectItem>
-                                <SelectItem value="easy">Easy</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="hard">Hard</SelectItem>
-                            </SelectContent>
-                        </Select>
-
-                        <Select value={selectedQuestionType} onValueChange={setSelectedQuestionType}>
-                            <SelectTrigger className="w-32">
-                                <SelectValue placeholder="Type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Types</SelectItem>
-                                <SelectItem value="multiple_choice">MCQ</SelectItem>
-                                <SelectItem value="essay">Essay</SelectItem>
-                                <SelectItem value="short_answer">Short Answer</SelectItem>
-                                <SelectItem value="true_false">True/False</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="text-sm text-gray-600">
-                        Showing {filteredQuestions.length} of {availableQuestions.length} questions
-                    </div>
-                </div>
-
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                    {filteredQuestions.length > 0 ? filteredQuestions.map((question) => (
-                        <Card key={question.id} className={`cursor-pointer transition-colors ${selectedQuestions.includes(question.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-                            }`} onClick={() => {
-                                setSelectedQuestions(prev =>
-                                    prev.includes(question.id)
-                                        ? prev.filter(id => id !== question.id)
-                                        : [...prev, question.id]
-                                )
-                            }}>
-                            <CardContent className="p-4">
-                                <div className="flex items-start space-x-3">
-                                    <Checkbox
-                                        checked={selectedQuestions.includes(question.id)}
-                                        onChange={() => { }} // Handled by card click
-                                    />
-                                    <div className="flex-1">
-                                        <div className="flex items-center space-x-2 mb-2">
-                                            <Badge className={getDifficultyColor(question.difficulty_level || 'medium')}>
-                                                {question.difficulty_level || 'medium'}
-                                            </Badge>
-                                            <Badge variant="secondary">{question.marks || 0} marks</Badge>
-                                            <Badge variant="outline">{question.question_type || question.numbering_style || 'Question'}</Badge>
-                                        </div>
-                                        <p className="text-sm text-gray-700">
-                                            {question.question_text ||
-                                                (question.text && typeof question.text === 'object' ?
-                                                    question.text.blocks?.map((block: any) => block.data?.text || '').join(' ') || 'Question text' :
-                                                    question.text || 'Question text')}
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )) : (
-                        <div className="text-center py-8 text-gray-500">
-                            <Search className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                            <h4 className="text-lg font-medium mb-2">No questions found</h4>
-                            <p className="text-sm">Try adjusting your search criteria or filters.</p>
-                        </div>
-                    )}
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setOpen(false)}>
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={handleAddSelected}
-                        disabled={selectedQuestions.length === 0 || !selectedQuestionSetId}
-                    >
-                        Add Selected Questions ({selectedQuestions.length})
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    )
-}
-
-
-
-function getDifficultyColor(difficulty: string) {
-    switch (difficulty) {
-        case 'easy': return 'bg-green-100 text-green-800'
-        case 'medium': return 'bg-yellow-100 text-yellow-800'
-        case 'hard': return 'bg-red-100 text-red-800'
-        default: return 'bg-gray-100 text-gray-800'
-    }
-}
+// Unused components removed - QuestionItem and AddQuestionDialog
+// These were legacy components replaced by QuestionSetList and related components
 
 export default function EditExamPaperPage() {
     const params = useParams()
@@ -1420,9 +1099,15 @@ export default function EditExamPaperPage() {
 
     // Handler for editing a question
     const handleEditQuestion = (question: QuestionRead) => {
+        console.log('📝 Opening edit dialog for question:', {
+            id: question.id,
+            number: question.question_number,
+            isSubQuestion: question.is_sub_question,
+            parentId: question.parent_id
+        })
         // Open the edit dialog with the question data
         setEditingQuestion(question)
-        setIsSubQuestion(question.is_sub_question || false)
+        setIsSubQuestion(question.is_sub_question || !!question.parent_id)
         setParentQuestionId(question.parent_id || '')
         setShowAddQuestionDialog(true)
     }
@@ -1846,80 +1531,73 @@ export default function EditExamPaperPage() {
                             </Card>
 
                             {/* Question Sets Management */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center justify-between">
-                                        <div className="flex items-center">
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-lg font-semibold flex items-center">
                                             <Layers className="mr-2 h-5 w-5" />
                                             Question Sets ({questionSets.length})
-                                        </div>
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Manage question sets for this exam paper. Each set contains multiple questions organized by topic or difficulty. Question sets can be reused across different exam papers for consistency.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
+                                        </h2>
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                            Manage question sets for this exam paper.
+                                        </p>
+                                    </div>
+                                    <Button type="button" variant="outline" onClick={handleOpenAddQuestionSetDialog}>
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Add Question Set
+                                    </Button>
+                                </div>
 
-
-                                    {questionSetsLoading || loadingQuestions ? (
-                                        <div className="text-center py-8">
-                                            <LoadingSpinner className="mx-auto mb-4" />
-                                            <h4 className="text-lg font-medium mb-2">
-                                                {questionSetsLoading ? 'Loading question sets...' : 'Loading questions...'}
-                                            </h4>
-                                            <p className="text-sm text-gray-500">
-                                                {questionSetsLoading
-                                                    ? 'Please wait while we load the question sets for this exam paper.'
-                                                    : 'Please wait while we load the questions for each question set.'}
-                                            </p>
-                                        </div>
-                                    ) : questionSets.length > 0 ? (
-                                        <QuestionSetList
-                                            questionSets={questionSets as QuestionSetWithQuestions[]}
-                                            isLoading={false}
-                                            onEditQuestion={handleEditQuestion}
-                                            onDeleteQuestion={(questionId: string) => handleDeleteQuestion(questionId)}
-                                            onAddSubQuestion={handleAddSubQuestion}
-                                            onEditQuestionSet={(qs: QuestionSetWithQuestions) => {
-                                                // For now, just show a notification - full edit would need a separate dialog
-                                                addNotification({
-                                                    type: 'info',
-                                                    title: 'Edit Question Set',
-                                                    message: `Editing question set: ${qs.title || 'Untitled'}`
-                                                })
-                                            }}
-                                            onDeleteQuestionSet={handleRemoveQuestionSet}
-                                            onAddQuestion={(questionSetId: string) => {
-                                                setNewQuestionSetId(questionSetId)
-                                                setIsSubQuestion(false)
-                                                setShowAddQuestionDialog(true)
-                                            }}
-                                            onAnswersChange={reloadQuestionSets}
-                                            defaultExpanded={false}
-                                        />
-                                    ) : (
-                                        <div className="text-center py-8 text-gray-500">
+                                {questionSetsLoading || loadingQuestions ? (
+                                    <div className="text-center py-8">
+                                        <LoadingSpinner className="mx-auto mb-4" />
+                                        <h4 className="text-lg font-medium mb-2">
+                                            {questionSetsLoading ? 'Loading question sets...' : 'Loading questions...'}
+                                        </h4>
+                                        <p className="text-sm text-gray-500">
+                                            {questionSetsLoading
+                                                ? 'Please wait while we load the question sets for this exam paper.'
+                                                : 'Please wait while we load the questions for each question set.'}
+                                        </p>
+                                    </div>
+                                ) : questionSets.length > 0 ? (
+                                    <QuestionSetList
+                                        questionSets={questionSets as QuestionSetWithQuestions[]}
+                                        isLoading={false}
+                                        onEditQuestion={handleEditQuestion}
+                                        onDeleteQuestion={(questionId: string) => handleDeleteQuestion(questionId)}
+                                        onAddSubQuestion={handleAddSubQuestion}
+                                        onEditQuestionSet={(qs: QuestionSetWithQuestions) => {
+                                            // For now, just show a notification - full edit would need a separate dialog
+                                            addNotification({
+                                                type: 'info',
+                                                title: 'Edit Question Set',
+                                                message: `Editing question set: ${qs.title || 'Untitled'}`
+                                            })
+                                        }}
+                                        onDeleteQuestionSet={handleRemoveQuestionSet}
+                                        onAddQuestion={(questionSetId: string) => {
+                                            setNewQuestionSetId(questionSetId)
+                                            setIsSubQuestion(false)
+                                            setShowAddQuestionDialog(true)
+                                        }}
+                                        onAnswersChange={reloadQuestionSets}
+                                        defaultExpanded={false}
+                                    />
+                                ) : (
+                                    <Card>
+                                        <CardContent className="text-center py-8 text-gray-500">
                                             <Layers className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                                             <h4 className="text-lg font-medium mb-2">No question sets added yet</h4>
-                                            <p className="text-sm mb-4">Question sets help organize your exam questions into logical groups. Each set can contain multiple questions with different difficulty levels.</p>
-                                            <div className="text-xs text-gray-400 space-y-1">
-                                                <p>💡 <strong>Tip:</strong> Start by adding a question set, then questions will be automatically included</p>
-                                                <p>📚 Question sets can be reused across multiple exam papers</p>
-                                                <p>🎯 Each set can have its own theme or topic focus</p>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="space-y-2">
-                                        <Button type="button" variant="outline" className="w-full" onClick={handleOpenAddQuestionSetDialog}>
-                                            <Plus className="mr-2 h-4 w-4" />
-                                            Add Question Set
-                                        </Button>
-
-
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                            <p className="text-sm mb-4">Question sets help organize your exam questions into logical groups.</p>
+                                            <Button type="button" variant="outline" onClick={handleOpenAddQuestionSetDialog}>
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                Add Question Set
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+                                )}
+                            </div>
 
 
                         </div>
@@ -2170,13 +1848,17 @@ export default function EditExamPaperPage() {
 
             {/* Add/Edit Question Dialog */}
             <Dialog open={showAddQuestionDialog} onOpenChange={(open) => {
+                console.log('🔄 Dialog onOpenChange called:', { open, currentState: showAddQuestionDialog })
                 if (!open) {
-                    // Immediately reset to trigger unmount
+                    // Dialog is closing - reset all state immediately
+                    setShowAddQuestionDialog(false)
                     setEditingQuestion(null)
                     setIsSubQuestion(false)
                     setParentQuestionId('')
+                } else {
+                    // Dialog is opening
+                    setShowAddQuestionDialog(true)
                 }
-                setShowAddQuestionDialog(open)
             }}>
                 <DialogContent className="
                     w-[90vw]                 /* Base: almost full width on small screens */
@@ -2221,17 +1903,16 @@ export default function EditExamPaperPage() {
                                     parentQuestionId={isSubQuestion ? parentQuestionId : undefined}
                                     isSubQuestion={isSubQuestion}
                                     onSuccess={() => {
+                                        console.log('✅ Question form success - closing dialog and reloading')
+                                        // Close dialog (onOpenChange will handle state reset)
                                         setShowAddQuestionDialog(false)
-                                        setEditingQuestion(null)
-                                        setIsSubQuestion(false)
-                                        setParentQuestionId('')
+                                        // Reload questions to show the changes
                                         reloadQuestionSets()
                                     }}
                                     onCancel={() => {
+                                        console.log('❌ Question form cancelled - closing dialog')
+                                        // Close dialog (onOpenChange will handle state reset)
                                         setShowAddQuestionDialog(false)
-                                        setEditingQuestion(null)
-                                        setIsSubQuestion(false)
-                                        setParentQuestionId('')
                                     }}
                                 />
                             ) : (

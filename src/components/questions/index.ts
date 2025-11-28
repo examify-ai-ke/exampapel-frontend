@@ -12,6 +12,7 @@ export { MainQuestionCard } from './MainQuestionCard';
 export { SubQuestionCard } from './SubQuestionCard';
 export { QuestionActions } from './QuestionActions';
 export { QuestionDialog } from './QuestionDialog';
+export { AnswerList } from './AnswerList';
 
 // Skeleton Components
 export { QuestionSetListSkeleton } from './skeletons/QuestionSetListSkeleton';

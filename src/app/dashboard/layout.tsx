@@ -116,7 +116,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const currentUser = bypassAuth ? mockUser : user;
 
   return (
-    <div className="h-screen flex bg-gray-50">
+    <div className="h-screen flex bg-gray-50 overflow-hidden">
       {/* Sidebar */}
       <Sidebar
         isMobileOpen={sidebarOpen}
@@ -132,7 +132,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Top Header */}
         <header className="bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
           <div className="px-4 py-3">
@@ -298,7 +298,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </header>
 
         {/* Content area */}
-        <main className="flex-1 overflow-auto bg-gray-50">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 min-h-0">
           <div className="container mx-auto p-6">
             {children}
           </div>

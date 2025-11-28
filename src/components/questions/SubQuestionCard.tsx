@@ -12,6 +12,7 @@ import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import EditorJsRenderer from '@/components/ui/editor-js-renderer';
 import { QuestionActions } from './QuestionActions';
+import { AnswerList } from './AnswerList';
 import type { SubQuestionCardProps } from './types';
 
 export function SubQuestionCard({
@@ -81,6 +82,9 @@ export function SubQuestionCard({
           </>
         )}
       </div>
+
+      {/* Answers */}
+      <AnswerList answers={question.answers} />
     </div>
   );
 }

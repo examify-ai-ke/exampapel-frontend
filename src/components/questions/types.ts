@@ -84,6 +84,9 @@ export interface MainQuestionCardProps {
   onDelete: () => void;
   onAddSubQuestion: () => void;
   onAnswersChange?: () => void;
+  // Optional: if provided, will be used for sub-question edit/delete
+  onEditQuestion?: (question: QuestionRead) => void;
+  onDeleteQuestion?: (questionId: string) => void;
 }
 
 /**
