@@ -211,7 +211,7 @@ export function ExamPaperCard({
           <div className="flex items-center gap-3">
             {institution?.logo?.media?.link ? (
               <Image
-                src={institution.logo.media.link}
+                src={institution.logo.media?.link}
                 alt={institution.name || 'Institution'}
                 width={40}
                 height={40}

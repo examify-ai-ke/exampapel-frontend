@@ -25,9 +25,9 @@ export function InstitutionCard({ institution, className = '' }: InstitutionCard
         <div className="flex flex-col items-center text-center space-y-4">
           {/* Institution Logo/Icon */}
           <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
-            {(institution as any).logo?.media?.link ? (
+            {institution.logo?.media?.link ? (
               <Image
-                src={(institution as any).logo.media.link}
+                src={institution.logo?.media?.link}
                 alt={institution.name}
                 width={64}
                 height={64}

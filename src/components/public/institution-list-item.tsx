@@ -44,9 +44,9 @@ export function InstitutionListItem({ institution, className = '' }: Institution
         {/* Institution Logo/Icon */}
         <div className="flex-shrink-0">
           <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
-            {(institution as any).logo ? (
+            {institution.logo?.media ? (
               <Image
-                src={institution.logo?.media?.path || '/placeholder.svg'}
+                src={institution.logo?.media?.link || '/placeholder.svg'}
                 alt={institution.logo?.media?.title || 'Institution logo'}
                 width={64}  
                 height={64}                
