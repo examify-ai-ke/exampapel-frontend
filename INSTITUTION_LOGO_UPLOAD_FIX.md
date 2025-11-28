@@ -14,6 +14,7 @@ The institution edit page had a syntax error causing build failure and the logo 
 - openapi-fetch client was setting `Content-Type: application/json` for all requests
 - FormData uploads require `multipart/form-data` with boundary
 - This caused 422 Unprocessable Entity errors
+- Logo wasn't displaying after upload
 
 **Solution**: 
 - Changed from openapi-fetch to direct `fetch` API for FormData uploads
@@ -21,6 +22,8 @@ The institution edit page had a syntax error causing build failure and the logo 
 - Applied same fix to all image upload endpoints (faculty, department, programme, course)
 - Logo upload now uses a separate endpoint from the institution update endpoint
 - Immediate upload on file selection for better UX
+- Added `reloadInstitution()` function to refresh data after upload/removal
+- Logo now displays immediately after successful upload
 
 ### 3. Removed Duplicate Code
 - Removed duplicate `handleLogoUpload` function
@@ -92,10 +95,11 @@ async uploadLogo(institutionId: string, formData: FormData) {
 
 1. User selects a logo file via file input
 2. File is validated (type and size)
-3. Preview is generated immediately
+3. Preview is generated immediately from the file
 4. Logo is uploaded to the server via the dedicated endpoint using direct fetch
-5. Server response updates the institution's logo
-6. UI reflects the new logo
+5. Server processes and stores the logo
+6. Institution data is reloaded from the server to get the updated logo URL
+7. UI displays the new logo from the server
 
 ## File Validation
 - **Allowed types**: JPEG, PNG, WebP, GIF

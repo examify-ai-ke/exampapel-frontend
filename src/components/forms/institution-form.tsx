@@ -43,8 +43,8 @@ const institutionFormSchema = z.object({
     category: z.enum(['University', 'College', 'TVET', 'TVC', 'TTI', 'Other']),
     key: z.string()
         .optional()
-        .refine((val) => !val || val.length <= 10, {
-            message: 'Key must not exceed 10 characters'
+        .refine((val) => !val || val.length <= 20, {
+            message: 'Key must not exceed 20 characters'
         }),
     location: z.string()
         .optional()

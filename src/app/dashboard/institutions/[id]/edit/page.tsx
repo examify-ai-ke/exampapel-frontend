@@ -263,6 +263,32 @@ export default function EditInstitutionPage() {
         }
     }
 
+    // Reload institution data to get updated logo
+    const reloadInstitution = async () => {
+        try {
+            console.log('🔄 Reloading institution data...')
+            const response = await adminAPI.institutions.getById(params.id as string)
+            
+            if (!response.error && response.data) {
+                const institutionData = (response.data as any).data || response.data
+                setInstitution(institutionData as InstitutionRead)
+                
+                // Update logo preview
+                if (institutionData.logo?.media?.path) {
+                    setLogoPreview(institutionData.logo.media.path)
+                } else if (institutionData.logo?.url) {
+                    setLogoPreview(institutionData.logo.url)
+                } else {
+                    setLogoPreview(null)
+                }
+                
+                console.log('✅ Institution data reloaded successfully')
+            }
+        } catch (error) {
+            console.error('❌ Error reloading institution:', error)
+        }
+    }
+
     // Upload logo function - uses separate endpoint from institution update
     const uploadLogo = async (file: File) => {
         if (!institution) return
@@ -296,13 +322,8 @@ export default function EditInstitutionPage() {
                 setLastSaved(new Date())
                 setHasUnsavedChanges(false)
                 
-                // Update the institution data to reflect the new logo
-                if (response.data && typeof response.data === 'object' && 'data' in response.data) {
-                    const updatedInstitution = (response.data as any).data
-                    if (updatedInstitution.logo?.media?.path) {
-                        setLogoPreview(updatedInstitution.logo.media.path)
-                    }
-                }
+                // Reload institution data to get the updated logo URL
+                await reloadInstitution()
             } else {
                 const errorData = response as any
                 const errorMessage = errorData.error && typeof errorData.error === 'object'
@@ -363,6 +384,9 @@ export default function EditInstitutionPage() {
                 })
                 setLastSaved(new Date())
                 setHasUnsavedChanges(false)
+                
+                // Reload institution data to confirm logo removal
+                await reloadInstitution()
             } else {
                 const errorData = response as any
                 const errorMessage = errorData.error && typeof errorData.error === 'object'
