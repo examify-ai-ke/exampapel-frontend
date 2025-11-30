@@ -211,82 +211,112 @@ export default function AllInstitutionsPage() {
         try {
             setLoading(true);
 
+            // Determine if we need to use search API (when any filter is active)
+            const hasFilters = searchTerm.trim() !== '' || 
+                              selectedType !== 'all' || 
+                              selectedCategory !== 'all' || 
+                              selectedLocation !== 'all';
+
             let response;
-            const params = {
-                limit: itemsPerPage,
-                skip: (currentPage - 1) * itemsPerPage,
-            };
 
-            console.log('🔍 Loading institutions with params:', params);
-            console.log('🔍 Search term:', searchTerm);
-            console.log('🔍 Selected type:', selectedType);
-
-            if (searchTerm && searchTerm.trim() !== '') {
-                // Use search API
-                const searchParams = {
-                    q: searchTerm,
+            if (hasFilters) {
+                // Use search API when filters are active
+                const searchParams: any = {
+                    q: searchTerm.trim() || undefined, // Only include if not empty
                     institution_type: selectedType !== 'all' ? selectedType as 'Public' | 'Private' | 'Other' : undefined,
+                    location: selectedLocation !== 'all' ? selectedLocation : undefined,
+                    sort_by: sortBy !== 'name' ? sortBy : undefined,
+                    sort_order: 'asc',
                     limit: itemsPerPage,
                     skip: (currentPage - 1) * itemsPerPage,
                 };
+
+                // Remove undefined values
+                Object.keys(searchParams).forEach(key => 
+                    searchParams[key] === undefined && delete searchParams[key]
+                );
+
                 console.log('🔍 Using search API with params:', searchParams);
                 response = await adminAPI.institutions.search(searchParams);
             } else {
-                // Use list API
-                console.log('🔍 Using list API with params:', params);
-                response = await adminAPI.institutions.list(params);
+                // Use list API when no filters are active
+                const listParams = {
+                    limit: itemsPerPage,
+                    skip: (currentPage - 1) * itemsPerPage,
+                };
+                console.log('📋 Using list API with params:', listParams);
+                response = await adminAPI.institutions.list(listParams);
             }
 
-            console.log('🔍 API Response:', response);
-            console.log('🔍 Response data:', response.data);
+            console.log('✅ API Response:', response);
 
             if (response.data) {
                 const responseData = response.data;
-                console.log('🔍 Response data structure:', {
-                    hasItems: !!responseData.items,
-                    isArray: Array.isArray(responseData),
-                    hasData: !!responseData.data,
-                    keys: Object.keys(responseData),
-                    responseData
-                });
 
-                // Handle the correct API response structure
+                // Handle the API response structure
                 if (responseData.data && responseData.data.items) {
                     // Paginated response (correct structure)
-                    console.log('🔍 Using paginated response:', responseData.data.items.length, 'items');
                     setInstitutions(responseData.data.items as InstitutionRead[]);
                     setTotalInstitutions(responseData.data.total || 0);
                 } else if ((responseData as any).items) {
                     // Direct items response (fallback)
-                    console.log('🔍 Using direct items response:', (responseData as any).items.length, 'items');
                     setInstitutions((responseData as any).items);
                     setTotalInstitutions((responseData as any).total || 0);
                 } else if (Array.isArray(responseData)) {
                     // Direct array response (fallback)
-                    console.log('🔍 Using direct array response:', responseData.length, 'items');
                     setInstitutions(responseData as InstitutionRead[]);
                     setTotalInstitutions(responseData.length);
                 } else {
                     // Unexpected structure
-                    console.log('🔍 Unexpected response structure, trying fallback');
+                    console.warn('⚠️ Unexpected response structure');
                     setInstitutions([]);
                     setTotalInstitutions(0);
                 }
+
+                // Apply client-side sorting for category (not supported by API)
+                if (selectedCategory !== 'all') {
+                    setInstitutions(prev => prev.filter(inst => inst.category === selectedCategory));
+                    setTotalInstitutions(prev => institutions.filter(inst => inst.category === selectedCategory).length);
+                }
+
+                // Apply client-side sorting if needed
+                if (sortBy && sortBy !== 'name') {
+                    setInstitutions(prev => {
+                        const sorted = [...prev];
+                        sorted.sort((a, b) => {
+                            if (sortBy === 'type') {
+                                return (a.institution_type || '').localeCompare(b.institution_type || '');
+                            } else if (sortBy === 'category') {
+                                return (a.category || '').localeCompare(b.category || '');
+                            } else if (sortBy === 'location') {
+                                return (a.location || '').localeCompare(b.location || '');
+                            }
+                            return 0;
+                        });
+                        return sorted;
+                    });
+                }
             } else {
-                console.log('🔍 No response data received');
+                console.warn('⚠️ No response data received');
                 setInstitutions([]);
                 setTotalInstitutions(0);
             }
         } catch (error) {
-            console.error('Error loading institutions:', error);
+            console.error('❌ Error loading institutions:', error);
 
             // Fallback to mock data
-            console.log('Using mock data - institutions API not available');
+            console.log('📦 Using mock data - institutions API not available');
             const filteredData = mockInstitutions.filter(inst => {
                 if (searchTerm && !inst.name.toLowerCase().includes(searchTerm.toLowerCase())) {
                     return false;
                 }
                 if (selectedType !== 'all' && inst.institution_type !== selectedType) {
+                    return false;
+                }
+                if (selectedCategory !== 'all' && inst.category !== selectedCategory) {
+                    return false;
+                }
+                if (selectedLocation !== 'all' && inst.location !== selectedLocation) {
                     return false;
                 }
                 return true;
@@ -521,6 +551,7 @@ export default function AllInstitutionsPage() {
                                 <SelectItem value="all">All Types</SelectItem>
                                 <SelectItem value="Public">Public</SelectItem>
                                 <SelectItem value="Private">Private</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                         </Select>
 
@@ -532,6 +563,10 @@ export default function AllInstitutionsPage() {
                                 <SelectItem value="all">All Categories</SelectItem>
                                 <SelectItem value="University">University</SelectItem>
                                 <SelectItem value="College">College</SelectItem>
+                                <SelectItem value="TVET">TVET</SelectItem>
+                                <SelectItem value="TVC">TVC</SelectItem>
+                                <SelectItem value="TTI">TTI</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                         </Select>
 

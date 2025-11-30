@@ -17,7 +17,7 @@ import { QuestionsListSkeleton, StatsCardSkeleton } from '@/components/ui/skelet
 
 export default function HomePage() {
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 9; // Show 9 questions per page
+  const pageSize = 10; // Show 10 questions per page
 
   // Fetch data with React Query hooks (runs in parallel, each component loads independently)
   const { data: stats, isLoading: statsLoading } = usePlatformStats();
