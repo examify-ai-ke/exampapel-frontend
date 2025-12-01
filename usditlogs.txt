@@ -1,0 +1,35 @@
+API Endpoints Added
+All endpoints require admin role:
+
+GET /api/v1/audit-logs/audit - Query audit logs with filters
+GET /api/v1/audit-logs/activity - Query activity logs with pagination
+GET /api/v1/audit-logs/audit/stats - Audit log statistics
+GET /api/v1/audit-logs/activity/stats - Activity log statistics
+GET /api/v1/audit-logs/user/{id}/activity - User activity summary
+GET /api/v1/audit-logs/security/suspicious - Suspicious activity detection
+📊 Features Implemented
+Audit Logging:
+
+✅ Authentication events (login, logout, token refresh)
+✅ Password changes and resets
+✅ Authorization failures
+✅ Data modification tracking
+✅ Admin actions
+✅ Security events
+✅ Failed login attempt tracking
+✅ IP address and user agent logging
+Activity Monitoring:
+
+✅ All API requests automatically logged
+✅ Response time tracking
+✅ Status code monitoring
+✅ User context preservation
+✅ Query parameter tracking (excluding sensitive data)
+✅ Request ID for correlation
+Analytics:
+
+✅ Success/failure rates
+✅ Top endpoints and users
+✅ Activity summaries
+✅ Suspicious activity detection
+✅ Date range filtering
