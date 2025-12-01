@@ -690,6 +690,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/user/social-auth/{provider}/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Social Auth Callback
+         * @description Handle OAuth callback - exchange authorization code for tokens
+         */
+        post: operations["social_auth_callback_api_v1_user_social_auth__provider__callback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/user/social-auth/{provider}": {
         parameters: {
             query?: never;
@@ -3751,10 +3771,278 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/audit-logs/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Audit Logs
+         * @description Get audit logs with optional filtering.
+         *
+         *     This endpoint requires admin role and provides comprehensive filtering options
+         *     for security and compliance purposes.
+         *
+         *     **Filtering Options:**
+         *     - `user_id`: Filter by specific user
+         *     - `action`: Filter by action type (login, logout, password_change, etc.)
+         *     - `resource_type`: Filter by resource type (user, exam_paper, etc.)
+         *     - `success`: Filter by success/failure status
+         *     - `email`: Filter by email address
+         *     - `start_date`/`end_date`: Filter by date range
+         *
+         *     **Pagination:**
+         *     - `limit`: Maximum records to return (1-1000)
+         *     - `offset`: Number of records to skip
+         */
+        get: operations["get_audit_logs_api_v1_audit_logs_audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit-logs/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Activity Logs
+         * @description Get activity logs with optional filtering.
+         *
+         *     This endpoint requires admin role and provides filtering for API request logs.
+         *
+         *     **Filtering Options:**
+         *     - `user_id`: Filter by specific user
+         *     - `method`: Filter by HTTP method (GET, POST, etc.)
+         *     - `endpoint`: Filter by API endpoint
+         *     - `status_code`: Filter by HTTP status code
+         *     - `start_date`/`end_date`: Filter by date range
+         *
+         *     **Pagination:**
+         *     - `limit`: Maximum records to return (1-1000)
+         *     - `offset`: Number of records to skip
+         */
+        get: operations["get_activity_logs_api_v1_audit_logs_activity_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit-logs/audit/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Audit Log Stats
+         * @description Get audit log statistics.
+         *
+         *     Provides aggregated statistics for audit logs including:
+         *     - Total log entries
+         *     - Success rate
+         *     - Failed attempt count
+         *     - Top actions
+         *     - Top users
+         *     - Recent events
+         */
+        get: operations["get_audit_log_stats_api_v1_audit_logs_audit_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit-logs/activity/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Activity Log Stats
+         * @description Get activity log statistics.
+         *
+         *     Provides aggregated statistics for activity logs including:
+         *     - Total requests
+         *     - Average response time
+         *     - Success rate
+         *     - Top endpoints
+         *     - Top users
+         *     - Recent requests
+         *     - Status code distribution
+         */
+        get: operations["get_activity_log_stats_api_v1_audit_logs_activity_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit-logs/user/{user_id}/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get User Activity
+         * @description Get activity summary for a specific user.
+         *
+         *     Provides a comprehensive view of user activity including:
+         *     - Total events in the period
+         *     - Success/failure breakdown
+         *     - Action type breakdown
+         *     - Recent activity
+         *
+         *     **Access Control:**
+         *     - Only admin users can view this information
+         *     - Users can view their own activity (if endpoint is extended)
+         */
+        get: operations["get_user_activity_api_v1_audit_logs_user__user_id__activity_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit-logs/security/suspicious": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Suspicious Activity
+         * @description Get suspicious activity indicators.
+         *
+         *     Identifies potentially concerning patterns in user activity such as:
+         *     - Multiple failed login attempts
+         *     - Unusual login patterns
+         *     - Rapid-fire requests
+         *     - Suspicious IP addresses
+         */
+        get: operations["get_suspicious_activity_api_v1_audit_logs_security_suspicious_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * ActivityLogListResponse
+         * @description Response schema for activity log list endpoint
+         */
+        ActivityLogListResponse: {
+            /** Data */
+            data: components["schemas"]["ActivityLogRead"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /**
+         * ActivityLogRead
+         * @description Schema for reading activity logs (includes timestamps and ID)
+         */
+        ActivityLogRead: {
+            /** User Id */
+            user_id?: string | null;
+            /** Method */
+            method: string;
+            /** Endpoint */
+            endpoint: string;
+            /** Path */
+            path: string;
+            /** Query Params */
+            query_params?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /** Response Time Ms */
+            response_time_ms?: number | null;
+            /** Ip Address */
+            ip_address?: string | null;
+            /** User Agent */
+            user_agent?: string | null;
+            /** Request Id */
+            request_id?: string | null;
+            /** Details */
+            details?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Updated At */
+            updated_at?: string | null;
+        };
+        /**
+         * ActivityLogStats
+         * @description Schema for activity log statistics
+         */
+        ActivityLogStats: {
+            /** Total Requests */
+            total_requests: number;
+            /** Avg Response Time */
+            avg_response_time: number;
+            /** Success Rate */
+            success_rate: number;
+            /** Top Endpoints */
+            top_endpoints: {
+                [key: string]: unknown;
+            }[];
+            /** Top Users */
+            top_users: {
+                [key: string]: unknown;
+            }[];
+            /** Recent Requests */
+            recent_requests: components["schemas"]["ActivityLogRead"][];
+            /** Status Code Distribution */
+            status_code_distribution: {
+                [key: string]: unknown;
+            }[];
+        };
         /** AddressCreate */
         AddressCreate: {
             /**
@@ -4024,6 +4312,90 @@ export interface components {
             question_id?: string | null;
         };
         /**
+         * AuditActionType
+         * @description Types of audit actions for security events
+         * @enum {string}
+         */
+        AuditActionType: "login_success" | "login_failed" | "logout" | "token_refresh" | "password_changed" | "password_reset_requested" | "password_reset_completed" | "account_created" | "account_updated" | "account_deactivated" | "account_reactivated" | "account_locked" | "account_unlocked" | "permission_denied" | "role_changed" | "data_created" | "data_updated" | "data_deleted" | "data_exported" | "admin_action" | "system_config_changed";
+        /**
+         * AuditLogListResponse
+         * @description Response schema for audit log list endpoint
+         */
+        AuditLogListResponse: {
+            /** Data */
+            data: components["schemas"]["AuditLogRead"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /**
+         * AuditLogRead
+         * @description Schema for reading audit logs (includes timestamps and ID)
+         */
+        AuditLogRead: {
+            /** User Id */
+            user_id?: string | null;
+            action: components["schemas"]["AuditActionType"];
+            /** Resource Type */
+            resource_type?: string | null;
+            /** Resource Id */
+            resource_id?: string | null;
+            /** Ip Address */
+            ip_address?: string | null;
+            /** User Agent */
+            user_agent?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Details */
+            details?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error Message */
+            error_message?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Updated At */
+            updated_at?: string | null;
+        };
+        /**
+         * AuditLogStats
+         * @description Schema for audit log statistics
+         */
+        AuditLogStats: {
+            /** Total Logs */
+            total_logs: number;
+            /** Success Rate */
+            success_rate: number;
+            /** Failed Attempts */
+            failed_attempts: number;
+            /** Top Actions */
+            top_actions: {
+                [key: string]: unknown;
+            }[];
+            /** Top Users */
+            top_users: {
+                [key: string]: unknown;
+            }[];
+            /** Recent Events */
+            recent_events: components["schemas"]["AuditLogRead"][];
+        };
+        /**
          * AuthProvider
          * @enum {string}
          */
@@ -4064,6 +4436,13 @@ export interface components {
             client_id?: string | null;
             /** Client Secret */
             client_secret?: string | null;
+        };
+        /** Body_social_auth_callback_api_v1_user_social_auth__provider__callback_post */
+        Body_social_auth_callback_api_v1_user_social_auth__provider__callback_post: {
+            /** Code */
+            code: string;
+            /** Redirect Uri */
+            redirect_uri: string;
         };
         /** Body_upload_campus_image_api_v1_campus__campus_id__image_post */
         Body_upload_campus_image_api_v1_campus__campus_id__image_post: {
@@ -5347,6 +5726,23 @@ export interface components {
                 [key: string]: unknown;
             } | unknown | null;
             data?: components["schemas"]["AnswerRead"] | null;
+        };
+        /** IGetResponseBase[Any] */
+        IGetResponseBase_Any_: {
+            /**
+             * Message
+             * @default Data got correctly
+             */
+            message: string | null;
+            /**
+             * Meta
+             * @default {}
+             */
+            meta: {
+                [key: string]: unknown;
+            } | unknown | null;
+            /** Data */
+            data?: unknown;
         };
         /** IGetResponseBase[CampusRead] */
         IGetResponseBase_CampusRead_: {
@@ -10088,6 +10484,41 @@ export interface operations {
             };
         };
     };
+    social_auth_callback_api_v1_user_social_auth__provider__callback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: components["schemas"]["AuthProvider"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Body_social_auth_callback_api_v1_user_social_auth__provider__callback_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IPostResponseBase_Token_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     social_auth_api_v1_user_social_auth__provider__post: {
         parameters: {
             query?: never;
@@ -10838,9 +11269,9 @@ export interface operations {
     };
     advanced_search_institutions_api_v1_institution_search_advanced_get: {
         parameters: {
-            query: {
+            query?: {
                 /** @description Search query for institutions */
-                q: string;
+                q?: string;
                 /** @description Filter by institution type */
                 institution_type?: components["schemas"]["InstitutionType"];
                 /** @description Filter by location */
@@ -15764,6 +16195,234 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IGetResponseBase_CommentCountSchema_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_audit_logs_api_v1_audit_logs_audit_get: {
+        parameters: {
+            query?: {
+                /** @description Filter by user ID */
+                user_id?: string | null;
+                /** @description Filter by action type */
+                action?: components["schemas"]["AuditActionType"] | null;
+                /** @description Filter by resource type */
+                resource_type?: string | null;
+                /** @description Filter by success status */
+                success?: boolean | null;
+                /** @description Filter by email */
+                email?: string | null;
+                /** @description Start date filter */
+                start_date?: string | null;
+                /** @description End date filter */
+                end_date?: string | null;
+                /** @description Maximum number of records */
+                limit?: number;
+                /** @description Number of records to skip */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditLogListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_activity_logs_api_v1_audit_logs_activity_get: {
+        parameters: {
+            query?: {
+                /** @description Filter by user ID */
+                user_id?: string | null;
+                /** @description Filter by HTTP method */
+                method?: string | null;
+                /** @description Filter by endpoint */
+                endpoint?: string | null;
+                /** @description Filter by status code */
+                status_code?: number | null;
+                /** @description Start date filter */
+                start_date?: string | null;
+                /** @description End date filter */
+                end_date?: string | null;
+                /** @description Maximum number of records */
+                limit?: number;
+                /** @description Number of records to skip */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityLogListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_audit_log_stats_api_v1_audit_logs_audit_stats_get: {
+        parameters: {
+            query?: {
+                /** @description Start date for statistics */
+                start_date?: string | null;
+                /** @description End date for statistics */
+                end_date?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditLogStats"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_activity_log_stats_api_v1_audit_logs_activity_stats_get: {
+        parameters: {
+            query?: {
+                /** @description Start date for statistics */
+                start_date?: string | null;
+                /** @description End date for statistics */
+                end_date?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityLogStats"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_user_activity_api_v1_audit_logs_user__user_id__activity_get: {
+        parameters: {
+            query?: {
+                /** @description Number of days to look back */
+                days?: number;
+            };
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IGetResponseBase_Any_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_suspicious_activity_api_v1_audit_logs_security_suspicious_get: {
+        parameters: {
+            query?: {
+                /** @description Number of hours to look back */
+                hours?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IGetResponseBase_Any_"];
                 };
             };
             /** @description Validation Error */

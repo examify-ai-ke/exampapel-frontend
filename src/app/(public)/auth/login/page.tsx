@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Mail, Lock, Github, Chrome } from 'lucide-react';
 import type { LoginFormData } from '@/lib/validation';
+import { redirectToGoogleAuth } from '@/lib/social-auth';
 
 function LoginForm() {
     const [showPassword, setShowPassword] = useState(false);
@@ -63,6 +64,16 @@ function LoginForm() {
             console.error('Login error:', error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleGoogleLogin = () => {
+        try {
+            // Redirect to Google OAuth
+            redirectToGoogleAuth(redirectUrl);
+        } catch (error) {
+            console.error('Google login error:', error);
+            alert('Failed to initiate Google login. Please check your configuration.');
         }
     };
 
@@ -149,11 +160,22 @@ function LoginForm() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" className="w-full">
+                    <Button 
+                        variant="outline" 
+                        className="w-full"
+                        type="button"
+                        disabled
+                    >
                         <Github className="mr-2 h-4 w-4" />
                         GitHub
                     </Button>
-                    <Button variant="outline" className="w-full">
+                    <Button 
+                        variant="outline" 
+                        className="w-full"
+                        type="button"
+                        onClick={() => handleGoogleLogin()}
+                        disabled={isLoading}
+                    >
                         <Chrome className="mr-2 h-4 w-4" />
                         Google
                     </Button>
