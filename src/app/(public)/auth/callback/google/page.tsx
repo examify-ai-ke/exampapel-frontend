@@ -75,6 +75,10 @@ export default function GoogleCallbackPage() {
                 
                 // Set cookie for SSR
                 document.cookie = `auth-token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+                
+                // Store user role in cookie for middleware access control
+                const userRole = user.is_superuser ? 'superuser' : (user.role?.name || 'user');
+                document.cookie = `user-role=${userRole}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
 
                 console.log('✅ User and token stored successfully');
                 setStatus('success');

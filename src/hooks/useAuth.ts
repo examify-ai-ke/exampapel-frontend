@@ -82,6 +82,12 @@ export const useAuth = () => {
         // Store token and user data
         setAuthToken(tokenData.access_token);
         login(user, tokenData.access_token);
+        
+        // Store user role in cookie for middleware access control
+        if (typeof window !== 'undefined') {
+          const userRole = user.is_superuser ? 'superuser' : (user.role?.name || 'user');
+          document.cookie = `user-role=${userRole}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+        }
 
         addNotification({
           type: 'success',
@@ -179,6 +185,11 @@ export const useAuth = () => {
       // Clear local storage and state
       clearAuthToken();
       logout();
+      
+      // Clear user-role cookie
+      if (typeof window !== 'undefined') {
+        document.cookie = 'user-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      }
 
       addNotification({
         type: 'success',
