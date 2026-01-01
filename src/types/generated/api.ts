@@ -2490,6 +2490,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/exam-title/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search Exam Titles
+         * @description Search exam titles by name
+         */
+        get: operations["search_exam_titles_api_v1_exam_title_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/exam-title": {
         parameters: {
             query?: never;
@@ -2570,6 +2590,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/exam-description/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search Exam Descriptions
+         * @description Search exam descriptions by name
+         */
+        get: operations["search_exam_descriptions_api_v1_exam_description_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/exam-description": {
         parameters: {
             query?: never;
@@ -2645,6 +2685,26 @@ export interface paths {
          *     - manager
          */
         delete: operations["remove_exam_description_api_v1_exam_description__exam_description_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/instruction/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search Instructions
+         * @description Search instructions by name
+         */
+        get: operations["search_instructions_api_v1_instruction_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -3952,6 +4012,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/exam-paper-builder/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Complete Exam Paper
+         * @description Create a complete exam paper with all prerequisites and questions.
+         */
+        post: operations["create_complete_exam_paper_api_v1_exam_paper_builder__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4553,6 +4633,124 @@ export interface components {
              */
             image_file: string;
         };
+        /** BuilderCourseCreate */
+        BuilderCourseCreate: {
+            /** Name */
+            name: string;
+            /** Course Acronym */
+            course_acronym?: string | null;
+            /** Description */
+            description?: string | null;
+        };
+        /** BuilderExamDescriptionCreate */
+        BuilderExamDescriptionCreate: {
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+        };
+        /** BuilderExamPaperCreate */
+        BuilderExamPaperCreate: {
+            /** Year Of Exam */
+            year_of_exam: string;
+            /** Exam Duration */
+            exam_duration: number;
+            /** Exam Date */
+            exam_date?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+        };
+        /** BuilderExamTitleCreate */
+        BuilderExamTitleCreate: {
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+        };
+        /** BuilderInstitutionCreate */
+        BuilderInstitutionCreate: {
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /**
+             * Category
+             * @default University
+             */
+            category: string;
+            /**
+             * Institution Type
+             * @default Public
+             */
+            institution_type: string;
+            /** Location */
+            location?: string | null;
+        };
+        /** BuilderInstructionCreate */
+        BuilderInstructionCreate: {
+            /** Name */
+            name: string;
+        };
+        /** BuilderMainQuestionCreate */
+        BuilderMainQuestionCreate: {
+            text?: components["schemas"]["app__schemas__exam_paper_builder_schema__QuestionTextSchema"] | null;
+            /** Marks */
+            marks?: number | null;
+            /**
+             * Numbering Style
+             * @default numeric
+             */
+            numbering_style: string;
+            /** Question Number */
+            question_number: string;
+            /**
+             * Sub Questions
+             * @default []
+             */
+            sub_questions: components["schemas"]["BuilderSubQuestionCreate"][];
+        };
+        /** BuilderModuleCreate */
+        BuilderModuleCreate: {
+            /** Name */
+            name: string;
+            /** Unit Code */
+            unit_code?: string | null;
+            /** Description */
+            description?: string | null;
+        };
+        /** BuilderProgrammeCreate */
+        BuilderProgrammeCreate: {
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+        };
+        /** BuilderQuestionSetCreate */
+        BuilderQuestionSetCreate: {
+            /** Title */
+            title: string;
+            /**
+             * Main Questions
+             * @default []
+             */
+            main_questions: components["schemas"]["BuilderMainQuestionCreate"][];
+        };
+        /** BuilderSubQuestionCreate */
+        BuilderSubQuestionCreate: {
+            text?: components["schemas"]["app__schemas__exam_paper_builder_schema__QuestionTextSchema"] | null;
+            /** Marks */
+            marks?: number | null;
+            /**
+             * Numbering Style
+             * @default alphabetic
+             */
+            numbering_style: string;
+            /**
+             * Question Number
+             * @default a
+             */
+            question_number: string;
+        };
         /**
          * BulkVerificationResponse
          * @description Response data for bulk verification email sending
@@ -4693,6 +4891,12 @@ export interface components {
             parent_id?: string | null;
             /** Id */
             id?: string | null;
+        };
+        /** CompleteExamPaperCreate */
+        CompleteExamPaperCreate: {
+            exam_paper: components["schemas"]["BuilderExamPaperCreate"];
+            prerequisites: components["schemas"]["PrerequisitesCreate"];
+            questions: components["schemas"]["QuestionsCreate"];
         };
         /** CourseCreate */
         CourseCreate: {
@@ -4865,6 +5069,17 @@ export interface components {
             /** Description */
             description: string | null;
         };
+        /** EditorJSBlock */
+        EditorJSBlock: {
+            /** Id */
+            id: string;
+            /** Type */
+            type: string;
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
+        };
         /**
          * EmailVerificationResult
          * @description Result of a verification email sending operation
@@ -5018,12 +5233,9 @@ export interface components {
              * @default []
              */
             modules: components["schemas"]["ModuleReadForExamPaper"][] | null;
-            /**
-             * Created By Id
-             * Format: uuid
-             */
-            created_by_id: string;
-            institution: components["schemas"]["InstitutionReadForExamPaper"];
+            /** Created By Id */
+            created_by_id?: string | null;
+            institution?: components["schemas"]["InstitutionReadForExamPaper"] | null;
             course: components["schemas"]["CourseReadForExamPaper"] | null;
             /**
              * Question Sets
@@ -5952,22 +6164,6 @@ export interface components {
             } | unknown | null;
             data?: components["schemas"]["IUserRead"] | null;
         };
-        /** IGetResponseBase[InstitutionDetailedStatistics] */
-        IGetResponseBase_InstitutionDetailedStatistics_: {
-            /**
-             * Message
-             * @default Data got correctly
-             */
-            message: string | null;
-            /**
-             * Meta
-             * @default {}
-             */
-            meta: {
-                [key: string]: unknown;
-            } | unknown | null;
-            data?: components["schemas"]["InstitutionDetailedStatistics"] | null;
-        };
         /** IGetResponseBase[InstitutionRead] */
         IGetResponseBase_InstitutionRead_: {
             /**
@@ -6052,22 +6248,6 @@ export interface components {
             } | unknown | null;
             /** Data */
             data?: components["schemas"]["QuestionSetReadWithQuestions"][] | null;
-        };
-        /** IGetResponseBase[ProgrammeRead] */
-        IGetResponseBase_ProgrammeRead_: {
-            /**
-             * Message
-             * @default Data got correctly
-             */
-            message: string | null;
-            /**
-             * Meta
-             * @default {}
-             */
-            meta: {
-                [key: string]: unknown;
-            } | unknown | null;
-            data?: components["schemas"]["ProgrammeRead"] | null;
         };
         /** IGetResponseBase[QuestionRead] */
         IGetResponseBase_QuestionRead_: {
@@ -7720,29 +7900,6 @@ export interface components {
             tags?: string[] | null;
             address?: components["schemas"]["AddressCreate"] | null;
         };
-        /** InstitutionDetailedStatistics */
-        InstitutionDetailedStatistics: {
-            /** Total Institutions */
-            total_institutions: number;
-            /** Total Courses */
-            total_courses: number;
-            /** Total Departments */
-            total_departments: number;
-            /** Total Modules */
-            total_modules: number;
-            /** Total Faculties */
-            total_faculties: number;
-            /** Total Main Questions */
-            total_main_questions: number;
-            /** Total Users */
-            total_users: number;
-            /** Total Exam Papers */
-            total_exam_papers: number;
-            /** Total Answers */
-            total_answers: number;
-            /** Total Campuses */
-            total_campuses: number;
-        };
         /** InstitutionForFaculty */
         InstitutionForFaculty: {
             /** Slug */
@@ -7787,7 +7944,7 @@ export interface components {
              */
             id: string;
             /** Slug */
-            slug: string;
+            slug?: string | null;
             /**
              * Faculties
              * @default []
@@ -7951,7 +8108,7 @@ export interface components {
         };
         /** MainQuestionCreate */
         MainQuestionCreate: {
-            text: components["schemas"]["QuestionTextSchema"] | null;
+            text: components["schemas"]["app__schemas__question_schema__QuestionTextSchema"] | null;
             /** Marks */
             marks?: number | null;
             numbering_style: components["schemas"]["NumberingStyleEnum"];
@@ -7973,7 +8130,7 @@ export interface components {
          * @description Schema for main questions with required fields
          */
         MainQuestionRead: {
-            text: components["schemas"]["QuestionTextSchema"] | null;
+            text: components["schemas"]["QuestionTextSchema-Output"] | null;
             /** Marks */
             marks: number | null;
             numbering_style: components["schemas"]["NumberingStyleEnum"];
@@ -8052,7 +8209,7 @@ export interface components {
         };
         /** MainQuestionUpdate */
         MainQuestionUpdate: {
-            text?: components["schemas"]["QuestionTextSchema"] | null;
+            text?: components["schemas"]["app__schemas__question_schema__QuestionTextSchema"] | null;
             /** Marks */
             marks?: number | null;
             numbering_style?: components["schemas"]["NumberingStyleEnum"] | null;
@@ -8174,7 +8331,7 @@ export interface components {
          * NumberingStyleEnum
          * @enum {string}
          */
-        NumberingStyleEnum: "roman" | "alpha" | "numerical";
+        NumberingStyleEnum: "roman" | "alphabetic" | "numeric";
         /** PageBase */
         PageBase: {
             /** Items */
@@ -8746,6 +8903,24 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /** PrerequisitesCreate */
+        PrerequisitesCreate: {
+            exam_title?: components["schemas"]["BuilderExamTitleCreate"] | null;
+            exam_description?: components["schemas"]["BuilderExamDescriptionCreate"] | null;
+            course?: components["schemas"]["BuilderCourseCreate"] | null;
+            institution?: components["schemas"]["BuilderInstitutionCreate"] | null;
+            programme?: components["schemas"]["BuilderProgrammeCreate"] | null;
+            /**
+             * Modules
+             * @default []
+             */
+            modules: components["schemas"]["BuilderModuleCreate"][];
+            /**
+             * Instructions
+             * @default []
+             */
+            instructions: components["schemas"]["BuilderInstructionCreate"][];
+        };
         /** ProgrammeCreate */
         ProgrammeCreate: {
             /** @default Bachelors/Undergraduate */
@@ -8853,7 +9028,7 @@ export interface components {
         };
         /** QuestionRead */
         QuestionRead: {
-            text: components["schemas"]["QuestionTextSchema"] | null;
+            text: components["schemas"]["QuestionTextSchema-Output"] | null;
             /** Marks */
             marks: number | null;
             numbering_style: components["schemas"]["NumberingStyleEnum"];
@@ -9059,11 +9234,19 @@ export interface components {
          *       "time": 1761416444650
          *     }
          */
-        QuestionTextSchema: {
+        "QuestionTextSchema-Output": {
             /** Time */
             time: number;
             /** Blocks */
             blocks: components["schemas"]["Block"][];
+        };
+        /** QuestionsCreate */
+        QuestionsCreate: {
+            /**
+             * Question Sets
+             * @default []
+             */
+            question_sets: components["schemas"]["BuilderQuestionSetCreate"][];
         };
         /** RefreshToken */
         RefreshToken: {
@@ -9072,7 +9255,7 @@ export interface components {
         };
         /** SubQuestionCreate */
         SubQuestionCreate: {
-            text: components["schemas"]["QuestionTextSchema"] | null;
+            text: components["schemas"]["app__schemas__question_schema__QuestionTextSchema"] | null;
             /** Marks */
             marks?: number | null;
             numbering_style: components["schemas"]["NumberingStyleEnum"];
@@ -9089,7 +9272,7 @@ export interface components {
          * @description Schema for sub-questions with required fields
          */
         SubQuestionRead: {
-            text: components["schemas"]["QuestionTextSchema"] | null;
+            text: components["schemas"]["QuestionTextSchema-Output"] | null;
             /** Marks */
             marks: number | null;
             numbering_style: components["schemas"]["NumberingStyleEnum"];
@@ -9165,7 +9348,7 @@ export interface components {
         };
         /** SubQuestionReadSimple */
         SubQuestionReadSimple: {
-            text: components["schemas"]["QuestionTextSchema"] | null;
+            text: components["schemas"]["QuestionTextSchema-Output"] | null;
             /** Marks */
             marks?: number | null;
             numbering_style: components["schemas"]["NumberingStyleEnum"];
@@ -9193,7 +9376,7 @@ export interface components {
         };
         /** SubQuestionUpdate */
         SubQuestionUpdate: {
-            text?: components["schemas"]["QuestionTextSchema"] | null;
+            text?: components["schemas"]["app__schemas__question_schema__QuestionTextSchema"] | null;
             /** Marks */
             marks?: number | null;
             numbering_style?: components["schemas"]["NumberingStyleEnum"] | null;
@@ -9299,6 +9482,13 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** QuestionTextSchema */
+        app__schemas__exam_paper_builder_schema__QuestionTextSchema: {
+            /** Time */
+            time: number;
+            /** Blocks */
+            blocks: components["schemas"]["EditorJSBlock"][];
+        };
         /** ExamDescriptionReadForExamPaper */
         app__schemas__exam_paper_schema__ExamDescriptionReadForExamPaper: {
             /**
@@ -9325,7 +9515,7 @@ export interface components {
         };
         /** MainQuestionReadForQuestionSet */
         app__schemas__exam_paper_schema__MainQuestionReadForQuestionSet: {
-            text: components["schemas"]["QuestionTextSchema"] | null;
+            text: components["schemas"]["QuestionTextSchema-Output"] | null;
             /** Marks */
             marks: number | null;
             numbering_style: components["schemas"]["NumberingStyleEnum"];
@@ -9353,7 +9543,7 @@ export interface components {
         };
         /** MainQuestionReadForQuestionSet */
         app__schemas__question_schema__MainQuestionReadForQuestionSet: {
-            text: components["schemas"]["QuestionTextSchema"] | null;
+            text: components["schemas"]["QuestionTextSchema-Output"] | null;
             /** Marks */
             marks?: number | null;
             numbering_style: components["schemas"]["NumberingStyleEnum"];
@@ -9385,6 +9575,45 @@ export interface components {
              * @default []
              */
             answers: components["schemas"]["AnswerReadForQuestion"][] | null;
+        };
+        /**
+         * QuestionTextSchema
+         * @example {
+         *       "blocks": [
+         *         {
+         *           "data": {
+         *             "caption": "logo-sample",
+         *             "file": {
+         *               "format": "PNG",
+         *               "height": 262,
+         *               "name": "favicon-exam.png",
+         *               "size": 104763,
+         *               "url": "https://exampapel-images-bucket2025.s3.amazonaws.com/019a1c1c-a20e-77fc-b3c8-dfd5587162b0favicon-exam.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA6QJRQF7UB6UGBA4E%2F20251025%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251025T160351Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=4d2bc69a2d68b30da57cfd18cebae3f18150f3d0936ad566a0fb6a7b5cc32fee",
+         *               "width": 265
+         *             },
+         *             "stretched": false,
+         *             "withBackground": false,
+         *             "withBorder": false
+         *           },
+         *           "id": "8z7KYTOioJ",
+         *           "type": "image"
+         *         },
+         *         {
+         *           "data": {
+         *             "text": "this is a question with an image.edited"
+         *           },
+         *           "id": "pp0wt2psxQ",
+         *           "type": "paragraph"
+         *         }
+         *       ],
+         *       "time": 1761416444650
+         *     }
+         */
+        app__schemas__question_schema__QuestionTextSchema: {
+            /** Time */
+            time: number;
+            /** Blocks */
+            blocks: components["schemas"]["Block"][];
         };
     };
     responses: never;
@@ -11185,7 +11414,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IGetResponseBase_InstitutionDetailedStatistics_"];
+                    "application/json": unknown;
                 };
             };
         };
@@ -12863,7 +13092,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IGetResponsePaginated_ProgrammeRead_"];
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -12936,7 +13165,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IGetResponsePaginated_ProgrammeRead_"];
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -13001,7 +13230,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IGetResponseBase_ProgrammeRead_"];
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -13823,6 +14052,39 @@ export interface operations {
             };
         };
     };
+    search_exam_titles_api_v1_exam_title_search_get: {
+        parameters: {
+            query: {
+                q: string;
+                skip?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IGetResponsePaginated_ExamTitleRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_exam_title_list_api_v1_exam_title_get: {
         parameters: {
             query?: {
@@ -13985,6 +14247,39 @@ export interface operations {
             };
         };
     };
+    search_exam_descriptions_api_v1_exam_description_search_get: {
+        parameters: {
+            query: {
+                q: string;
+                skip?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IGetResponsePaginated_ExamDescriptionRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_exam_description_list_api_v1_exam_description_get: {
         parameters: {
             query?: {
@@ -14134,6 +14429,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IDeleteResponseBase_ExamDescriptionRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_instructions_api_v1_instruction_search_get: {
+        parameters: {
+            query: {
+                q: string;
+                skip?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IGetResponsePaginated_InstructionRead_"];
                 };
             };
             /** @description Validation Error */
@@ -16423,6 +16751,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IGetResponseBase_Any_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_complete_exam_paper_api_v1_exam_paper_builder__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteExamPaperCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamPaperRead"];
                 };
             };
             /** @description Validation Error */

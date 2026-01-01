@@ -127,21 +127,35 @@ const EditorRenderer: React.FC<EditorRendererProps> = ({ data, className = '' })
         );
 
       case 'table':
+        // Validate table data structure
+        if (!block.data.content || !Array.isArray(block.data.content)) {
+          console.warn('Invalid table data structure:', block.data);
+          return null;
+        }
+        
         return (
           <div key={key} className="mb-4 overflow-x-auto">
             <table className="min-w-full border-collapse border border-gray-300">
               <tbody>
-                {block.data.content?.map((row: string[], rowIndex: number) => (
-                  <tr key={rowIndex}>
-                    {row.map((cell: string, cellIndex: number) => (
-                      <td
-                        key={cellIndex}
-                        className="border border-gray-300 px-4 py-2"
-                        dangerouslySetInnerHTML={{ __html: cell }}
-                      />
-                    ))}
-                  </tr>
-                ))}
+                {block.data.content.map((row: any, rowIndex: number) => {
+                  // Ensure row is an array
+                  if (!Array.isArray(row)) {
+                    console.warn('Invalid table row:', row);
+                    return null;
+                  }
+                  
+                  return (
+                    <tr key={rowIndex}>
+                      {row.map((cell: string, cellIndex: number) => (
+                        <td
+                          key={cellIndex}
+                          className="border border-gray-300 px-4 py-2"
+                          dangerouslySetInnerHTML={{ __html: cell }}
+                        />
+                      ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

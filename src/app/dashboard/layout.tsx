@@ -116,7 +116,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const currentUser = bypassAuth ? mockUser : user;
 
   return (
-    <div className="h-screen flex bg-gray-50 overflow-hidden">
+    <div className="fixed inset-0 flex bg-gray-50 overflow-hidden">
       {/* Sidebar */}
       <Sidebar
         isMobileOpen={sidebarOpen}
