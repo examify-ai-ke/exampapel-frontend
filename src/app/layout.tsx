@@ -4,6 +4,7 @@ import "./globals.css";
 import { Notifications } from "@/components/ui/notifications";
 import { APP_CONFIG } from "@/lib/constants";
 import { QueryProvider } from "@/lib/query-provider";
+import { PostHogProvider } from "@/providers/posthog-provider";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -70,10 +71,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${gtSuper.variable} font-sans`} suppressHydrationWarning> 
-        <QueryProvider>
-          {children}
-          <Notifications />
-        </QueryProvider>
+        <PostHogProvider>
+          <QueryProvider>
+            {children}
+            <Notifications />
+          </QueryProvider>
+        </PostHogProvider>
       </body>
     </html>
   );

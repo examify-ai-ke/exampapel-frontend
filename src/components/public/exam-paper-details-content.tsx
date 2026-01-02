@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { publicAPI } from '@/lib/api-public';
-import { Loader2, Calendar, Clock, Building2, BookOpen, Tag, ArrowLeft, Download, Share2 } from 'lucide-react';
+import { Loader2, Calendar, Clock, Building2, BookOpen, Tag, ArrowLeft, Download, Share2, BookCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { QuestionCard } from './question-card';
@@ -140,11 +140,11 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
                 </div>
                 <div className="flex-1">
                   <h3 className="text-4xl font-normal text-white mb-3 line-clamp-3 tracking-wide">
-                    {paper.title?.title || paper.identifying_name || 'Exam Paper'}
+                    {paper.identifying_name  ||  paper.title?.title || 'Exam Paper'}
                   </h3>
-                  {paper.description?.description && (
+                  {/* {paper.description?.description && (
                     <p className="text-white/90 text-lg leading-relaxed">{paper.description.description}</p>
-                  )}
+                  )} */}
                 </div>
               </div>
 
@@ -163,6 +163,13 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
                     <span>{paper.course.name}</span>
                   </div>
                 )}
+                {paper.modules && (
+                  <div className="flex items-center gap-2 text-white/95">
+                    <BookCheck className="h-4 w-4 text-white/80" />
+                    <span>{paper.modules[0].unit_code}</span>
+                  </div>
+                )}
+
 
                 {paper.year_of_exam && (
                   <div className="flex items-center gap-2 text-white/95">
