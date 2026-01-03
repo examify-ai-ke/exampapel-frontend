@@ -163,7 +163,7 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
                     <span>{paper.course.name}</span>
                   </div>
                 )}
-                {paper.modules && (
+                {paper.modules && paper.modules.length > 0 && paper.modules[0].unit_code && (
                   <div className="flex items-center gap-2 text-white/95">
                     <BookCheck className="h-4 w-4 text-white/80" />
                     <span>{paper.modules[0].unit_code}</span>
