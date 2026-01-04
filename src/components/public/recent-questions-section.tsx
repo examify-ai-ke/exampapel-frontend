@@ -248,12 +248,14 @@ export function RecentQuestionsSection({
                         </div>
                       </div>
 
-                      {/* Expand Icon */}
-                      <div className="flex-shrink-0">
-                        <ChevronDown
-                          className={`w-5 h-5 text-primary transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                        />
-                      </div>
+                      {/* Expand Icon - Only show if there are sub-questions */}
+                      {childrenCount > 0 && (
+                        <div className="flex-shrink-0">
+                          <ChevronDown
+                            className={`w-5 h-5 text-primary transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </button>
