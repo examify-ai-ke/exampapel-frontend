@@ -184,13 +184,16 @@ export function RecentQuestionsSection({
                           )}
                         </div>
 
-                        {/* Question Number Badge */}
+                        {/* Question Number and Marks Badge */}
                         <div className="flex items-center gap-3 mb-3">
                           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
                             {question.question_number || '?'}
                           </span>
                           <span className="text-md font-bold text-muted-foreground uppercase tracking-wide">
                             Question
+                          </span>
+                          <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-bold">
+                            {totalMarks} {totalMarks === 1 ? 'mark' : 'marks'}
                           </span>
                         </div>
 
@@ -203,12 +206,8 @@ export function RecentQuestionsSection({
                           )}
                         </div>
 
-                        {/* First Row: Marks, Sub-questions, Year */}
-                        <div className="flex flex-wrap items-center gap-4 mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-muted-foreground">Marks:</span>
-                            <span className="text-base font-bold text-primary">{totalMarks}</span>
-                          </div>
+                        {/* Metadata: Sub-questions and Year */}
+                        <div className="flex flex-wrap items-center gap-4 mb-3">
                           {childrenCount > 0 && (
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-medium text-muted-foreground">Sub-questions:</span>
@@ -219,22 +218,33 @@ export function RecentQuestionsSection({
                             <span className="text-sm font-medium text-muted-foreground">Year:</span>
                             <span className="text-base font-bold text-foreground">{year}</span>
                           </div>
+                          {question.modules && question.modules.length > 0 && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-muted-foreground">Module:</span>
+                              <span className="text-base font-bold text-foreground">
+                                {question.modules.map((m: any) => m.unit_code).filter(Boolean).join(', ') || 
+                                 question.modules.map((m: any) => m.name).filter(Boolean).join(', ')}
+                              </span>
+                            </div>
+                          )}
                         </div>
 
-                        {/* Second Row: Exam Paper - Clickable Link */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-muted-foreground">Exam Paper:</span>
-                          {exam_paper_slug ? (
-                            <Link
-                              href={`/exampapers/${exam_paper_slug}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-base font-medium text-primary hover:text-primary/80 hover:underline transition-colors"
-                            >
-                              {exam_paper_name}
-                            </Link>
-                          ) : (
-                            <span className="text-base font-medium text-foreground">{exam_paper_name}</span>
-                          )}
+                        {/* Footer: Exam Paper Link with Divider */}
+                        <div className="pt-3 mt-3 border-t border-border/50">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Exam Paper:</span>
+                            {exam_paper_slug ? (
+                              <Link
+                                href={`/exampapers/${exam_paper_slug}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-sm font-medium text-primary hover:text-primary/80 hover:underline transition-colors"
+                              >
+                                {exam_paper_name}
+                              </Link>
+                            ) : (
+                              <span className="text-sm font-medium text-foreground">{exam_paper_name}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
