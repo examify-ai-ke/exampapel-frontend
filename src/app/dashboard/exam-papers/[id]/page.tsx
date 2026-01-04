@@ -377,10 +377,11 @@ export default function ExamPaperDetailsPage() {
             }
         } catch (error) {
             console.error('Error adding module:', error)
+            const errorMessage = error instanceof Error ? error.message : 'Failed to add modules. The module may already be linked or there may be a validation error.'
             addNotification({
                 type: 'error',
                 title: 'Error',
-                message: 'Failed to add module'
+                message: errorMessage
             })
         } finally {
             setAddingModules(false)
