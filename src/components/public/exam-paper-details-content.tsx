@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { QuestionCard } from './question-card';
 import { PDFPreviewModal } from '@/components/pdf/pdf-preview-modal';
+import { ShareDialog } from '@/components/ui/share-dialog';
 
 
 interface ExamPaperDetailsContentProps {
@@ -25,6 +26,7 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
   const [error, setError] = useState<string | null>(null);
   const [questionsError, setQuestionsError] = useState<string | null>(null);
   const [showPDFModal, setShowPDFModal] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   useEffect(() => {
     async function fetchPaper() {
@@ -298,7 +300,12 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
 
             {/* Action Buttons */}
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="bg-white/10 text-white border-white/30 hover:bg-white/20 hover:text-white">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-white/10 text-white border-white/30 hover:bg-white/20 hover:text-white"
+                onClick={() => setShowShareDialog(true)}
+              >
                 <Share2 className="h-4 w-4 mr-2" />
                 Share
               </Button>
@@ -321,6 +328,15 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
         isOpen={showPDFModal}
         onClose={() => setShowPDFModal(false)}
         examPaperData={{ ...paper, question_sets: questionSets }}
+      />
+
+      {/* Share Dialog */}
+      <ShareDialog
+        isOpen={showShareDialog}
+        onClose={() => setShowShareDialog(false)}
+        url={typeof window !== 'undefined' ? window.location.href : ''}
+        title={`${paper?.identifying_name || 'Exam Paper'} - ${paper?.institution?.name || ''}`}
+        description={`Check out this exam paper from ${paper?.institution?.name || 'ExamPapel'} - ${paper?.course?.name || ''} (${paper?.year_of_exam || ''})`}
       />
 
       {/* Main Content */}
