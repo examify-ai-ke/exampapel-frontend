@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { InstitutionCard } from '@/components/public';
@@ -9,10 +9,11 @@ import { BaseSearch } from '@/components/public/base-search';
 import { Pagination } from '@/components/public/pagination';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { InstitutionsGridSkeleton, InstitutionsListSkeleton } from '@/components/ui/skeleton-loaders';
 import { publicAPI } from '@/lib/api-public';
 import type { InstitutionRead } from '@/components/public/types';
-import { Building2, GraduationCap, School, List, Grid } from 'lucide-react';
+import { Building2, GraduationCap, School, List, Grid, Search, X } from 'lucide-react';
 
 type InstitutionType = 'all' | 'Public' | 'Private' | 'Other';
 type InstitutionCategory = 'all' | 'University' | 'College' | 'TVET' | 'TVC' | 'TTI' | 'Other';
@@ -25,6 +26,7 @@ export default function InstitutionsPageContent() {
   
   // State from URL params
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [inputValue, setInputValue] = useState(searchParams.get('q') || '');
   const [institutionType, setInstitutionType] = useState<InstitutionType>(
     (searchParams.get('type') as InstitutionType) || 'all'
   );
@@ -39,6 +41,16 @@ export default function InstitutionsPageContent() {
   const [viewMode, setViewMode] = useState<ViewMode>(
     (searchParams.get('view') as ViewMode) || 'list' // Default to list view
   );
+
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(inputValue);
+      setCurrentPage(1);
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [inputValue]);
 
   // Fetch institutions
   const { data, isLoading } = useQuery({
@@ -97,7 +109,12 @@ export default function InstitutionsPageContent() {
   }, [searchQuery, institutionType, institutionCategory, sortBy, currentPage, pageSize, viewMode, router]);
 
   const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
+    setInputValue(query);
+  };
+
+  const handleClearSearch = () => {
+    setInputValue('');
+    setSearchQuery('');
     setCurrentPage(1);
   };
 
@@ -157,12 +174,29 @@ export default function InstitutionsPageContent() {
 
         {/* Search Bar */}
         <div className="mb-6">
-          <BaseSearch
-            value={searchQuery}
-            placeholder="Search institutions by name..."
-            onSearch={handleSearchChange}
-            className="max-w-2xl"
-          />
+          <div className="relative max-w-2xl">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              value={inputValue}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="Search institutions by name..."
+              className="pl-10 pr-10"
+              aria-label="Search institutions"
+            />
+            {inputValue && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleClearSearch}
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Filters */}
