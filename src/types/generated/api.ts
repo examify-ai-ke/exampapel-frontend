@@ -2939,6 +2939,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/exampaper/{exampaper_id}/download-pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Exam Paper Pdf
+         * @description Generates and downloads a PDF for the exam paper.
+         */
+        get: operations["download_exam_paper_pdf_api_v1_exampaper__exampaper_id__download_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/exampaper/{exampaper_id}": {
         parameters: {
             query?: never;
@@ -4383,7 +4403,7 @@ export interface components {
             /** Time */
             time: number;
             /** Blocks */
-            blocks: components["schemas"]["Block"][];
+            blocks: components["schemas"]["app__schemas__comment_schema__Block"][];
         };
         /** AnswerUpdate */
         AnswerUpdate: {
@@ -4480,17 +4500,6 @@ export interface components {
          * @enum {string}
          */
         AuthProvider: "email" | "google" | "github" | "facebook" | "twitter";
-        /** Block */
-        Block: {
-            /** Id */
-            id: string;
-            /** Data */
-            data: {
-                [key: string]: unknown;
-            };
-            /** Type */
-            type: string;
-        };
         /** Body_create_user_api_v1_user_post */
         Body_create_user_api_v1_user_post: {
             /** @default email */
@@ -4505,7 +4514,10 @@ export interface components {
             grant_type?: string | null;
             /** Username */
             username: string;
-            /** Password */
+            /**
+             * Password
+             * Format: password
+             */
             password: string;
             /**
              * Scope
@@ -4514,7 +4526,10 @@ export interface components {
             scope: string;
             /** Client Id */
             client_id?: string | null;
-            /** Client Secret */
+            /**
+             * Client Secret
+             * Format: password
+             */
             client_secret?: string | null;
         };
         /** Body_social_auth_callback_api_v1_user_social_auth__provider__callback_post */
@@ -4880,7 +4895,7 @@ export interface components {
             /** Time */
             time: number;
             /** Blocks */
-            blocks: components["schemas"]["Block"][];
+            blocks: components["schemas"]["app__schemas__comment_schema__Block"][];
         };
         /** CommentUpdate */
         CommentUpdate: {
@@ -8047,7 +8062,7 @@ export interface components {
             /** Name */
             name: string;
             /** Slug */
-            slug: string | null;
+            slug?: string | null;
         };
         /** InstructionRead */
         InstructionRead: {
@@ -8130,7 +8145,7 @@ export interface components {
          * @description Schema for main questions with required fields
          */
         MainQuestionRead: {
-            text: components["schemas"]["QuestionTextSchema-Output"] | null;
+            text: components["schemas"]["app__schemas__question_schema__QuestionTextSchema"] | null;
             /** Marks */
             marks: number | null;
             numbering_style: components["schemas"]["NumberingStyleEnum"];
@@ -9028,7 +9043,7 @@ export interface components {
         };
         /** QuestionRead */
         QuestionRead: {
-            text: components["schemas"]["QuestionTextSchema-Output"] | null;
+            text: components["schemas"]["app__schemas__question_schema__QuestionTextSchema"] | null;
             /** Marks */
             marks: number | null;
             numbering_style: components["schemas"]["NumberingStyleEnum"];
@@ -9201,45 +9216,6 @@ export interface components {
         QuestionSetUpdate: {
             title?: components["schemas"]["QuestionSetTitleEnum"] | null;
         };
-        /**
-         * QuestionTextSchema
-         * @example {
-         *       "blocks": [
-         *         {
-         *           "data": {
-         *             "caption": "logo-sample",
-         *             "file": {
-         *               "format": "PNG",
-         *               "height": 262,
-         *               "name": "favicon-exam.png",
-         *               "size": 104763,
-         *               "url": "https://exampapel-images-bucket2025.s3.amazonaws.com/019a1c1c-a20e-77fc-b3c8-dfd5587162b0favicon-exam.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA6QJRQF7UB6UGBA4E%2F20251025%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251025T160351Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=4d2bc69a2d68b30da57cfd18cebae3f18150f3d0936ad566a0fb6a7b5cc32fee",
-         *               "width": 265
-         *             },
-         *             "stretched": false,
-         *             "withBackground": false,
-         *             "withBorder": false
-         *           },
-         *           "id": "8z7KYTOioJ",
-         *           "type": "image"
-         *         },
-         *         {
-         *           "data": {
-         *             "text": "this is a question with an image.edited"
-         *           },
-         *           "id": "pp0wt2psxQ",
-         *           "type": "paragraph"
-         *         }
-         *       ],
-         *       "time": 1761416444650
-         *     }
-         */
-        "QuestionTextSchema-Output": {
-            /** Time */
-            time: number;
-            /** Blocks */
-            blocks: components["schemas"]["Block"][];
-        };
         /** QuestionsCreate */
         QuestionsCreate: {
             /**
@@ -9272,7 +9248,7 @@ export interface components {
          * @description Schema for sub-questions with required fields
          */
         SubQuestionRead: {
-            text: components["schemas"]["QuestionTextSchema-Output"] | null;
+            text: components["schemas"]["app__schemas__question_schema__QuestionTextSchema"] | null;
             /** Marks */
             marks: number | null;
             numbering_style: components["schemas"]["NumberingStyleEnum"];
@@ -9348,7 +9324,7 @@ export interface components {
         };
         /** SubQuestionReadSimple */
         SubQuestionReadSimple: {
-            text: components["schemas"]["QuestionTextSchema-Output"] | null;
+            text: components["schemas"]["app__schemas__question_schema__QuestionTextSchema"] | null;
             /** Marks */
             marks?: number | null;
             numbering_style: components["schemas"]["NumberingStyleEnum"];
@@ -9462,6 +9438,17 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /** Block */
+        app__schemas__comment_schema__Block: {
+            /** Id */
+            id: string;
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
+            /** Type */
+            type: string;
+        };
         /** ExamDescriptionReadForExamPaper */
         app__schemas__course_schema__ExamDescriptionReadForExamPaper: {
             /**
@@ -9515,7 +9502,7 @@ export interface components {
         };
         /** MainQuestionReadForQuestionSet */
         app__schemas__exam_paper_schema__MainQuestionReadForQuestionSet: {
-            text: components["schemas"]["QuestionTextSchema-Output"] | null;
+            text: components["schemas"]["app__schemas__question_schema__QuestionTextSchema"] | null;
             /** Marks */
             marks: number | null;
             numbering_style: components["schemas"]["NumberingStyleEnum"];
@@ -9543,7 +9530,7 @@ export interface components {
         };
         /** MainQuestionReadForQuestionSet */
         app__schemas__question_schema__MainQuestionReadForQuestionSet: {
-            text: components["schemas"]["QuestionTextSchema-Output"] | null;
+            text: components["schemas"]["app__schemas__question_schema__QuestionTextSchema"] | null;
             /** Marks */
             marks?: number | null;
             numbering_style: components["schemas"]["NumberingStyleEnum"];
@@ -9613,7 +9600,7 @@ export interface components {
             /** Time */
             time: number;
             /** Blocks */
-            blocks: components["schemas"]["Block"][];
+            blocks: components["schemas"]["app__schemas__comment_schema__Block"][];
         };
     };
     responses: never;
@@ -11513,7 +11500,7 @@ export interface operations {
                 established_year_to?: number;
                 /** @description Filter institutions with/without exam papers */
                 has_exam_papers?: boolean;
-                /** @description Sort by: relevance, name, established_year, exam_count */
+                /** @description Sort by: relevance, name, established_year, exam_count, question_count */
                 sort_by?: string;
                 /** @description Sort order: asc, desc */
                 sort_order?: string;
@@ -13454,7 +13441,7 @@ export interface operations {
                 institution_id?: string;
                 /** @description Filter by course acronym */
                 course_acronym?: string;
-                /** @description Sort by: name, created_at */
+                /** @description Sort by: name, created_at, exam_paper_count */
                 sort_by?: string;
                 /** @description Sort order: asc, desc */
                 sort_order?: string;
@@ -14723,7 +14710,7 @@ export interface operations {
                 duration_max?: number;
                 /** @description Filter by tags (comma-separated) */
                 tags?: string;
-                /** @description Sort by: relevance, date, duration, title */
+                /** @description Sort by: relevance, date, duration, title, questions_count */
                 sort_by?: string;
                 /** @description Sort order: asc, desc */
                 sort_order?: string;
@@ -14874,6 +14861,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IGetResponseBase_ExamPaperRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_exam_paper_pdf_api_v1_exampaper__exampaper_id__download_pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exampaper_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

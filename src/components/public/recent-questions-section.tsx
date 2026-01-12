@@ -93,7 +93,7 @@ export function RecentQuestionsSection({
 
   return (
     <section className="bg-background">
-      <div className="w-full max-w-7xl mx-auto">
+      <div className="w-full max-w-7xl mx-auto px-4">
         {/* Optional Section Header */}
         {showHeading && (
           <div className="text-center mb-12 py-12">
@@ -101,6 +101,54 @@ export function RecentQuestionsSection({
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Explore the latest exam questions added to our platform. Practice with real past paper questions from top institutions.
             </p>
+          </div>
+        )}
+
+        {/* Top Pagination */}
+        {onPageChange && totalPages > 1 && (
+          <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
+            <div className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages} • {totalItems} total questions
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage <= 1}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {totalPages > 0 && Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                  const pageNum = i + 1;
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => onPageChange(pageNum)}
+                      className="w-10"
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage >= totalPages}
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
           </div>
         )}
 
@@ -307,8 +355,8 @@ export function RecentQuestionsSection({
         </div>
 
         {/* Pagination */}
-        {onPageChange && (
-          <div className="mt-12 flex items-center justify-end gap-4">
+        {onPageChange && totalPages > 1 && (
+          <div className="mt-12 flex items-center justify-between gap-4 flex-wrap">
             <div className="text-sm text-muted-foreground">
               Page {currentPage} of {totalPages} • {totalItems} total questions
             </div>

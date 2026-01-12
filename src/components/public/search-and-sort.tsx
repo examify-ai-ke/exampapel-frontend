@@ -24,6 +24,7 @@ interface SearchAndSortProps {
   totalResults: number;
   isLoading?: boolean;
   placeholder?: string;
+  resultsLabel?: string; // e.g., "question", "exam paper", "institution"
   onSearchChange: (query: string) => void;
   onSortChange: (sortBy: SearchFilters['sortBy'], sortOrder: SearchFilters['sortOrder']) => void;
   onViewModeChange: (mode: ViewMode) => void;
@@ -49,6 +50,7 @@ export function SearchAndSort({
   totalResults,
   isLoading = false,
   placeholder = 'Search for questions...',
+  resultsLabel = 'exam paper', // Default to "exam paper" for backward compatibility
   onSearchChange,
   onSortChange,
   onViewModeChange,
@@ -148,7 +150,7 @@ export function SearchAndSort({
               <span className="font-medium text-gray-900">
                 {totalResults.toLocaleString()}
               </span>{' '}
-              {totalResults === 1 ? 'exam paper' : 'exam papers'} found
+              {totalResults === 1 ? resultsLabel : `${resultsLabel}s`} found
             </>
           )}
         </div>

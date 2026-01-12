@@ -19,6 +19,8 @@ import { LoadingOverlay } from '@/components/ui/loading-overlay';
 import { QuestionsListSkeleton } from '@/components/ui/skeleton-loaders';
 import { X } from 'lucide-react';
 import type { FilterOption } from '@/types/search-filters';
+import { useLoginGate } from '@/hooks/useLoginGate';
+import { LoginGateDialog } from '@/components/ui/login-gate-dialog';
 
 export default function PublicQuestionsContent() {
   const [page, setPage] = useState(1);
@@ -40,6 +42,12 @@ export default function PublicQuestionsContent() {
   const [institutionSearchQuery, setInstitutionSearchQuery] = useState('');
   const [courseSearchQuery, setCourseSearchQuery] = useState('');
   const [moduleSearchQuery, setModuleSearchQuery] = useState('');
+
+  // Login gate for non-authenticated users
+  const { showLoginPrompt, closePrompt } = useLoginGate({ 
+    currentPage: page, 
+    enabled: true 
+  });
 
   // Debounce search query to avoid excessive API calls
   useEffect(() => {
@@ -219,6 +227,14 @@ export default function PublicQuestionsContent() {
 
   return (
     <div>
+      {/* Login Gate Dialog */}
+      <LoginGateDialog
+        isOpen={showLoginPrompt}
+        onClose={closePrompt}
+        redirectUrl="/questions"
+        message="Please sign in to continue exploring more questions."
+      />
+
       {/* Hero Section */}
       {platformStats && !isStatsLoading && (
         <QuestionsHeroSection stats={platformStats} />
@@ -250,14 +266,19 @@ export default function PublicQuestionsContent() {
           {/* Search and Sort Bar */}
           <SearchAndSort
             searchQuery={searchQuery}
-            sortBy={sortBy}
+            sortBy={sortBy === 'marks' ? 'relevance' : sortBy === 'created_at' ? 'date' : sortBy as any}
             sortOrder={sortOrder}
             pageSize={pageSize}
             totalResults={totalItems}
             isLoading={isLoading}
             placeholder="Search for questions..."
+            resultsLabel="question"
             onSearchChange={handleSearch}
-            onSortChange={handleSortChange}
+            onSortChange={(newSortBy, newSortOrder) => {
+              // Map back to question sort options
+              const mappedSortBy = newSortBy === 'date' ? 'created_at' : newSortBy === 'relevance' ? 'relevance' : 'marks';
+              handleSortChange(mappedSortBy as any, newSortOrder || 'desc');
+            }}
             onPageSizeChange={handlePageSizeChange}
             onViewModeChange={() => {}} // View mode toggle not implemented yet
             onFilterClick={() => setIsMobileFilterOpen(true)}
@@ -324,7 +345,7 @@ export default function PublicQuestionsContent() {
           )}
 
           {/* Questions List */}
-          <div className="mt-6 bg-white shadow-lg rounded-lg p-0 relative min-h-[400px]">
+          <div className="mt-6 bg-white shadow-lg rounded-lg p-6 relative min-h-[400px]">
             {/* Loading State - Show skeleton when loading OR when fetching with no existing data */}
             {(isLoading || (isFetching && questions.length === 0)) && (
               <QuestionsListSkeleton count={5} />

@@ -104,6 +104,7 @@ export function useListQuestions(filters?: Record<string, unknown>) {
 /**
  * Fetch featured institutions
  * Cache: 10 minutes (featured list is relatively stable)
+ * Uses advanced search endpoint sorted by exam_count to feature institutions with content first
  */
 export function useFeaturedInstitutions(limit: number = 8) {
   return useQuery({
@@ -113,7 +114,9 @@ export function useFeaturedInstitutions(limit: number = 8) {
       if (result.error) {
         throw new Error('Failed to fetch featured institutions');
       }
-      return result.data;
+      
+      // API already sorts by exam_count, so just return the data
+      return result.data || [];
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes

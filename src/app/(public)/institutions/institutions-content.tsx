@@ -14,6 +14,8 @@ import { InstitutionsGridSkeleton, InstitutionsListSkeleton } from '@/components
 import { publicAPI } from '@/lib/api-public';
 import type { InstitutionRead } from '@/components/public/types';
 import { Building2, GraduationCap, School, List, Grid, Search, X } from 'lucide-react';
+import { useLoginGate } from '@/hooks/useLoginGate';
+import { LoginGateDialog } from '@/components/ui/login-gate-dialog';
 
 type InstitutionType = 'all' | 'Public' | 'Private' | 'Other';
 type InstitutionCategory = 'all' | 'University' | 'College' | 'TVET' | 'TVC' | 'TTI' | 'Other';
@@ -41,6 +43,12 @@ export default function InstitutionsPageContent() {
   const [viewMode, setViewMode] = useState<ViewMode>(
     (searchParams.get('view') as ViewMode) || 'list' // Default to list view
   );
+
+  // Login gate for non-authenticated users
+  const { showLoginPrompt, closePrompt } = useLoginGate({ 
+    currentPage, 
+    enabled: true 
+  });
 
   // Debounced search effect
   useEffect(() => {
@@ -161,6 +169,14 @@ export default function InstitutionsPageContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Login Gate Dialog */}
+      <LoginGateDialog
+        isOpen={showLoginPrompt}
+        onClose={closePrompt}
+        redirectUrl="/institutions"
+        message="Please sign in to continue exploring more institutions."
+      />
+
       <div className="container mx-auto px-4 py-8">
         {/* Page Header */}
         <div className="mb-8">

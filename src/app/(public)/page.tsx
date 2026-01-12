@@ -14,10 +14,18 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { publicAPI } from '@/lib/api-public';
 import { QuestionsListSkeleton, StatsCardSkeleton } from '@/components/ui/skeleton-loaders';
+import { useLoginGate } from '@/hooks/useLoginGate';
+import { LoginGateDialog } from '@/components/ui/login-gate-dialog';
 
 export default function HomePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10; // Show 10 questions per page
+
+  // Login gate for non-authenticated users
+  const { showLoginPrompt, closePrompt } = useLoginGate({ 
+    currentPage, 
+    enabled: true 
+  });
 
   // Fetch data with React Query hooks (runs in parallel, each component loads independently)
   const { data: stats, isLoading: statsLoading } = usePlatformStats();
@@ -52,6 +60,14 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
+      {/* Login Gate Dialog */}
+      <LoginGateDialog
+        isOpen={showLoginPrompt}
+        onClose={closePrompt}
+        redirectUrl="/"
+        message="Please sign in to continue exploring more questions."
+      />
+
       {/* Hero Section with Search and Stats - Shows skeleton while loading */}
       {statsLoading ? (
         <div className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">

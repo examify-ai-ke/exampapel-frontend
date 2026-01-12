@@ -345,8 +345,8 @@ export const publicAPI = {
                         query: {
                             question_type: 'all',
                             include_children: true,
-                            skip,
-                            limit: 100, // Fetch more to ensure we get enough main questions after filtering
+                            skip: skip,
+                            limit: limit,
                         }
                     }
                 });
@@ -360,28 +360,19 @@ export const publicAPI = {
 
                 const allItems = extractItems<QuestionRead>(response);
                 const totalFromAPI = extractTotal(response);
-                
-                // Filter to get only main questions (with children included)
-                const mainQuestions = allItems.filter((q: any) => 
-                    q.is_main_question === true
-                );
-
-                // Calculate total main questions (approximate based on ratio)
-                const mainQuestionsRatio = mainQuestions.length / allItems.length;
-                const estimatedTotalMainQuestions = Math.ceil(totalFromAPI * mainQuestionsRatio);
 
                 console.log('✅ Extracted data:', { 
                     totalItems: allItems.length,
                     totalFromAPI,
-                    mainQuestions: mainQuestions.length,
-                    estimatedTotal: estimatedTotalMainQuestions,
-                    sampleQuestion: mainQuestions[0],
-                    hasChildren: (mainQuestions[0]?.children?.length || 0) > 0
+                    skip,
+                    limit,
+                    sampleQuestion: allItems[0],
+                    hasChildren: (allItems[0]?.children?.length || 0) > 0
                 });
 
                 return {
-                    data: mainQuestions.slice(0, limit),
-                    total: estimatedTotalMainQuestions,
+                    data: allItems,
+                    total: totalFromAPI,
                     error: response.error,
                 };
             } catch (error) {
@@ -716,34 +707,46 @@ export const publicAPI = {
 
         /**
          * Get featured institutions (by paper count)
+         * Uses the advanced search endpoint with exam_count sorting
          * Useful for landing page
          */
         async getFeatured(limit: number = 8) {
             try {
-                // Get institutions and sort by paper count on client side
-                const response = await api.GET('/api/v1/institution', {
+                console.log('🏛️ Fetching featured institutions sorted by exam count');
+                
+                // Use the advanced search endpoint with exam_count sorting
+                const response = await api.GET('/api/v1/institution/search/advanced', {
                     params: {
                         query: {
                             skip: 0,
-                            limit: 50, // Get more to filter
+                            limit: limit,
+                            sort_by: 'exam_count',
+                            sort_order: 'desc',
                         }
                     }
                 });
 
+                if (response.error) {
+                    console.error('❌ Featured institutions API Error:', response.error);
+                    throw new Error(`API Error: ${JSON.stringify(response.error)}`);
+                }
+
                 const institutions = extractItems<InstitutionRead>(response);
                 
-                // Sort by exams_count and take top N
-                const featured = institutions
-                    .sort((a: any, b: any) => (b.exams_count || 0) - (a.exams_count || 0))
-                    .slice(0, limit);
+                console.log('📦 Featured institutions response:', {
+                    count: institutions.length,
+                    sortedBy: 'exam_count',
+                    topInstitution: institutions[0]?.name,
+                    topExamCount: institutions[0] && 'exams_count' in institutions[0] ? (institutions[0] as any).exams_count : 0,
+                });
 
                 return {
-                    data: featured,
-                    total: featured.length,
+                    data: institutions,
+                    total: institutions.length,
                     error: response.error,
                 };
             } catch (error) {
-                console.error('Error fetching featured institutions:', error);
+                console.error('❌ Error fetching featured institutions:', error);
                 return {
                     data: [],
                     total: 0,

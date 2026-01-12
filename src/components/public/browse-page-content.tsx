@@ -9,6 +9,8 @@ import { MobileFilterDrawer } from './mobile-filter-drawer';
 import { ExamPaperCard } from './exam-paper-card';
 import { Pagination } from './pagination';
 import { ExamPapersGridSkeleton, ExamPapersListSkeleton } from '@/components/ui/skeleton-loaders';
+import { useLoginGate } from '@/hooks/useLoginGate';
+import { LoginGateDialog } from '@/components/ui/login-gate-dialog';
 
 type ViewMode = 'grid' | 'list';
 
@@ -53,6 +55,12 @@ export function BrowsePageContent() {
     setPage,
   } = useExamPaperSearch();
 
+  // Login gate for non-authenticated users
+  const { showLoginPrompt, closePrompt } = useLoginGate({ 
+    currentPage, 
+    enabled: true 
+  });
+
   const isLoading = papersLoading || filtersLoading;
 
   const handleSearchChange = (query: string) => {
@@ -68,6 +76,14 @@ export function BrowsePageContent() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Login Gate Dialog */}
+      <LoginGateDialog
+        isOpen={showLoginPrompt}
+        onClose={closePrompt}
+        redirectUrl="/exampapers"
+        message="Please sign in to continue exploring more exam papers."
+      />
+
       <div className="flex gap-8">
         {/* Desktop Sidebar */}
         <aside className="hidden lg:block w-80 shrink-0">
