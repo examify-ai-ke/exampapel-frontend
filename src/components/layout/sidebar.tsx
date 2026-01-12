@@ -158,12 +158,6 @@ const navItems: NavItem[] = [
         roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
       },
       {
-        title: 'Manage Questions',
-        href: '/dashboard/questions/manage',
-        icon: Settings,
-        roles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER],
-      },
-      {
         title: 'Question Sets',
         href: '/dashboard/questions/sets',
         icon: FolderOpen,

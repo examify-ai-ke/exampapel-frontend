@@ -184,7 +184,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     asChild
                     className="text-gray-600 hover:text-gray-900"
                   >
-                    <Link href="/dashboard/questions/manage">
+                    <Link href="/dashboard/questions">
                       <HelpCircle className="h-4 w-4 mr-1" />
                       <span className="text-sm">Questions</span>
                     </Link>
