@@ -104,8 +104,8 @@ export default function ProfilePage() {
         if (user) {
             console.log('👤 User data:', user);
             console.log('🖼️ User image:', user.image);
-            console.log('📸 Avatar URL (path):', user.image?.media?.path);
-            console.log('🔗 Avatar URL (link - double encoded):', user.image?.media?.link);
+            console.log('📸 Avatar URL (path):', user.image?.media?.link);
+            console.log('🔗 Avatar URL (link - double encoded):', user.image?.media?.path);
             setFormData({
                 first_name: user.first_name || '',
                 last_name: user.last_name || '',
@@ -466,8 +466,8 @@ export default function ProfilePage() {
                             <div className="relative inline-block">
                                 <Avatar className="h-24 w-24 mx-auto">
                                     <AvatarImage 
-                                        src={user?.image?.media?.path || '/default-avatar-profile-picture-male-icon.png'} 
-                                        alt={user?.full_name || 'User'} 
+                                        src={user?.image?.media?.link || '/default-avatar-profile-picture-male-icon.png'} 
+                                        alt={user?.first_name || 'User'} 
                                     />
                                     <AvatarFallback className="text-2xl bg-blue-100 text-blue-600">
                                         {user?.first_name?.charAt(0) || user?.email?.charAt(0) || 'U'}

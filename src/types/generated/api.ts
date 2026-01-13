@@ -4403,7 +4403,7 @@ export interface components {
             /** Time */
             time: number;
             /** Blocks */
-            blocks: components["schemas"]["app__schemas__comment_schema__Block"][];
+            blocks: components["schemas"]["app__schemas__answer_schema__Block"][];
         };
         /** AnswerUpdate */
         AnswerUpdate: {
@@ -4875,6 +4875,7 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            created_by?: components["schemas"]["IUserReadWithoutGroups"] | null;
         };
         /**
          * CommentTextSchema
@@ -4895,7 +4896,7 @@ export interface components {
             /** Time */
             time: number;
             /** Blocks */
-            blocks: components["schemas"]["app__schemas__comment_schema__Block"][];
+            blocks: components["schemas"]["app__schemas__answer_schema__Block"][];
         };
         /** CommentUpdate */
         CommentUpdate: {
@@ -9493,7 +9494,7 @@ export interface components {
             type: string;
         };
         /** Block */
-        app__schemas__comment_schema__Block: {
+        app__schemas__answer_schema__Block: {
             /** Id */
             id: string;
             /** Data */
@@ -9654,7 +9655,7 @@ export interface components {
             /** Time */
             time: number;
             /** Blocks */
-            blocks: components["schemas"]["app__schemas__comment_schema__Block"][];
+            blocks: components["schemas"]["app__schemas__answer_schema__Block"][];
         };
     };
     responses: never;

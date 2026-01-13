@@ -327,24 +327,35 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
   }, [commentEditorData]);
 
   // Check if user is admin or manager
-  const canAcceptAnswer = user?.role === 'admin' || user?.role === 'manager';
+  const canAcceptAnswer = user?.role?.name === 'admin' || user?.role?.name === 'manager';
 
-  // Fetch comment count and comments on mount
+  // Fetch comment count on mount (always)
   React.useEffect(() => {
-    const fetchComments = async () => {
+    const fetchCommentCount = async () => {
       try {
-        // Fetch comment count
         const countResponse = await publicAPI.comments.getCountByAnswerId(answer.id);
+        
         if (!countResponse.error && typeof countResponse.data === 'number') {
           setCommentCount(countResponse.data);
         }
+      } catch (error) {
+        console.error('Error fetching comment count:', error);
+      }
+    };
+    
+    fetchCommentCount();
+  }, [answer.id]);
 
-        // Fetch comments if showing comments section
-        if (showComments) {
-          const commentsResponse = await publicAPI.comments.getByAnswerId(answer.id);
-          if (!commentsResponse.error && Array.isArray(commentsResponse.data)) {
-            setComments(commentsResponse.data);
-          }
+  // Fetch comments only when user opens the comments section
+  React.useEffect(() => {
+    if (!showComments) return; // Don't fetch if not showing
+    
+    const fetchComments = async () => {
+      try {
+        const commentsResponse = await publicAPI.comments.getByAnswerId(answer.id);
+        
+        if (!commentsResponse.error && Array.isArray(commentsResponse.data)) {
+          setComments(commentsResponse.data);
         }
       } catch (error) {
         console.error('Error fetching comments:', error);
@@ -517,8 +528,21 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
       });
       setShowCommentForm(false);
       
-      // Refresh the page to show the new comment
-      window.location.reload();
+      // Fetch updated comments and count instead of reloading page
+      const [countResponse, commentsResponse] = await Promise.all([
+        publicAPI.comments.getCountByAnswerId(answer.id),
+        publicAPI.comments.getByAnswerId(answer.id)
+      ]);
+      
+      if (!countResponse.error && typeof countResponse.data === 'number') {
+        setCommentCount(countResponse.data);
+      }
+      
+      if (!commentsResponse.error && Array.isArray(commentsResponse.data)) {
+        setComments(commentsResponse.data);
+        // Auto-open comments section to show the new comment
+        setShowComments(true);
+      }
     } catch (error) {
       console.error('Error adding comment:', error);
       addNotification({
@@ -589,7 +613,7 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
 
         {/* Answer Content with CircleCheck icon */}
         <div className="flex items-start gap-2 mb-3">
-          <CircleCheck className={`h-4 w-4 mt-0.5 flex-shrink-0 ${isAccepted ? 'text-green-600' : 'text-gray-400'}`} />
+          <CircleCheck className={`h-4 w-4 mt-0.5 flex-shrink-0 ${isAccepted ? 'text-green-600' : 'text-green-500'}`} />
           <div className="prose prose-sm max-w-none text-gray-800 flex-1">
             {answer.text && <EditorRenderer data={answer.text} />}
           </div>
@@ -656,7 +680,11 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
             {/* Comments Button - Shows count */}
             <button
               onClick={handleToggleComments}
-              className={`flex items-center gap-1 transition-colors ${showComments ? 'text-blue-600' : 'hover:text-blue-600'}`}
+              className={`flex items-center gap-1 transition-colors ${
+                showComments 
+                  ? 'text-blue-700 font-semibold' 
+                  : 'text-blue-600 hover:text-blue-700'
+              }`}
               title="View comments"
             >
               <MessageSquare className="h-3.5 w-3.5" />
@@ -758,7 +786,7 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
                   <div className="flex items-center justify-between text-xs text-gray-500 ml-6">
                     <div className="flex items-center gap-2">
                       <img
-                        src={comment.created_by?.profile_image || '/default-avatar-profile-picture-male-icon.svg'}
+                        src={comment.created_by?.image?.media?.link || '/default-avatar-profile-picture-male-icon.svg'}
                         alt={comment.created_by?.last_name || comment.created_by?.first_name || 'Anonymous'}
                         className="w-5 h-5 rounded-full object-cover"
                         onError={(e) => {
@@ -766,7 +794,7 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
                         }}
                       />
                       <span>
-                        {comment.created_by?.last_name || comment.created_by?.first_name || comment.created_by?.name || 'Anonymous'}
+                        {comment.created_by?.last_name || comment.created_by?.first_name || 'Anonymous'}
                       </span>
                       {comment.created_at && (
                         <>
