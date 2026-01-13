@@ -1243,6 +1243,298 @@ export const publicAPI = {
                 };
             }
         },
+
+        /**
+         * Create a reply to an answer
+         * Requires authentication
+         */
+        async addReply(answerId: string, replyData: { text: any; question_id: string }) {
+            try {
+                const response = await api.POST('/api/v1/answer/{answer_id}/reply', {
+                    params: {
+                        path: { answer_id: answerId }
+                    },
+                    body: replyData
+                });
+
+                // Extract data from nested response structure
+                const data = response.data && typeof response.data === 'object' && 'data' in response.data
+                    ? (response.data as any).data
+                    : response.data;
+
+                return {
+                    data: data || null,
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error adding reply:', error);
+                return {
+                    data: null,
+                    error: error as any,
+                };
+            }
+        },
+
+        /**
+         * Mark answer as reviewed (admin/manager only)
+         * Can be used to "accept" an answer by marking it as verified
+         */
+        async markAsReviewed(answerId: string, reviewed: boolean = true) {
+            try {
+                const response = await api.PUT('/api/v1/answer/{answer_id}/review', {
+                    params: {
+                        path: { answer_id: answerId },
+                        query: { reviewed }
+                    }
+                });
+
+                // Extract data from nested response structure
+                const data = response.data && typeof response.data === 'object' && 'data' in response.data
+                    ? (response.data as any).data
+                    : response.data;
+
+                return {
+                    data: data || null,
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error marking answer as reviewed:', error);
+                return {
+                    data: null,
+                    error: error as any,
+                };
+            }
+        },
+    },
+
+    /**
+     * Comments
+     */
+    comments: {
+        /**
+         * Get comments for a specific answer
+         */
+        async getByAnswerId(answerId: string, params?: { skip?: number; limit?: number }) {
+            try {
+                const response = await api.GET('/api/v1/comment/by_answer/{answer_id}', {
+                    params: {
+                        path: { answer_id: answerId },
+                        query: {
+                            skip: params?.skip || 0,
+                            limit: params?.limit || 50,
+                        }
+                    }
+                });
+
+                // Extract data from nested response structure
+                const data = response.data && typeof response.data === 'object' && 'data' in response.data
+                    ? (response.data as any).data
+                    : response.data;
+
+                return {
+                    data: data || [],
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error fetching comments:', error);
+                return {
+                    data: [],
+                    error: error as any,
+                };
+            }
+        },
+
+        /**
+         * Create a comment on an answer
+         * Requires authentication
+         */
+        async create(commentData: { text: any; answer_id: string; parent_id?: string | null }) {
+            try {
+                const response = await api.POST('/api/v1/comment', {
+                    body: commentData
+                });
+
+                // Extract data from nested response structure
+                const data = response.data && typeof response.data === 'object' && 'data' in response.data
+                    ? (response.data as any).data
+                    : response.data;
+
+                return {
+                    data: data || null,
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error creating comment:', error);
+                return {
+                    data: null,
+                    error: error as any,
+                };
+            }
+        },
+
+        /**
+         * Create a reply to a comment
+         * Requires authentication
+         */
+        async createReply(parentId: string, replyData: { text: any; answer_id: string }) {
+            try {
+                const response = await api.POST('/api/v1/comment/reply/{parent_id}', {
+                    params: {
+                        path: { parent_id: parentId }
+                    },
+                    body: replyData
+                });
+
+                // Extract data from nested response structure
+                const data = response.data && typeof response.data === 'object' && 'data' in response.data
+                    ? (response.data as any).data
+                    : response.data;
+
+                return {
+                    data: data || null,
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error creating comment reply:', error);
+                return {
+                    data: null,
+                    error: error as any,
+                };
+            }
+        },
+
+        /**
+         * Toggle comment like
+         */
+        async toggleLike(commentId: string) {
+            try {
+                const response = await api.POST('/api/v1/comment/{comment_id}/like', {
+                    params: {
+                        path: { comment_id: commentId }
+                    }
+                });
+
+                return {
+                    data: response.data,
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error toggling comment like:', error);
+                return {
+                    data: null,
+                    error: error as any,
+                };
+            }
+        },
+
+        /**
+         * Toggle comment dislike
+         */
+        async toggleDislike(commentId: string) {
+            try {
+                const response = await api.POST('/api/v1/comment/{comment_id}/dislike', {
+                    params: {
+                        path: { comment_id: commentId }
+                    }
+                });
+
+                return {
+                    data: response.data,
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error toggling comment dislike:', error);
+                return {
+                    data: null,
+                    error: error as any,
+                };
+            }
+        },
+
+        /**
+         * Get comment count for an answer
+         */
+        async getCountByAnswerId(answerId: string) {
+            try {
+                const response = await api.GET('/api/v1/comment/count/{answer_id}', {
+                    params: {
+                        path: { answer_id: answerId }
+                    }
+                });
+
+                // Extract data from nested response structure
+                const data = response.data && typeof response.data === 'object' && 'data' in response.data
+                    ? (response.data as any).data
+                    : response.data;
+
+                return {
+                    data: data || 0,
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error fetching comment count:', error);
+                return {
+                    data: 0,
+                    error: error as any,
+                };
+            }
+        },
+
+        /**
+         * Update a comment
+         * Requires authentication and ownership
+         */
+        async update(commentId: string, commentData: { text: any }) {
+            try {
+                const response = await api.PUT('/api/v1/comment/{comment_id}', {
+                    params: {
+                        path: { comment_id: commentId }
+                    },
+                    body: commentData
+                });
+
+                // Extract data from nested response structure
+                const data = response.data && typeof response.data === 'object' && 'data' in response.data
+                    ? (response.data as any).data
+                    : response.data;
+
+                return {
+                    data: data || null,
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error updating comment:', error);
+                return {
+                    data: null,
+                    error: error as any,
+                };
+            }
+        },
+
+        /**
+         * Delete a comment
+         * Requires authentication and ownership or admin role
+         */
+        async delete(commentId: string) {
+            try {
+                const response = await api.DELETE('/api/v1/comment/{comment_id}', {
+                    params: {
+                        path: { comment_id: commentId }
+                    }
+                });
+
+                return {
+                    data: response.data,
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error deleting comment:', error);
+                return {
+                    data: null,
+                    error: error as any,
+                };
+            }
+        },
     },
 };
 

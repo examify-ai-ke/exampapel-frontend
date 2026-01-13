@@ -4,16 +4,63 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, MessageSquare, ThumbsUp, ThumbsDown, Clock } from 'lucide-react';
+import { ChevronDown, MessageSquare, ThumbsUp, ThumbsDown, Clock, CircleCheck } from 'lucide-react';
 import EditorRenderer from '@/components/ui/editor-renderer';
+import AnswerRenderer from '@/components/ui/answer-renderer';
+import Editor from '@/components/ui/editor';
 import { publicAPI } from '@/lib/api-public';
 import { useUIStore } from '@/stores/ui';
+import { useAuthStore } from '@/stores/auth';
 import { formatRelativeTime } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
+import type { OutputData } from '@editorjs/editorjs';
 
 interface QuestionCardProps {
   question: any;
   questionNumber: string | number;
 }
+
+// AnswerData type for AnswerRenderer component
+interface AnswerData {
+  id: string;
+  text: any; // Editor.js OutputData
+  is_accepted?: boolean;
+  is_verified?: boolean;
+  upvotes_count?: number;
+  downvotes_count?: number;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    profile_image?: string;
+  };
+  question_id?: string;
+  parent_answer_id?: string;
+  replies?: AnswerData[];
+  replies_count?: number;
+}
+
+// Utility function to map API answer format to AnswerRenderer format
+const mapAnswerData = (answer: any): AnswerData => {
+  return {
+    id: answer.id,
+    text: answer.text,
+    is_accepted: answer.is_accepted,
+    is_verified: answer.reviewed, // Map 'reviewed' to 'is_verified'
+    upvotes_count: answer.likes, // Map 'likes' to 'upvotes_count'
+    downvotes_count: answer.dislikes, // Map 'dislikes' to 'downvotes_count'
+    created_at: answer.created_at,
+    updated_at: answer.updated_at,
+    created_by: answer.created_by,
+    question_id: answer.question_id,
+    parent_answer_id: answer.parent_answer_id,
+    replies: answer.children?.map(mapAnswerData), // Recursively map 'children' to 'replies'
+    replies_count: answer.children?.length || 0, // Calculate replies_count from children array length
+  };
+};
 
 export function QuestionCard({ question, questionNumber }: QuestionCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -251,14 +298,35 @@ export function QuestionCard({ question, questionNumber }: QuestionCardProps) {
   );
 }
 
-// Answer Display Component with Like/Dislike and Replies
+// Answer Display Component with Interactive Like/Dislike
 function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
   const { addNotification } = useUIStore();
+  const { user, isAuthenticated } = useAuthStore();
   const [likes, setLikes] = useState(answer.likes || 0);
   const [dislikes, setDislikes] = useState(answer.dislikes || 0);
   const [showReplies, setShowReplies] = useState(false);
+  const [isAccepted, setIsAccepted] = useState(answer.is_accepted || false);
+  const [showCommentForm, setShowCommentForm] = useState(false);
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const [editorData, setEditorData] = useState<OutputData>({
+    time: Date.now(),
+    blocks: []
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  // Check if user is admin or manager
+  const canAcceptAnswer = user?.role === 'admin' || user?.role === 'manager';
 
   const handleLike = async () => {
+    if (!isAuthenticated) {
+      addNotification({
+        type: 'error',
+        title: 'Authentication Required',
+        message: 'Please log in to like answers.'
+      });
+      return;
+    }
+
     try {
       const response = await publicAPI.answers.toggleLike(answer.id);
       if (!response.error) {
@@ -283,6 +351,15 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
   };
 
   const handleDislike = async () => {
+    if (!isAuthenticated) {
+      addNotification({
+        type: 'error',
+        title: 'Authentication Required',
+        message: 'Please log in to dislike answers.'
+      });
+      return;
+    }
+
     try {
       const response = await publicAPI.answers.toggleDislike(answer.id);
       if (!response.error) {
@@ -306,103 +383,476 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
     }
   };
 
+  const handleAcceptAnswer = async () => {
+    if (!canAcceptAnswer) {
+      addNotification({
+        type: 'error',
+        title: 'Permission Denied',
+        message: 'Only administrators and managers can mark answers as verified.'
+      });
+      return;
+    }
+
+    try {
+      // Use the review endpoint to mark answer as verified (accepted)
+      const response = await publicAPI.answers.markAsReviewed(answer.id, !answer.reviewed);
+      
+      if (response.error) {
+        throw new Error('Failed to mark answer');
+      }
+      
+      addNotification({
+        type: 'success',
+        title: 'Success',
+        message: answer.reviewed ? 'Answer unmarked as verified' : 'Answer marked as verified'
+      });
+      
+      // Refresh to show updated state
+      window.location.reload();
+    } catch (error) {
+      console.error('Error marking answer:', error);
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to update answer status'
+      });
+    }
+  };
+
+  const handleComment = () => {
+    if (!isAuthenticated) {
+      addNotification({
+        type: 'error',
+        title: 'Authentication Required',
+        message: 'Please log in to comment on answers.'
+      });
+      return;
+    }
+    // Close reply form if open
+    setShowReplyForm(false);
+    setShowCommentForm(!showCommentForm);
+    // Reset editor data
+    setEditorData({
+      time: Date.now(),
+      blocks: []
+    });
+  };
+
+  const handleReply = () => {
+    if (!isAuthenticated) {
+      addNotification({
+        type: 'error',
+        title: 'Authentication Required',
+        message: 'Please log in to reply to answers.'
+      });
+      return;
+    }
+    // Close comment form if open
+    setShowCommentForm(false);
+    setShowReplyForm(!showReplyForm);
+    // Reset editor data
+    setEditorData({
+      time: Date.now(),
+      blocks: []
+    });
+  };
+
+  const handleSubmitComment = async () => {
+    if (!editorData.blocks || editorData.blocks.length === 0) {
+      addNotification({
+        type: 'error',
+        title: 'Empty Comment',
+        message: 'Please enter a comment before submitting.'
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    
+    try {
+      const commentData = {
+        text: editorData,
+        answer_id: answer.id
+      };
+
+      const response = await publicAPI.comments.create(commentData);
+      
+      if (response.error) {
+        throw new Error('Failed to add comment');
+      }
+      
+      addNotification({
+        type: 'success',
+        title: 'Comment Added',
+        message: 'Your comment has been added successfully.'
+      });
+      
+      // Reset and hide form
+      setEditorData({
+        time: Date.now(),
+        blocks: []
+      });
+      setShowCommentForm(false);
+      setShowReplies(true);
+      
+      // Refresh the page to show the new comment
+      window.location.reload();
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to add comment. Please try again.'
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmitReply = async () => {
+    if (!editorData.blocks || editorData.blocks.length === 0) {
+      addNotification({
+        type: 'error',
+        title: 'Empty Reply',
+        message: 'Please enter a reply before submitting.'
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    
+    try {
+      const replyData = {
+        text: editorData,
+        question_id: answer.question_id
+      };
+
+      const response = await publicAPI.answers.addReply(answer.id, replyData);
+      
+      if (response.error) {
+        throw new Error('Failed to add reply');
+      }
+      
+      addNotification({
+        type: 'success',
+        title: 'Reply Added',
+        message: 'Your reply has been added successfully.'
+      });
+      
+      // Reset and hide form
+      setEditorData({
+        time: Date.now(),
+        blocks: []
+      });
+      setShowReplyForm(false);
+      setShowReplies(true);
+      
+      // Refresh the page to show the new reply
+      window.location.reload();
+    } catch (error) {
+      console.error('Error adding reply:', error);
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to add reply. Please try again.'
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const hasReplies = answer.children && answer.children.length > 0;
+  
+  // Get author display name (prefer last name)
+  const getAuthorName = () => {
+    if (!answer.created_by) return 'Anonymous';
+    const { last_name, first_name, name } = answer.created_by;
+    return last_name || first_name || name || 'Anonymous';
+  };
+
+  // Get avatar URL or default
+  const getAvatarUrl = () => {
+    return answer.created_by?.profile_image || '/default-avatar-profile-picture-male-icon.svg';
+  };
+
+  // Format time like "about 2 hours ago"
+  const getTimeAgo = (dateString?: string) => {
+    if (!dateString) return '';
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    } catch {
+      return '';
+    }
+  };
 
   return (
-    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-      {/* Answer Header */}
-      <div className="flex items-center gap-2 mb-3">
-        <Badge className="text-xs bg-green-600">Answer {index + 1}</Badge>
-        {answer.reviewed && (
-          <Badge variant="outline" className="text-xs border-green-600 text-green-700">
-            Reviewed
-          </Badge>
-        )}
-      </div>
-
-      {/* Answer Content */}
-      <div className="prose prose-sm max-w-none text-gray-800">
-        {answer.text && <EditorRenderer data={answer.text} />}
-      </div>
-
-      {/* Answer Metadata with Like/Dislike */}
-      <div className="mt-3 flex items-center justify-between text-xs text-gray-600">
-        <div className="flex items-center gap-2">
-          <span>
-            By: {answer.created_by?.first_name || answer.created_by?.last_name
-              ? `${answer.created_by.first_name || ''} ${answer.created_by.last_name || ''}`.trim()
-              : answer.created_by?.name || 'Anonymous'}
-          </span>
-          <Clock className="h-3 w-3" />
-          <span>{formatRelativeTime(answer.created_at)}</span>
+    <div className="border-l-2 border-green-200 bg-green-50/50 rounded-r overflow-hidden mb-3">
+      <div className="px-4 pt-3 pb-2">
+        {/* Answer Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <CircleCheck className={`h-5 w-5 flex-shrink-0 ${isAccepted ? 'text-green-600 fill-green-100' : 'text-gray-400'}`} />
+            <span className="text-sm font-medium text-gray-700">Answer {index + 1}</span>
+            {answer.reviewed && (
+              <Badge variant="outline" className="text-xs border-green-600 text-green-700">
+                ✓ Verified
+              </Badge>
+            )}
+            {isAccepted && (
+              <Badge className="text-xs bg-green-600">
+                ✓ Accepted
+              </Badge>
+            )}
+          </div>
+          
+          {/* Accept Answer Button - Only for Admins/Managers */}
+          {canAcceptAnswer && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleAcceptAnswer}
+              className={`h-7 px-2 text-xs ${isAccepted ? 'text-green-700 bg-green-100' : 'hover:bg-gray-100'}`}
+              title={isAccepted ? 'Unmark as accepted' : 'Mark as accepted answer'}
+            >
+              <CircleCheck className="h-4 w-4" />
+            </Button>
+          )}
         </div>
 
-        {/* Like/Dislike Buttons */}
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLike}
-            className="h-6 px-2 text-xs hover:bg-green-100"
-          >
-            <ThumbsUp className="h-3 w-3 mr-1" />
-            {likes}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDislike}
-            className="h-6 px-2 text-xs hover:bg-red-100"
-          >
-            <ThumbsDown className="h-3 w-3 mr-1" />
-            {dislikes}
-          </Button>
+        {/* Answer Content with CircleCheck icon */}
+        <div className="flex items-start gap-2 mb-3">
+          <CircleCheck className={`h-4 w-4 mt-0.5 flex-shrink-0 ${isAccepted ? 'text-green-600' : 'text-gray-400'}`} />
+          <div className="prose prose-sm max-w-none text-gray-800 flex-1">
+            {answer.text && <EditorRenderer data={answer.text} />}
+          </div>
+        </div>
+
+        {/* Separator */}
+        <div className="border-t border-green-200 my-2"></div>
+
+        {/* Answer Footer with Author, Timestamp, and Actions */}
+        <div className="flex items-center justify-between text-xs text-gray-600">
+          <div className="flex items-center gap-3">
+            {/* Author Info with Avatar */}
+            <div className="flex items-center gap-2">
+              <img
+                src={getAvatarUrl()}
+                alt={getAuthorName()}
+                className="w-6 h-6 rounded-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/default-avatar-profile-picture-male-icon.svg';
+                }}
+              />
+              <span className="font-medium">{getAuthorName()}</span>
+            </div>
+            
+            {/* Timestamp */}
+            {answer.created_at && (
+              <>
+                <span className="text-gray-400">•</span>
+                <span>{getTimeAgo(answer.created_at)}</span>
+              </>
+            )}
+            
+            {/* Edited Indicator */}
+            {answer.updated_at && answer.updated_at !== answer.created_at && (
+              <>
+                <span className="text-gray-400">•</span>
+                <span className="text-gray-500 italic">(edited {getTimeAgo(answer.updated_at)})</span>
+              </>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3">
+            {/* Like Button */}
+            <button
+              onClick={handleLike}
+              className="flex items-center gap-1 hover:text-green-600 transition-colors"
+              title="Like this answer"
+            >
+              <ThumbsUp className="h-3.5 w-3.5" />
+              <span>{likes}</span>
+            </button>
+            
+            {/* Dislike Button */}
+            <button
+              onClick={handleDislike}
+              className="flex items-center gap-1 hover:text-red-600 transition-colors"
+              title="Dislike this answer"
+            >
+              <ThumbsDown className="h-3.5 w-3.5" />
+              <span>{dislikes}</span>
+            </button>
+
+            {/* Comment Button */}
+            <button
+              onClick={handleComment}
+              className={`flex items-center gap-1 transition-colors ${showCommentForm ? 'text-blue-600' : 'hover:text-blue-600'}`}
+              title="Comment on this answer"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span>Comment</span>
+            </button>
+
+            {/* Reply Button */}
+            <button
+              onClick={handleReply}
+              className={`flex items-center gap-1 transition-colors ${showReplyForm ? 'text-purple-600' : 'hover:text-purple-600'}`}
+              title="Reply to this answer"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span>Reply ({hasReplies ? answer.children.length : 0})</span>
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Comment Form */}
+      {showCommentForm && (
+        <div className="px-4 pb-3 border-t border-blue-200 bg-blue-50/30">
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center gap-2 mb-2">
+              <MessageSquare className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-900">Add a Comment</span>
+              <span className="text-xs text-blue-600">(Comments are for discussion and questions)</span>
+            </div>
+            <div className="border border-blue-200 rounded-md bg-white">
+              <Editor
+                data={editorData}
+                onChange={setEditorData}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditorData({
+                    time: Date.now(),
+                    blocks: []
+                  });
+                  setShowCommentForm(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSubmitComment}
+                disabled={submitting || !editorData.blocks || editorData.blocks.length === 0}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {submitting ? 'Posting...' : 'Post Comment'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reply Form */}
+      {showReplyForm && (
+        <div className="px-4 pb-3 border-t border-purple-200 bg-purple-50/30">
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center gap-2 mb-2">
+              <MessageSquare className="h-4 w-4 text-purple-600" />
+              <span className="text-sm font-medium text-purple-900">Add a Reply</span>
+              <span className="text-xs text-purple-600">(Replies are direct responses to this answer)</span>
+            </div>
+            <div className="border border-purple-200 rounded-md bg-white">
+              <Editor
+                data={editorData}
+                onChange={setEditorData}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditorData({
+                    time: Date.now(),
+                    blocks: []
+                  });
+                  setShowReplyForm(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSubmitReply}
+                disabled={submitting || !editorData.blocks || editorData.blocks.length === 0}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                {submitting ? 'Posting...' : 'Post Reply'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Replies Section */}
-      {hasReplies && (
-        <div className="mt-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowReplies(!showReplies)}
-            className="text-xs text-blue-600 hover:text-blue-800"
-          >
-            <MessageSquare className="h-3 w-3 mr-1" />
-            {showReplies ? 'Hide' : 'Show'} Replies ({answer.children.length})
-          </Button>
-
-          {showReplies && (
-            <div className="mt-3 ml-4 space-y-2">
-              {answer.children.map((reply: any, replyIndex: number) => (
-                <div
-                  key={reply.id || replyIndex}
-                  className="bg-white border border-gray-200 rounded-lg p-3"
-                >
-                  <Badge variant="outline" className="text-xs mb-2">Reply {replyIndex + 1}</Badge>
-                  <div className="prose prose-sm max-w-none text-gray-800">
-                    {reply.text && <EditorRenderer data={reply.text} />}
+      {hasReplies && showReplies && (
+        <div className="px-4 pb-3 border-t border-green-200 bg-white/50">
+          <div className="mt-3 space-y-3">
+            {answer.children.map((reply: any, replyIndex: number) => (
+              <div
+                key={reply.id || replyIndex}
+                className="py-3 border-b border-gray-100 last:border-b-0"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <CircleCheck className="h-4 w-4 text-gray-400" />
+                  <span className="text-xs font-medium text-gray-600">Reply {replyIndex + 1}</span>
+                  {reply.reviewed && (
+                    <Badge variant="outline" className="text-xs border-green-600 text-green-700">
+                      ✓ Verified
+                    </Badge>
+                  )}
+                </div>
+                
+                <div className="prose prose-sm max-w-none text-gray-800 mb-2 ml-6">
+                  {reply.text && <EditorRenderer data={reply.text} />}
+                </div>
+                
+                <div className="flex items-center justify-between text-xs text-gray-500 ml-6">
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={reply.created_by?.profile_image || '/default-avatar-profile-picture-male-icon.svg'}
+                      alt={reply.created_by?.last_name || reply.created_by?.first_name || 'Anonymous'}
+                      className="w-5 h-5 rounded-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/default-avatar-profile-picture-male-icon.svg';
+                      }}
+                    />
+                    <span>
+                      {reply.created_by?.last_name || reply.created_by?.first_name || reply.created_by?.name || 'Anonymous'}
+                    </span>
+                    {reply.created_at && (
+                      <>
+                        <span className="text-gray-400">•</span>
+                        <span>{getTimeAgo(reply.created_at)}</span>
+                      </>
+                    )}
                   </div>
-                  <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <span>
-                        By: {reply.created_by?.first_name || reply.created_by?.last_name
-                          ? `${reply.created_by.first_name || ''} ${reply.created_by.last_name || ''}`.trim()
-                          : reply.created_by?.name || 'Anonymous'}
-                      </span>
-                      <Clock className="h-3 w-3" />
-                      <span>{formatRelativeTime(reply.created_at)}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span>👍 {reply.likes || 0}</span>
-                      <span>👎 {reply.dislikes || 0}</span>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1">
+                      <ThumbsUp className="h-3 w-3" />
+                      {reply.likes || 0}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <ThumbsDown className="h-3 w-3" />
+                      {reply.dislikes || 0}
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
