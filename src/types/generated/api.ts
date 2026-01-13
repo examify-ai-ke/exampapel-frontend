@@ -6365,22 +6365,6 @@ export interface components {
             /** Data */
             data?: components["schemas"]["CampusRead"][] | null;
         };
-        /** IGetResponsePaginated */
-        IGetResponsePaginated: {
-            /**
-             * Message
-             * @default Item retreived successfully
-             */
-            message: string | null;
-            /**
-             * Meta
-             * @default {}
-             */
-            meta: {
-                [key: string]: unknown;
-            };
-            data: components["schemas"]["PageBase"];
-        };
         /** IGetResponsePaginated[AnswerRead] */
         IGetResponsePaginated_AnswerRead_: {
             /**
@@ -6620,6 +6604,22 @@ export interface components {
                 [key: string]: unknown;
             };
             data: components["schemas"]["PageBase_IUserReadWithoutGroups_"];
+        };
+        /** IGetResponsePaginated[InstitutionReadSimple] */
+        IGetResponsePaginated_InstitutionReadSimple_: {
+            /**
+             * Message
+             * @default Item retreived successfully
+             */
+            message: string | null;
+            /**
+             * Meta
+             * @default {}
+             */
+            meta: {
+                [key: string]: unknown;
+            };
+            data: components["schemas"]["PageBase_InstitutionReadSimple_"];
         };
         /** IGetResponsePaginated[InstitutionRead] */
         IGetResponsePaginated_InstitutionRead_: {
@@ -8029,6 +8029,60 @@ export interface components {
             slug?: string | null;
         };
         /**
+         * InstitutionReadSimple
+         * @description Simplified schema for list/search endpoints without nested relationships
+         */
+        InstitutionReadSimple: {
+            /** Name */
+            name: string;
+            /**
+             * Description
+             * @default An Institution of choice
+             */
+            description: string | null;
+            category: components["schemas"]["InstitutionCategory"];
+            /** Key */
+            key?: string | null;
+            /** Location */
+            location?: string | null;
+            /** Kuccps Institution Url */
+            kuccps_institution_url?: string | null;
+            institution_type?: components["schemas"]["InstitutionType"] | null;
+            /** Full Profile */
+            full_profile?: string | null;
+            /** Parent Ministry */
+            parent_ministry?: string | null;
+            /**
+             * Tags
+             * @default []
+             */
+            tags: string[] | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Slug */
+            slug?: string | null;
+            /**
+             * Exams Count
+             * @default 0
+             */
+            exams_count: number | null;
+            /**
+             * Campuses Count
+             * @default 0
+             */
+            campuses_count: number | null;
+            /**
+             * Faculties Count
+             * @default 0
+             */
+            faculties_count: number | null;
+            logo?: components["schemas"]["IImageMediaRead"] | null;
+            address?: components["schemas"]["AddressRead"] | null;
+        };
+        /**
          * InstitutionType
          * @enum {string}
          */
@@ -8347,29 +8401,6 @@ export interface components {
          * @enum {string}
          */
         NumberingStyleEnum: "roman" | "alphabetic" | "numeric";
-        /** PageBase */
-        PageBase: {
-            /** Items */
-            items: unknown[];
-            /** Total */
-            total?: number | null;
-            /** Page */
-            page: number | null;
-            /** Size */
-            size: number | null;
-            /** Pages */
-            pages?: number | null;
-            /**
-             * Previous Page
-             * @description Page number of the previous page
-             */
-            previous_page?: number | null;
-            /**
-             * Next Page
-             * @description Page number of the next page
-             */
-            next_page?: number | null;
-        };
         /** PageBase[AnswerRead] */
         PageBase_AnswerRead_: {
             /** Items */
@@ -8696,6 +8727,29 @@ export interface components {
         PageBase_IUserReadWithoutGroups_: {
             /** Items */
             items: components["schemas"]["IUserReadWithoutGroups"][];
+            /** Total */
+            total?: number | null;
+            /** Page */
+            page: number | null;
+            /** Size */
+            size: number | null;
+            /** Pages */
+            pages?: number | null;
+            /**
+             * Previous Page
+             * @description Page number of the previous page
+             */
+            previous_page?: number | null;
+            /**
+             * Next Page
+             * @description Page number of the next page
+             */
+            next_page?: number | null;
+        };
+        /** PageBase[InstitutionReadSimple] */
+        PageBase_InstitutionReadSimple_: {
+            /** Items */
+            items: components["schemas"]["InstitutionReadSimple"][];
             /** Total */
             total?: number | null;
             /** Page */
@@ -11521,7 +11575,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IGetResponsePaginated"];
+                    "application/json": components["schemas"]["IGetResponsePaginated_InstitutionReadSimple_"];
                 };
             };
             /** @description Validation Error */

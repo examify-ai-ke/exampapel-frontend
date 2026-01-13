@@ -8,18 +8,41 @@
 
 'use client';
 
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { AlertCircle, CheckCircle2, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import EditorJsRenderer from '@/components/ui/editor-js-renderer';
 import { QuestionActions } from './QuestionActions';
 import { AnswerList } from './AnswerList';
+import { AnswerForm } from '@/components/forms/answer-form';
+import { useUIStore } from '@/stores/ui';
 import type { SubQuestionCardProps } from './types';
 
 export function SubQuestionCard({
   question,
   onEdit,
   onDelete,
+  onAnswersChange,
 }: SubQuestionCardProps) {
+  // State for answer form visibility
+  const [showAnswerForm, setShowAnswerForm] = useState(false);
+  
+  const { addNotification } = useUIStore();
+  
+  const handleAddAnswer = () => {
+    if (!question?.id) {
+      console.error('Cannot add answer: question ID is missing');
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Cannot add answer: question data is invalid'
+      });
+      return;
+    }
+    setShowAnswerForm(true);
+  };
+  
   const hasAnswers = question.answers && question.answers.length > 0;
   const answersCount = question.answers?.length ?? 0;
 
@@ -84,7 +107,36 @@ export function SubQuestionCard({
       </div>
 
       {/* Answers */}
-      <AnswerList answers={question.answers} />
+      <div className="space-y-3">
+        <AnswerList answers={question.answers} />
+        
+        {/* Add Answer Button */}
+        {!showAnswerForm && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleAddAnswer}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Answer
+          </Button>
+        )}
+        
+        {/* Answer Form */}
+        {showAnswerForm && (
+          <div className="border rounded-lg p-4 bg-gray-50">
+            <AnswerForm
+              questionId={question.id}
+              onSuccess={() => {
+                setShowAnswerForm(false);
+                onAnswersChange?.();
+              }}
+              onCancel={() => setShowAnswerForm(false)}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
