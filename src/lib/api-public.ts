@@ -1669,6 +1669,52 @@ export const publicAPI = {
                     error: error as any,
                 };
             }
+        },
+
+        /**
+         * Toggle like on a comment
+         */
+        async toggleLike(commentId: string) {
+            try {
+                const response = await api.POST('/api/v1/comment/{comment_id}/like', {
+                    params: {
+                        path: { comment_id: commentId }
+                    }
+                });
+                return {
+                    data: response.data,
+                    error: response.error
+                };
+            } catch (error) {
+                console.error('Error toggling like:', error);
+                return {
+                    data: null,
+                    error: error as any
+                };
+            }
+        },
+
+        /**
+         * Toggle dislike on a comment
+         */
+        async toggleDislike(commentId: string) {
+            try {
+                const response = await api.POST('/api/v1/comment/{comment_id}/dislike', {
+                    params: {
+                        path: { comment_id: commentId }
+                    }
+                });
+                return {
+                    data: response.data,
+                    error: response.error
+                };
+            } catch (error) {
+                console.error('Error toggling dislike:', error);
+                return {
+                    data: null,
+                    error: error as any
+                };
+            }
         }
     },
 };

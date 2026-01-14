@@ -413,6 +413,7 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
   const [likes, setLikes] = useState(answer.likes || 0);
   const [dislikes, setDislikes] = useState(answer.dislikes || 0);
   const [isAccepted, setIsAccepted] = useState(answer.is_accepted || false);
+  const [isVerified, setIsVerified] = useState(answer.reviewed || answer.is_verified || false);
   const [showComments, setShowComments] = useState(false);
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [commentEditorData, setCommentEditorData] = useState<OutputData>({
@@ -432,7 +433,7 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
   }, [commentEditorData]);
 
   // Check if user is admin or manager
-  const canAcceptAnswer = user?.role?.name === 'admin' || user?.role?.name === 'manager';
+  const canAcceptAnswer = user?.role?.name === 'Admin' || user?.role?.name === 'Manager' || user?.is_superuser;
 
   // Fetch comment count on mount (always)
   React.useEffect(() => {
@@ -455,9 +456,6 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
   React.useEffect(() => {
     if (!showComments) return; // Don't fetch if not showing
     
-    // If we already have comments and count hasn't changed, maybe don't refetch?
-    // But for now, let's just fetch to be safe and show loading.
-    
     const fetchComments = async () => {
       setIsLoadingComments(true);
       try {
@@ -468,8 +466,6 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
           let allComments = [...commentsResponse.data];
           
           // Fetch replies for each root comment
-          // Note: This is a simple 1-level fetch. For deep nesting, we might need a recursive approach 
-          // or a "load more replies" feature.
           const fetchRepliesPromises = commentsResponse.data.map(async (rootComment: any) => {
              const repliesResponse = await publicAPI.comments.getReplies(rootComment.id, { limit: 100 });
              if (!repliesResponse.error && Array.isArray(repliesResponse.data)) {
@@ -592,20 +588,21 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
 
     try {
       // Use the review endpoint to mark answer as verified (accepted)
-      const response = await publicAPI.answers.markAsReviewed(answer.id, !answer.reviewed);
+      const response = await publicAPI.answers.markAsReviewed(answer.id, !isVerified);
       
       if (response.error) {
         throw new Error('Failed to mark answer');
       }
       
+      const newStatus = !isVerified;
+      setIsVerified(newStatus);
+
       addNotification({
         type: 'success',
         title: 'Success',
-        message: answer.reviewed ? 'Answer unmarked as verified' : 'Answer marked as verified'
+        message: newStatus ? 'Answer marked as verified' : 'Answer unmarked as verified'
       });
       
-      // Refresh to show updated state
-      window.location.reload();
     } catch (error) {
       console.error('Error marking answer:', error);
       addNotification({
@@ -854,7 +851,7 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
           <div className="flex items-center gap-2">
             <CircleCheck className={`h-5 w-5 flex-shrink-0 ${isAccepted ? 'text-green-600 fill-green-100' : 'text-gray-400'}`} />
             <span className="text-sm font-medium text-gray-700">Answer {index + 1}</span>
-            {answer.reviewed && (
+            {isVerified && (
               <Badge variant="outline" className="text-xs border-green-600 text-green-700">
                 ✓ Verified
               </Badge>
@@ -866,16 +863,16 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
             )}
           </div>
           
-          {/* Accept Answer Button - Only for Admins/Managers */}
-          {canAcceptAnswer && (
+          {/* Accept Answer Button - Only for Admins/Managers and only if NOT verified */}
+          {canAcceptAnswer && !isVerified && (
             <Button
               variant="ghost"
               size="sm"
               onClick={handleAcceptAnswer}
-              className={`h-7 px-2 text-xs ${isAccepted ? 'text-green-700 bg-green-100' : 'hover:bg-gray-100'}`}
-              title={isAccepted ? 'Unmark as accepted' : 'Mark as accepted answer'}
+              className={`h-7 px-2 text-xs hover:bg-gray-100`}
+              title="Mark as verified"
             >
-              <CircleCheck className="h-4 w-4" />
+              <CircleCheck className="h-4 w-4 text-gray-400 hover:text-green-600 transition-colors" />
             </Button>
           )}
         </div>
@@ -1093,6 +1090,10 @@ function CommentItem({
     return last_name || first_name || name || 'Anonymous';
   };
 
+  const { addNotification } = useUIStore();
+  const [likes, setLikes] = useState(comment.likes || 0);
+  const [dislikes, setDislikes] = useState(comment.dislikes || 0);
+
   // Format time like "about 2 hours ago"
   const getTimeAgo = (dateString?: string) => {
     if (!dateString) return '';
@@ -1115,6 +1116,62 @@ function CommentItem({
           onEdit(comment, editData);
           setIsEditing(false);
       }
+  };
+
+  const handleLike = async () => {
+    if (!user) {
+        addNotification({
+            type: 'error',
+            title: 'Authentication Required',
+            message: 'Please log in to like comments.'
+        });
+        return;
+    }
+
+    try {
+        const response = await publicAPI.comments.toggleLike(comment.id);
+        if (!response.error) {
+            // Update local state from response
+            const data = response.data && typeof response.data === 'object' && 'data' in response.data
+            ? (response.data as any).data
+            : response.data;
+            
+            if (data) {
+                setLikes(data.likes || 0);
+                setDislikes(data.dislikes || 0);
+            }
+        }
+    } catch (error) {
+        console.error('Error liking comment:', error);
+    }
+  };
+
+  const handleDislike = async () => {
+    if (!user) {
+        addNotification({
+            type: 'error',
+            title: 'Authentication Required',
+            message: 'Please log in to dislike comments.'
+        });
+        return;
+    }
+
+    try {
+        const response = await publicAPI.comments.toggleDislike(comment.id);
+        if (!response.error) {
+             // Update local state from response
+            const data = response.data && typeof response.data === 'object' && 'data' in response.data
+            ? (response.data as any).data
+            : response.data;
+            
+            if (data) {
+                setLikes(data.likes || 0);
+                setDislikes(data.dislikes || 0);
+            }
+        }
+    } catch (error) {
+        console.error('Error disliking comment:', error);
+    }
   };
 
   return (
@@ -1155,9 +1212,29 @@ function CommentItem({
         )}
       </div>
       
-      {/* Actions: Reply, Edit, Delete */}
+      {/* Actions: Like, Dislike, Reply, Edit, Delete */}
       {!isReplying && !isEditing && (
         <div className="flex items-center justify-start text-xs text-gray-500 ml-6 mb-2 gap-4">
+           {/* Like Button */}
+            <button
+              onClick={handleLike}
+              className="flex items-center gap-1 hover:text-green-600 transition-colors"
+              title="Like"
+            >
+              <ThumbsUp className="h-3 w-3" />
+              <span>{likes}</span>
+            </button>
+            
+            {/* Dislike Button */}
+            <button
+              onClick={handleDislike}
+              className="flex items-center gap-1 hover:text-red-600 transition-colors"
+              title="Dislike"
+            >
+              <ThumbsDown className="h-3 w-3" />
+              <span>{dislikes}</span>
+            </button>
+
           <button 
             onClick={() => onReply(comment.id)}
             className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
