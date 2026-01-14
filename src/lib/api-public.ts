@@ -1563,13 +1563,13 @@ export const publicAPI = {
          * Update a comment
          * Requires authentication and ownership
          */
-        async update(commentId: string, commentData: { text: any }) {
+        async update(commentId: string, text: any) {
             try {
                 const response = await api.PUT('/api/v1/comment/{comment_id}', {
                     params: {
                         path: { comment_id: commentId }
                     },
-                    body: commentData
+                    body: { text }
                 });
 
                 // Extract data from nested response structure
@@ -1588,6 +1588,37 @@ export const publicAPI = {
                     error: error as any,
                 };
             }
+        },
+
+        /**
+         * Update a reply
+         * Requires authentication and ownership
+         */
+        async updateReply(replyId: string, text: any) {
+             try {
+                const response = await api.PUT('/api/v1/comment/reply/{reply_id}', {
+                    params: {
+                        path: { reply_id: replyId }
+                    },
+                    body: { text }
+                });
+
+                // Extract data from nested response structure
+                const data = response.data && typeof response.data === 'object' && 'data' in response.data
+                    ? (response.data as any).data
+                    : response.data;
+
+                return {
+                     data: data || null,
+                     error: response.error,
+                };
+             } catch (error) {
+                 console.error('Error updating reply:', error);
+                 return {
+                     data: null,
+                     error: error as any,
+                 };
+             }
         },
 
         /**
@@ -1614,6 +1645,31 @@ export const publicAPI = {
                 };
             }
         },
+
+        /**
+         * Delete a reply
+         * Requires authentication and ownership
+         */
+        async deleteReply(replyId: string) {
+            try {
+                const response = await api.DELETE('/api/v1/comment/reply/{reply_id}', {
+                     params: {
+                         path: { reply_id: replyId }
+                     }
+                });
+
+                return {
+                    data: response.data,
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error deleting reply:', error);
+                return {
+                    data: null,
+                    error: error as any,
+                };
+            }
+        }
     },
 };
 

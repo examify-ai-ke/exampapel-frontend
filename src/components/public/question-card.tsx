@@ -5,12 +5,13 @@ import dynamic from 'next/dynamic';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, MessageSquare, ThumbsUp, ThumbsDown, Clock, CircleCheck, Loader2, Reply } from 'lucide-react';
+import { ChevronDown, MessageSquare, ThumbsUp, ThumbsDown, Clock, CircleCheck, Loader2, Reply, Edit, Trash2 } from 'lucide-react';
 import EditorRenderer from '@/components/ui/editor-renderer';
 import AnswerRenderer from '@/components/ui/answer-renderer';
 import { publicAPI } from '@/lib/api-public';
 import { useUIStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/auth';
+import { useAuth } from '@/hooks/useAuth';
 import { formatRelativeTime } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import type { OutputData } from '@editorjs/editorjs';
@@ -665,6 +666,89 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
     setShowComments(!showComments);
   };
 
+  const handleEditComment = async (comment: any, newText: OutputData) => {
+      try {
+          let response;
+          if (comment.parent_id) {
+              response = await publicAPI.comments.updateReply(comment.id, newText);
+          } else {
+              response = await publicAPI.comments.update(comment.id, newText);
+          }
+
+          if (response.error) {
+              throw new Error('Failed to update comment');
+          }
+
+          addNotification({
+              type: 'success',
+              title: 'Success',
+              message: 'Comment updated successfully'
+          });
+
+          // Update local state
+          setComments(prev => prev.map(c => 
+              c.id === comment.id ? { ...c, text: newText, updated_at: new Date().toISOString() } : c
+          ));
+
+      } catch (error) {
+          console.error('Error updating comment:', error);
+          addNotification({
+              type: 'error',
+              title: 'Error',
+              message: 'Failed to update comment'
+          });
+      }
+  };
+
+  const handleDeleteComment = async (comment: any) => {
+      if (!confirm('Are you sure you want to delete this comment?')) return;
+
+      try {
+          let response;
+          if (comment.parent_id) {
+              response = await publicAPI.comments.deleteReply(comment.id);
+          } else {
+              response = await publicAPI.comments.delete(comment.id);
+          }
+
+          if (response.error) {
+              throw new Error('Failed to delete comment');
+          }
+
+          addNotification({
+              type: 'success',
+              title: 'Success',
+              message: 'Comment deleted successfully'
+          });
+
+          // Update local state - remove the comment and any children
+          // For a robust removal, we should remove any comment whose ID matches or whose ancestor path includes it.
+          // Since we have a flat list and parent_id, we can remove the item and any item that points to it as parent.
+          // But wait, recursively removing children from a flat list requires multiple passes or a recursive check.
+          // For now, let's remove the item itself. The UI tree builder will handle orphans if any (or we assume backend cleans up).
+          // Actually, if we delete a parent, the backend usually cascades delete or sets parent null.
+          // Let's assume cascade delete on backend, so we should filter out children locally too for immediate UI sync.
+          
+          const idsToRemove = new Set([comment.id]);
+          
+          // Simple local cascade for depth 1 children immediately visible
+          comments.forEach(c => {
+              if (c.parent_id === comment.id) idsToRemove.add(c.id);
+          });
+          
+          setComments(prev => prev.filter(c => !idsToRemove.has(c.id)));
+          setCommentCount(prev => Math.max(0, prev - 1)); // Decrement count (approximate if children deleted)
+
+      } catch (error) {
+          console.error('Error deleting comment:', error);
+          addNotification({
+              type: 'error',
+              title: 'Error',
+              message: 'Failed to delete comment'
+          });
+      }
+  };
+
   const handleSubmitComment = async () => {
     if (!commentEditorData.blocks || commentEditorData.blocks.length === 0) {
       addNotification({
@@ -924,6 +1008,8 @@ function AnswerDisplay({ answer, index }: { answer: any; index: number }) {
                   onReply={handleReply}
                   activeReplyId={replyToId}
                   onCancelReply={handleCancelReply}
+                  onEdit={handleEditComment}
+                  onDelete={handleDeleteComment}
                   commentFormProps={{
                     editorData: commentEditorData,
                     onEditorChange: setCommentEditorData,
@@ -952,6 +1038,8 @@ function CommentItem({
   depth = 0,
   activeReplyId,
   onCancelReply,
+  onDelete,
+  onEdit,
   commentFormProps
 }: { 
   comment: any; 
@@ -959,14 +1047,45 @@ function CommentItem({
   depth?: number;
   activeReplyId: string | null;
   onCancelReply: () => void;
+  onDelete?: (comment: any) => void;
+  onEdit?: (comment: any, newText: any) => void;
   commentFormProps: {
-    editorData: OutputData;
-    onEditorChange: (data: OutputData) => void;
+    editorData: any;
+    onEditorChange: (data: any) => void;
     onSubmit: () => void;
     isSubmitting: boolean;
     componentKey: string | number;
   }
 }) {
+  const { user } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState(comment.text);
+  
+  // Calculate permissions
+  const canEditOrDelete = React.useMemo(() => {
+    if (!user) return false;
+    
+    // 1. Admins and Managers are always exempt
+    const isExempt = user.is_superuser || 
+                    user.role?.name === 'Admin' || 
+                    user.role?.name === 'Manager';
+    
+    if (isExempt) return true;
+    
+    // 2. Must be owner
+    const isOwner = user.id === comment.created_by?.id;
+    if (!isOwner) return false;
+    
+    // 3. Time limit check (6 hours)
+    if (!comment.created_at) return true; // Fallback if no date
+    
+    const createdTime = new Date(comment.created_at).getTime();
+    const sixHoursMs = 6 * 60 * 60 * 1000;
+    const timeElapsed = Date.now() - createdTime;
+    
+    return timeElapsed <= sixHoursMs;
+  }, [user, comment]);
+
   // Get author display name (prefer last name)
   const getAuthorName = (user: any) => {
     if (!user) return 'Anonymous';
@@ -991,6 +1110,13 @@ function CommentItem({
 
   const isReplying = activeReplyId === comment.id;
 
+  const handleEditSubmit = () => {
+      if (onEdit) {
+          onEdit(comment, editData);
+          setIsEditing(false);
+      }
+  };
+
   return (
     <div className={`
       ${depth > 0 ? 'ml-6 border-l-2 border-blue-100 pl-3 mt-2' : 'py-3 border-b border-blue-100 last:border-b-0'}
@@ -1013,12 +1139,25 @@ function CommentItem({
       </div>
       
       <div className="prose prose-sm max-w-none text-gray-800 mb-2 ml-6">
-        {comment.text && <EditorRenderer data={comment.text} />}
+        {isEditing ? (
+             <CommentForm 
+              editorData={editData}
+              onEditorChange={setEditData}
+              onCancel={() => setIsEditing(false)}
+              onSubmit={handleEditSubmit}
+              isSubmitting={commentFormProps.isSubmitting} // Share creating submitting state or local? Local is better but prop is easier.
+              title="Edit comment"
+              submitLabel="Save Changes"
+              componentKey={`edit-${comment.id}`}
+           />
+        ) : (
+             comment.text && <EditorRenderer data={comment.text} />
+        )}
       </div>
       
-      {/* Reply Button */}
-      {!isReplying && (
-        <div className="flex items-center justify-start text-xs text-gray-500 ml-6 mb-2">
+      {/* Actions: Reply, Edit, Delete */}
+      {!isReplying && !isEditing && (
+        <div className="flex items-center justify-start text-xs text-gray-500 ml-6 mb-2 gap-4">
           <button 
             onClick={() => onReply(comment.id)}
             className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
@@ -1026,6 +1165,25 @@ function CommentItem({
             <Reply className="h-3 w-3" />
             Reply
           </button>
+
+          {canEditOrDelete && (
+              <>
+                 <button 
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    <Edit className="h-3 w-3" />
+                    Edit
+                  </button>
+                  <button 
+                    onClick={() => onDelete && onDelete(comment)}
+                    className="flex items-center gap-1 text-red-500 hover:text-red-700 transition-colors"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Delete
+                  </button>
+              </>
+          )}
         </div>
       )}
 
@@ -1056,6 +1214,8 @@ function CommentItem({
                depth={depth + 1}
                activeReplyId={activeReplyId}
                onCancelReply={onCancelReply}
+               onEdit={onEdit}
+               onDelete={onDelete}
                commentFormProps={commentFormProps}
              />
           ))}
