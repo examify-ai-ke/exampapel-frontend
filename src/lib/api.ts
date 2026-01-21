@@ -22,10 +22,18 @@ export const api = createClient<paths>({
 // Request interceptor to add auth token
 api.use({
   onRequest({ request }) {
+    // Don't add auth token to login/register/password-reset endpoints
+    const url = request.url;
+    const isAuthEndpoint = url.includes('/login') || 
+                          url.includes('/register') || 
+                          url.includes('/password-reset') ||
+                          url.includes('/user') && request.method === 'POST' && !url.includes('/user/');
+
     // Get token from localStorage or cookies
     const token = getAuthToken();
 
-    if (token) {
+    // Only add Authorization header if we have a token AND it's not an auth endpoint
+    if (token && !isAuthEndpoint) {
       request.headers.set('Authorization', `Bearer ${token}`);
     }
 

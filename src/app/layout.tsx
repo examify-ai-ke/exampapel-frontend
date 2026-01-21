@@ -5,6 +5,7 @@ import { Notifications } from "@/components/ui/notifications";
 import { APP_CONFIG } from "@/lib/constants";
 import { QueryProvider } from "@/lib/query-provider";
 import { PostHogProvider } from "@/providers/posthog-provider";
+import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -70,7 +71,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${gtSuper.variable} font-sans`} suppressHydrationWarning> 
+      <body className={`${inter.variable} ${gtSuper.variable} font-sans`} suppressHydrationWarning>
+        {/* Google Analytics */}
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <GoogleAnalytics measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        )}
+        
         <PostHogProvider>
           <QueryProvider>
             {children}

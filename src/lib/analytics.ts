@@ -1,183 +1,214 @@
-import { posthog } from './posthog';
-
 /**
- * Analytics utility functions for tracking user events
+ * Analytics Helper Functions
+ * 
+ * Centralized analytics tracking functions for consistent event tracking
+ * across the application. These functions wrap the Google Analytics
+ * trackEvent function with predefined event structures.
  */
 
+import { trackEvent, setUserProperties } from '@/components/analytics/google-analytics';
+
+/**
+ * User Authentication Events
+ */
 export const analytics = {
-  /**
-   * Identify a user with their properties
-   */
-  identify: (userId: string, properties?: Record<string, any>) => {
-    if (typeof window !== 'undefined' && posthog) {
-      posthog.identify(userId, properties);
-    }
-  },
-
-  /**
-   * Reset user identity (on logout)
-   */
-  reset: () => {
-    if (typeof window !== 'undefined' && posthog) {
-      posthog.reset();
-    }
-  },
-
-  /**
-   * Track a custom event
-   */
-  track: (eventName: string, properties?: Record<string, any>) => {
-    if (typeof window !== 'undefined' && posthog) {
-      posthog.capture(eventName, properties);
-    }
-  },
-
-  /**
-   * Set user properties
-   */
-  setUserProperties: (properties: Record<string, any>) => {
-    if (typeof window !== 'undefined' && posthog) {
-      posthog.people.set(properties);
-    }
-  },
-
-  /**
-   * Track page view (handled automatically by PostHogProvider)
-   */
-  pageView: (url?: string) => {
-    if (typeof window !== 'undefined' && posthog) {
-      posthog.capture('$pageview', {
-        $current_url: url || window.location.href,
+  // User Events
+  user: {
+    signUp: (method: string, role?: string) => {
+      trackEvent('sign_up', {
+        method,
+        user_role: role,
       });
-    }
+    },
+
+    login: (method: string) => {
+      trackEvent('login', {
+        method,
+      });
+    },
+
+    logout: () => {
+      trackEvent('logout');
+    },
+
+    updateProfile: () => {
+      trackEvent('profile_update');
+    },
+
+    changePassword: () => {
+      trackEvent('password_change');
+    },
+
+    setProperties: (userId: string, role: string, institution?: string) => {
+      setUserProperties({
+        user_id: userId,
+        user_role: role,
+        institution: institution || 'none',
+      });
+    },
+  },
+
+  // Content Events
+  content: {
+    viewExamPaper: (paperId: string, title: string, course?: string, institution?: string) => {
+      trackEvent('view_item', {
+        item_id: paperId,
+        item_name: title,
+        item_category: course || 'uncategorized',
+        institution: institution || 'unknown',
+        content_type: 'exam_paper',
+      });
+    },
+
+    viewQuestion: (questionId: string, examPaperId?: string) => {
+      trackEvent('view_item', {
+        item_id: questionId,
+        exam_paper_id: examPaperId,
+        content_type: 'question',
+      });
+    },
+
+    viewInstitution: (institutionId: string, name: string) => {
+      trackEvent('view_item', {
+        item_id: institutionId,
+        item_name: name,
+        content_type: 'institution',
+      });
+    },
+
+    downloadPaper: (paperId: string, title: string, format: string = 'pdf') => {
+      trackEvent('file_download', {
+        file_name: title,
+        file_type: format,
+        item_id: paperId,
+        content_type: 'exam_paper',
+      });
+    },
+  },
+
+  // Search Events
+  search: {
+    perform: (query: string, category?: string, resultsCount?: number) => {
+      trackEvent('search', {
+        search_term: query,
+        search_category: category || 'all',
+        results_count: resultsCount,
+      });
+    },
+
+    filter: (filterType: string, filterValue: string) => {
+      trackEvent('filter_applied', {
+        filter_type: filterType,
+        filter_value: filterValue,
+      });
+    },
+
+    sort: (sortBy: string, order: string) => {
+      trackEvent('sort_changed', {
+        sort_by: sortBy,
+        sort_order: order,
+      });
+    },
+  },
+
+  // Engagement Events
+  engagement: {
+    share: (contentType: string, contentId: string, method: string) => {
+      trackEvent('share', {
+        content_type: contentType,
+        item_id: contentId,
+        method,
+      });
+    },
+
+    comment: (contentType: string, contentId: string) => {
+      trackEvent('comment_posted', {
+        content_type: contentType,
+        item_id: contentId,
+      });
+    },
+
+    like: (contentType: string, contentId: string) => {
+      trackEvent('like', {
+        content_type: contentType,
+        item_id: contentId,
+      });
+    },
+
+    follow: (entityType: string, entityId: string) => {
+      trackEvent('follow', {
+        entity_type: entityType,
+        entity_id: entityId,
+      });
+    },
+  },
+
+  // Form Events
+  form: {
+    start: (formName: string) => {
+      trackEvent('form_start', {
+        form_name: formName,
+      });
+    },
+
+    submit: (formName: string, success: boolean) => {
+      trackEvent('form_submit', {
+        form_name: formName,
+        success,
+      });
+    },
+
+    error: (formName: string, errorType: string) => {
+      trackEvent('form_error', {
+        form_name: formName,
+        error_type: errorType,
+      });
+    },
+  },
+
+  // Navigation Events
+  navigation: {
+    clickLink: (linkText: string, destination: string) => {
+      trackEvent('click', {
+        link_text: linkText,
+        link_destination: destination,
+        event_category: 'navigation',
+      });
+    },
+
+    clickButton: (buttonName: string, location: string) => {
+      trackEvent('button_click', {
+        button_name: buttonName,
+        button_location: location,
+      });
+    },
+  },
+
+  // Error Events
+  error: {
+    track: (errorMessage: string, errorType: string, fatal: boolean = false) => {
+      trackEvent('exception', {
+        description: errorMessage,
+        error_type: errorType,
+        fatal,
+        page: typeof window !== 'undefined' ? window.location.pathname : 'unknown',
+      });
+    },
+
+    notFound: (path: string) => {
+      trackEvent('page_not_found', {
+        path,
+      });
+    },
+
+    apiError: (endpoint: string, statusCode: number, errorMessage: string) => {
+      trackEvent('api_error', {
+        endpoint,
+        status_code: statusCode,
+        error_message: errorMessage,
+      });
+    },
   },
 };
 
-/**
- * Predefined event tracking functions
- */
-
-// Authentication Events
-export const trackAuthEvent = {
-  login: (method: 'email' | 'google' | 'github') => {
-    analytics.track('user_login', { method });
-  },
-  
-  logout: () => {
-    analytics.track('user_logout');
-  },
-  
-  signup: (method: 'email' | 'google' | 'github') => {
-    analytics.track('user_signup', { method });
-  },
-  
-  passwordReset: () => {
-    analytics.track('password_reset_requested');
-  },
-};
-
-// Exam Paper Events
-export const trackExamPaperEvent = {
-  view: (paperId: string, paperTitle: string) => {
-    analytics.track('exam_paper_viewed', {
-      paper_id: paperId,
-      paper_title: paperTitle,
-    });
-  },
-  
-  download: (paperId: string, paperTitle: string, format: string) => {
-    analytics.track('exam_paper_downloaded', {
-      paper_id: paperId,
-      paper_title: paperTitle,
-      format,
-    });
-  },
-  
-  search: (query: string, resultsCount: number) => {
-    analytics.track('exam_paper_searched', {
-      search_query: query,
-      results_count: resultsCount,
-    });
-  },
-  
-  filter: (filters: Record<string, any>) => {
-    analytics.track('exam_paper_filtered', filters);
-  },
-};
-
-// Admin Events
-export const trackAdminEvent = {
-  createPaper: (paperId: string) => {
-    analytics.track('admin_paper_created', { paper_id: paperId });
-  },
-  
-  updatePaper: (paperId: string) => {
-    analytics.track('admin_paper_updated', { paper_id: paperId });
-  },
-  
-  deletePaper: (paperId: string) => {
-    analytics.track('admin_paper_deleted', { paper_id: paperId });
-  },
-  
-  createInstitution: (institutionId: string) => {
-    analytics.track('admin_institution_created', { institution_id: institutionId });
-  },
-  
-  updateInstitution: (institutionId: string) => {
-    analytics.track('admin_institution_updated', { institution_id: institutionId });
-  },
-};
-
-// User Profile Events
-export const trackProfileEvent = {
-  update: (fields: string[]) => {
-    analytics.track('profile_updated', { updated_fields: fields });
-  },
-  
-  avatarUpload: () => {
-    analytics.track('profile_avatar_uploaded');
-  },
-  
-  view: (userId: string) => {
-    analytics.track('profile_viewed', { user_id: userId });
-  },
-};
-
-// Navigation Events
-export const trackNavigationEvent = {
-  sidebarToggle: (isOpen: boolean) => {
-    analytics.track('sidebar_toggled', { is_open: isOpen });
-  },
-  
-  menuClick: (menuItem: string) => {
-    analytics.track('menu_item_clicked', { menu_item: menuItem });
-  },
-};
-
-// Error Events
-export const trackErrorEvent = {
-  apiError: (endpoint: string, statusCode: number, errorMessage: string) => {
-    analytics.track('api_error', {
-      endpoint,
-      status_code: statusCode,
-      error_message: errorMessage,
-    });
-  },
-  
-  formError: (formName: string, errors: Record<string, any>) => {
-    analytics.track('form_error', {
-      form_name: formName,
-      errors,
-    });
-  },
-};
-
-// Feature Usage Events
-export const trackFeatureEvent = {
-  use: (featureName: string, metadata?: Record<string, any>) => {
-    analytics.track('feature_used', {
-      feature_name: featureName,
-      ...metadata,
-    });
-  },
-};
+export default analytics;

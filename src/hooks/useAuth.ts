@@ -19,6 +19,10 @@ export const useAuth = () => {
     setIsLoading(true);
     clearError();
 
+    // Clear any existing expired tokens before login attempt
+    // This prevents the expired token from being sent with the login request
+    clearAuthToken();
+
     // Ensure provider field is included for backend API compatibility
     const loginData: LoginRequest = {
       email: credentials.email,
