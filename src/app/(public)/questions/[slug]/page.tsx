@@ -37,8 +37,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       const institutionName = question.institution?.name || '';
       const marks = question.marks ? `${question.marks} marks` : '';
       
-      // Build comprehensive title
-      const titleParts = ['Question', questionNumber, examPaperName].filter(Boolean);
+      // Build comprehensive title using question slug
+      const questionSlug = question.slug || slug;
+      const titleParts = ['Question', questionNumber, questionSlug].filter(Boolean);
       const title = titleParts.join(' - ');
       
       // Build keywords array

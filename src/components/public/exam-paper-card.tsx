@@ -76,7 +76,7 @@ export function ExamPaperCard({
       >
         <div className="flex flex-col sm:flex-row">
           {/* Institution Logo */}
-          <div className="sm:w-32 sm:shrink-0 p-6 flex items-center justify-center bg-gray-50">
+          <div className="sm:w-32 sm:shrink-0 p-6 flex items-center justify-center bg-gray-50 dark:bg-slate-800">
             {institution?.logo?.media ? (
               <img
                 src={institution.logo?.media?.link || '/placeholder.svg'}
@@ -87,7 +87,7 @@ export function ExamPaperCard({
               
               />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-teal-100 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center">
                 <Building2 className="h-10 w-10 text-teal-600" />
               </div>
             )}
@@ -97,7 +97,7 @@ export function ExamPaperCard({
           <div className="flex-1 p-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
-                <h3 className="text-3xl font-semibold text-gray-900 mb-3 line-clamp-3">
+                <h3 className="text-3xl font-semibold text-gray-900 dark:text-white mb-3 line-clamp-3">
                   {mainTitle}
                 </h3>
 
@@ -124,7 +124,7 @@ export function ExamPaperCard({
                   ))}
                 </div>
 
-                <div className="flex flex-wrap gap-3 text-sm text-gray-600 mb-3">
+                <div className="flex flex-wrap gap-3 text-sm text-gray-600 dark:text-slate-400 mb-3">
                   {institution && typeof institution === 'object' && institution.name && (
                     <div className="flex items-center gap-1">
                       <Building2 className="h-4 w-4" />
@@ -180,7 +180,7 @@ export function ExamPaperCard({
             </div>
 
             <div className="flex items-center justify-between mt-4 pt-4 border-t">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 dark:text-slate-400">
                 {questionCount} {questionCount === 1 ? 'question' : 'questions'}
               </div>
               <Button
@@ -220,16 +220,16 @@ export function ExamPaperCard({
                 unoptimized
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center">
                 <Building2 className="h-5 w-5 text-teal-600" />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                 {institutionName}
               </p>
               {year && (
-                <p className="text-xs text-gray-500">{String(year)}</p>
+                <p className="text-xs text-gray-500 dark:text-slate-500">{String(year)}</p>
               )}
             </div>
           </div>
@@ -247,7 +247,7 @@ export function ExamPaperCard({
         </div>
 
         {/* Title */}
-        <h3 className="text-base font-semibold text-gray-900 line-clamp-2 min-h-[3rem]">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white line-clamp-2 min-h-[3rem]">
           {mainTitle}
         </h3>
       </CardHeader>
@@ -255,21 +255,21 @@ export function ExamPaperCard({
       <CardContent className="pb-3 flex-1">
         {/* Description */}
         {description && (
-          <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+          <p className="text-sm text-gray-600 dark:text-slate-400 line-clamp-2 mb-3">
             {description}
           </p>
         )}
 
         {/* Course */}
         {courseName && (
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400 mb-3">
             <FileText className="h-4 w-4" />
             <span className="truncate">{courseName}</span>
           </div>
         )}
 
         {/* Meta Info */}
-        <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-slate-500 mb-3">
           {questionCount > 0 && (
             <span>{questionCount} questions</span>
           )}

@@ -104,7 +104,7 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
   /* ─── Loading Skeleton ─── */
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-950 dark:to-slate-900">
         {/* Header skeleton */}
         <div className="bg-gradient-to-r from-teal-600 via-teal-500 to-cyan-600 border-b border-teal-700/30 shadow-lg">
           <div className="container mx-auto px-4 py-12">
@@ -125,17 +125,17 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <aside className="lg:col-span-1">
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 animate-pulse space-y-3">
-                <div className="h-5 bg-gray-200 rounded w-28 mb-4" />
-                {[...Array(4)].map((_, i) => <div key={i} className="h-4 bg-gray-100 rounded w-full" />)}
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 animate-pulse space-y-3">
+                <div className="h-5 bg-gray-200 dark:bg-slate-700 rounded w-28 mb-4" />
+                {[...Array(4)].map((_, i) => <div key={i} className="h-4 bg-gray-100 dark:bg-slate-600 rounded w-full" />)}
               </div>
             </aside>
             <main className="lg:col-span-3 space-y-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-gray-200 p-6 animate-pulse space-y-3">
-                  <div className="h-5 bg-gray-200 rounded w-24" />
-                  <div className="h-4 bg-gray-100 rounded w-full" />
-                  <div className="h-4 bg-gray-100 rounded w-4/5" />
+                <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 animate-pulse space-y-3">
+                  <div className="h-5 bg-gray-200 dark:bg-slate-700 rounded w-24" />
+                  <div className="h-4 bg-gray-100 dark:bg-slate-600 rounded w-full" />
+                  <div className="h-4 bg-gray-100 dark:bg-slate-600 rounded w-4/5" />
                 </div>
               ))}
             </main>
@@ -148,13 +148,13 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
   /* ─── Error State ─── */
   if (error || !paper) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="text-center max-w-md px-6">
-          <div className="w-20 h-20 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 rounded-2xl bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex items-center justify-center mx-auto mb-6">
             <FileQuestion className="w-10 h-10 text-gray-400" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2 font-heading">Exam Paper Not Found</h1>
-          <p className="text-gray-500 mb-6 leading-relaxed">{error || 'The exam paper you are looking for does not exist.'}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 font-heading">Exam Paper Not Found</h1>
+          <p className="text-gray-500 dark:text-slate-400 mb-6 leading-relaxed">{error || 'The exam paper you are looking for does not exist.'}</p>
           <Button onClick={() => router.push('/exampapers')} className="bg-teal-500 hover:bg-teal-600">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to ExamPapers
@@ -166,7 +166,7 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
 
   /* ─── Main View ─── */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
 
       {/* ── Hero Header ── */}
       <div className="bg-gradient-to-r from-teal-600 via-teal-500 to-cyan-600 shadow-xl border-b border-teal-700/30">
@@ -287,37 +287,37 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
             <div className="sticky top-6 space-y-4">
 
               {/* Exam Details card */}
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="px-5 py-3.5 border-b border-gray-100 bg-gray-50/70">
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Exam Details</h3>
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-gray-100 dark:border-slate-700 bg-gray-50/70 dark:bg-slate-800/70">
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Exam Details</h3>
                 </div>
                 <div className="p-5 space-y-4 text-sm">
                   {paper.modules && paper.modules.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Modules</p>
+                      <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-1.5">Modules</p>
                       <div className="space-y-1">
                         {paper.modules.map((module: any) => (
-                          <p key={module.id} className="text-gray-800 font-medium">{module.name}</p>
+                          <p key={module.id} className="text-gray-800 dark:text-slate-300 font-medium">{module.name}</p>
                         ))}
                       </div>
                     </div>
                   )}
                   {paper.exam_date && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Exam Date</p>
-                      <p className="text-gray-800 font-medium">{new Date(paper.exam_date).toLocaleDateString()}</p>
+                      <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-1">Exam Date</p>
+                      <p className="text-gray-800 dark:text-slate-300 font-medium">{new Date(paper.exam_date).toLocaleDateString()}</p>
                     </div>
                   )}
                   {questionSets && questionSets.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Question Sets</p>
-                      <p className="text-gray-800 font-medium">{questionSets.length} set{questionSets.length !== 1 ? 's' : ''}</p>
+                      <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-1">Question Sets</p>
+                      <p className="text-gray-800 dark:text-slate-300 font-medium">{questionSets.length} set{questionSets.length !== 1 ? 's' : ''}</p>
                     </div>
                   )}
                   {questionSets && questionSets.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Total Questions</p>
-                      <p className="text-gray-800 font-medium">
+                      <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-1">Total Questions</p>
+                      <p className="text-gray-800 dark:text-slate-300 font-medium">
                         {questionSets.reduce((total, set) => total + (set.questions?.length || 0), 0)}
                       </p>
                     </div>
@@ -327,15 +327,15 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
 
               {/* Related papers – loading */}
               {isLoadingRelated && (
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                  <div className="px-5 py-3.5 border-b border-gray-100 bg-gray-50/70">
-                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Related Papers</h3>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                  <div className="px-5 py-3.5 border-b border-gray-100 dark:border-slate-700 bg-gray-50/70 dark:bg-slate-800/70">
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Related Papers</h3>
                   </div>
                   <div className="p-4 space-y-3">
                     {[...Array(3)].map((_, i) => (
-                      <div key={i} className="p-3 rounded-xl border border-gray-100 animate-pulse">
-                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-                        <div className="h-3 bg-gray-100 rounded w-1/2" />
+                      <div key={i} className="p-3 rounded-xl border border-gray-100 dark:border-slate-700 animate-pulse">
+                        <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-3/4 mb-2" />
+                        <div className="h-3 bg-gray-100 dark:bg-slate-600 rounded w-1/2" />
                       </div>
                     ))}
                   </div>
@@ -344,28 +344,28 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
 
               {/* Related papers – data */}
               {!isLoadingRelated && relatedPapers.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                  <div className="px-5 py-3.5 border-b border-gray-100 bg-gray-50/70">
-                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Related Papers</h3>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                  <div className="px-5 py-3.5 border-b border-gray-100 dark:border-slate-700 bg-gray-50/70 dark:bg-slate-800/70">
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Related Papers</h3>
                   </div>
                   <div className="p-4 space-y-2">
                     {relatedPapers.map((relatedPaper: any) => (
                       <button
                         key={relatedPaper.id}
                         onClick={() => router.push(`/exampapers/${relatedPaper.slug}`)}
-                        className="w-full text-left p-3 rounded-xl border border-gray-100 hover:border-teal-400/60 hover:bg-teal-50/50 transition-all duration-200 group cursor-pointer"
+                        className="w-full text-left p-3 rounded-xl border border-gray-100 dark:border-slate-700 hover:border-teal-400/60 hover:bg-teal-50/50 dark:hover:bg-teal-950/30 transition-all duration-200 group cursor-pointer"
                       >
-                        <p className="text-sm font-semibold text-gray-800 group-hover:text-teal-700 line-clamp-2 mb-2">
+                        <p className="text-sm font-semibold text-gray-800 dark:text-slate-300 group-hover:text-teal-700 dark:group-hover:text-teal-400 line-clamp-2 mb-2">
                           {relatedPaper.identifying_name || relatedPaper.title?.name || 'Exam Paper'}
                         </p>
                         <div className="flex flex-wrap gap-1.5 mb-2">
                           {relatedPaper.course?.course_acronym && (
-                            <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-teal-50 text-teal-700 border border-teal-200">
+                            <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800">
                               {relatedPaper.course.course_acronym}
                             </Badge>
                           )}
                           {relatedPaper.modules?.[0]?.unit_code && (
-                            <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200">
+                            <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
                               {relatedPaper.modules[0].unit_code}
                             </Badge>
                           )}
@@ -407,9 +407,9 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
 
             {/* Instructions */}
             {paper.instructions && Array.isArray(paper.instructions) && paper.instructions.length > 0 && (
-              <div className="bg-blue-50 border border-blue-200/70 rounded-2xl overflow-hidden">
-                <div className="px-6 py-4 border-b border-blue-200/70 bg-blue-100/50">
-                  <h2 className="text-base font-bold text-blue-900 uppercase tracking-wider">Instructions</h2>
+              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200/70 dark:border-blue-800 rounded-2xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-blue-200/70 dark:border-blue-800 bg-blue-100/50 dark:bg-blue-900/30">
+                  <h2 className="text-base font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider">Instructions</h2>
                 </div>
                 <ul className="p-6 space-y-3">
                   {paper.instructions.map((instruction: any, index: number) => {
@@ -418,8 +418,8 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
                       instruction.content || (typeof instruction === 'string' ? instruction : null);
                     if (!instructionText) return null;
                     return (
-                      <li key={instruction.id || index} className="flex items-start gap-3 text-blue-800">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-blue-200 text-blue-900 flex items-center justify-center text-xs font-bold mt-0.5">
+                      <li key={instruction.id || index} className="flex items-start gap-3 text-blue-800 dark:text-blue-300">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-300 flex items-center justify-center text-xs font-bold mt-0.5">
                           {index + 1}
                         </span>
                         <span className="flex-1 leading-relaxed text-sm">{instructionText}</span>
@@ -433,9 +433,9 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
             {/* Questions section */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-900 font-heading">Questions</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Questions</h2>
                 {questionSets.length > 0 && !isLoadingQuestions && !questionsError && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-50 text-teal-700 border border-teal-200 text-sm font-semibold">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800 text-sm font-semibold">
                     {questionSets.reduce((total, set) => total + (set.questions?.length || 0), 0)} questions
                   </span>
                 )}
@@ -443,9 +443,9 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
 
               {/* Loading */}
               {isLoadingQuestions && (
-                <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center shadow-sm">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 p-10 text-center shadow-sm">
                   <Loader2 className="h-8 w-8 animate-spin text-teal-500 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">Loading questions…</p>
+                  <p className="text-gray-500 dark:text-slate-400 text-sm">Loading questions…</p>
                 </div>
               )}
 
@@ -470,12 +470,12 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
 
               {/* Empty */}
               {!isLoadingQuestions && !questionsError && questionSets.length === 0 && (
-                <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center shadow-sm">
-                  <div className="w-14 h-14 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center mx-auto mb-4">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 p-10 text-center shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex items-center justify-center mx-auto mb-4">
                     <BookOpen className="h-7 w-7 text-gray-400" />
                   </div>
-                  <p className="text-gray-600 font-medium mb-1">No questions available</p>
-                  <p className="text-sm text-gray-400">Questions will appear here once they are added.</p>
+                  <p className="text-gray-600 dark:text-slate-400 font-medium mb-1">No questions available</p>
+                  <p className="text-sm text-gray-400 dark:text-slate-500">Questions will appear here once they are added.</p>
                 </div>
               )}
 
@@ -489,9 +489,9 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
                         <div className="flex items-center gap-3 mb-4">
                           <div className="flex-shrink-0 w-1 h-8 rounded-full bg-teal-500" />
                           <div>
-                            <h3 className="text-base font-bold text-gray-900">{questionSet.title}</h3>
+                            <h3 className="text-base font-bold text-gray-900 dark:text-white">{questionSet.title}</h3>
                             {questionSet.description && (
-                              <p className="text-sm text-gray-500 mt-0.5">{questionSet.description}</p>
+                              <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{questionSet.description}</p>
                             )}
                           </div>
                         </div>
@@ -517,8 +517,8 @@ export function ExamPaperDetailsContent({ slug }: ExamPaperDetailsContentProps) 
                             ))}
                         </div>
                       ) : (
-                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
-                          <p className="text-gray-500 text-sm">No questions in this set</p>
+                        <div className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6 text-center">
+                          <p className="text-gray-500 dark:text-slate-400 text-sm">No questions in this set</p>
                         </div>
                       )}
                     </div>

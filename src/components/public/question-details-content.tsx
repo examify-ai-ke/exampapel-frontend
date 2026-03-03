@@ -32,7 +32,12 @@ import { CommentForm } from '@/components/shared/comment-form';
 import { CommentItem } from '@/components/shared/comment-item';
 import { buildCommentTree } from '@/utils/comments';
 import { getQuestionUrl } from '@/utils/question-url';
-import { AnswerForm } from '@/components/forms/answer-form';
+import dynamic from 'next/dynamic';
+
+const AnswerForm = dynamic(
+  () => import('@/components/forms/answer-form').then(mod => mod.AnswerForm),
+  { ssr: false }
+);
 import { formatDistanceToNow } from 'date-fns';
 import {
   AlertDialog,

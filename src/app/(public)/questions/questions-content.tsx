@@ -287,9 +287,9 @@ export default function PublicQuestionsContent() {
 
           {/* Active Filters Display */}
           {hasActiveFilters && (
-            <div className="mt-6 mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="mt-6 mb-4 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-blue-900">Active Filters</span>
+                <span className="text-sm font-medium text-blue-900 dark:text-blue-300">Active Filters</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -301,7 +301,7 @@ export default function PublicQuestionsContent() {
               </div>
               <div className="flex flex-wrap gap-2 mt-2">
                 {selectedInstitution && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-blue-200">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white dark:bg-slate-800 rounded-full border border-blue-200 dark:border-blue-700">
                     <span className="text-sm">Institution: {getInstitutionName(selectedInstitution)}</span>
                     <button onClick={() => setSelectedInstitution(undefined)} className="text-blue-600 hover:text-blue-700">
                       <X className="w-4 h-4" />
@@ -309,7 +309,7 @@ export default function PublicQuestionsContent() {
                   </div>
                 )}
                 {selectedCourse && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-blue-200">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white dark:bg-slate-800 rounded-full border border-blue-200 dark:border-blue-700">
                     <span className="text-sm">Course: {getCourseName(selectedCourse)}</span>
                     <button onClick={() => setSelectedCourse(undefined)} className="text-blue-600 hover:text-blue-700">
                       <X className="w-4 h-4" />
@@ -317,7 +317,7 @@ export default function PublicQuestionsContent() {
                   </div>
                 )}
                 {selectedModule && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-blue-200">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white dark:bg-slate-800 rounded-full border border-blue-200 dark:border-blue-700">
                     <span className="text-sm">Module: {getModuleName(selectedModule)}</span>
                     <button onClick={() => setSelectedModule(undefined)} className="text-blue-600 hover:text-blue-700">
                       <X className="w-4 h-4" />
@@ -325,7 +325,7 @@ export default function PublicQuestionsContent() {
                   </div>
                 )}
                 {selectedProgramme && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-blue-200">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white dark:bg-slate-800 rounded-full border border-blue-200 dark:border-blue-700">
                     <span className="text-sm">Programme: {getProgrammeName(selectedProgramme)}</span>
                     <button onClick={() => setSelectedProgramme(undefined)} className="text-blue-600 hover:text-blue-700">
                       <X className="w-4 h-4" />
@@ -333,7 +333,7 @@ export default function PublicQuestionsContent() {
                   </div>
                 )}
                 {hasAnswersFilter !== undefined && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-blue-200">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white dark:bg-slate-800 rounded-full border border-blue-200 dark:border-blue-700">
                     <span className="text-sm">Has Answers: {hasAnswersFilter ? 'Yes' : 'No'}</span>
                     <button onClick={() => setHasAnswersFilter(undefined)} className="text-blue-600 hover:text-blue-700">
                       <X className="w-4 h-4" />
@@ -345,7 +345,7 @@ export default function PublicQuestionsContent() {
           )}
 
           {/* Questions List */}
-          <div className="mt-6 bg-white shadow-lg rounded-lg p-6 relative min-h-[400px]">
+          <div className="mt-6 bg-white dark:bg-slate-900 shadow-lg dark:shadow-slate-900/50 rounded-lg p-6 relative min-h-[400px]">
             {/* Loading State - Show skeleton when loading OR when fetching with no existing data */}
             {(isLoading || (isFetching && questions.length === 0)) && (
               <QuestionsListSkeleton count={5} />
@@ -375,13 +375,13 @@ export default function PublicQuestionsContent() {
               <div className="p-8 text-center">
                 {searchQuery || hasActiveFilters ? (
                   <>
-                    <p className="text-gray-600 mb-4">No questions found matching your criteria</p>
+                    <p className="text-gray-600 dark:text-slate-400 mb-4">No questions found matching your criteria</p>
                     <Button variant="outline" onClick={handleClearFilters}>
                       Clear Filters
                     </Button>
                   </>
                 ) : (
-                  <p className="text-gray-600">No questions available at the moment.</p>
+                  <p className="text-gray-600 dark:text-slate-400">No questions available at the moment.</p>
                 )}
               </div>
             )}

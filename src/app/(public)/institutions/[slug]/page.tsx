@@ -82,10 +82,10 @@ export default function InstitutionProfilePage() {
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-2xl mx-auto text-center">
           <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Institution Not Found
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-slate-400 mb-6">
             The institution you're looking for doesn't exist or has been removed.
           </p>
           <Button onClick={() => router.push('/institutions')}>
@@ -103,7 +103,7 @@ export default function InstitutionProfilePage() {
   const campusesCount = (institution as any).campuses_count || 0;
   // console.log(institution?.logo?.media);
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-slate-950 dark:to-slate-900">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-teal-600 to-blue-600 text-white pb-20">
         <div className="container mx-auto px-4 py-12">
@@ -194,8 +194,8 @@ export default function InstitutionProfilePage() {
                     <FileText className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 font-medium">Exam Papers</p>
-                    <p className="text-3xl font-bold text-gray-900">
+                    <p className="text-sm text-gray-600 dark:text-slate-400 font-medium">Exam Papers</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white">
                       {totalPapers.toLocaleString()}
                     </p>
                   </div>
@@ -210,8 +210,8 @@ export default function InstitutionProfilePage() {
                     <Users className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 font-medium">Faculties</p>
-                    <p className="text-3xl font-bold text-gray-900">
+                    <p className="text-sm text-gray-600 dark:text-slate-400 font-medium">Faculties</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white">
                       {facultiesCount.toLocaleString()}
                     </p>
                   </div>
@@ -226,8 +226,8 @@ export default function InstitutionProfilePage() {
                     <Building2 className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 font-medium">Campuses</p>
-                    <p className="text-3xl font-bold text-gray-900">
+                    <p className="text-sm text-gray-600 dark:text-slate-400 font-medium">Campuses</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white">
                       {campusesCount.toLocaleString()}
                     </p>
                   </div>
@@ -242,8 +242,8 @@ export default function InstitutionProfilePage() {
                     <BookOpen className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 font-medium">Category</p>
-                    <p className="text-xl font-bold text-gray-900">
+                    <p className="text-sm text-gray-600 dark:text-slate-400 font-medium">Category</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">
                       {institution.category || 'N/A'}
                     </p>
                   </div>
@@ -271,10 +271,10 @@ export default function InstitutionProfilePage() {
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-900">
+                      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                         Available Exam Papers
                       </h2>
-                      <p className="text-gray-600 mt-1">
+                      <p className="text-gray-600 dark:text-slate-400 mt-1">
                         {totalPapers} {totalPapers === 1 ? 'paper' : 'papers'} available
                       </p>
                     </div>
@@ -296,12 +296,12 @@ export default function InstitutionProfilePage() {
                   )}
 
                   {!papersLoading && papers.length === 0 && (
-                    <div className="text-center py-20 bg-gray-50 rounded-lg">
+                    <div className="text-center py-20 bg-gray-50 dark:bg-slate-800 rounded-lg">
                       <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                         No Exam Papers Yet
                       </h3>
-                      <p className="text-gray-600 max-w-md mx-auto">
+                      <p className="text-gray-600 dark:text-slate-400 max-w-md mx-auto">
                         There are no exam papers available for this institution at the moment. 
                         Check back later for updates.
                       </p>
@@ -329,14 +329,14 @@ export default function InstitutionProfilePage() {
               {/* Institution Details */}
               <Card>
                 <CardContent className="pt-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                     About {institution.name}
                   </h2>
                   
                   {institution.description && (
                     <div className="mb-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Overview</h3>
-                      <p className="text-gray-700 leading-relaxed">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Overview</h3>
+                      <p className="text-gray-700 dark:text-slate-400 leading-relaxed">
                         {institution.description}
                       </p>
                     </div>
@@ -344,9 +344,9 @@ export default function InstitutionProfilePage() {
 
                   {institution.full_profile && (
                     <div className="mb-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Full Profile</h3>
-                      <div className="prose prose-gray max-w-none">
-                        <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Full Profile</h3>
+                      <div className="prose prose-gray dark:prose-invert max-w-none">
+                        <p className="text-gray-700 dark:text-slate-400 leading-relaxed whitespace-pre-line">
                           {institution.full_profile}
                         </p>
                       </div>
@@ -358,37 +358,37 @@ export default function InstitutionProfilePage() {
                   {/* Institution Details Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Details</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Details</h3>
                       <dl className="space-y-3">
                         {institution.institution_type && (
                           <div>
-                            <dt className="text-sm font-medium text-gray-600">Type</dt>
-                            <dd className="text-base text-gray-900">{institution.institution_type}</dd>
+                            <dt className="text-sm font-medium text-gray-600 dark:text-slate-400">Type</dt>
+                            <dd className="text-base text-gray-900 dark:text-white">{institution.institution_type}</dd>
                           </div>
                         )}
                         {institution.category && (
                           <div>
-                            <dt className="text-sm font-medium text-gray-600">Category</dt>
-                            <dd className="text-base text-gray-900">{institution.category}</dd>
+                            <dt className="text-sm font-medium text-gray-600 dark:text-slate-400">Category</dt>
+                            <dd className="text-base text-gray-900 dark:text-white">{institution.category}</dd>
                           </div>
                         )}
                         {institution.location && (
                           <div>
-                            <dt className="text-sm font-medium text-gray-600">Location</dt>
-                            <dd className="text-base text-gray-900">{institution.location}</dd>
+                            <dt className="text-sm font-medium text-gray-600 dark:text-slate-400">Location</dt>
+                            <dd className="text-base text-gray-900 dark:text-white">{institution.location}</dd>
                           </div>
                         )}
                         {institution.parent_ministry && (
                           <div>
-                            <dt className="text-sm font-medium text-gray-600">Parent Ministry</dt>
-                            <dd className="text-base text-gray-900">{institution.parent_ministry}</dd>
+                            <dt className="text-sm font-medium text-gray-600 dark:text-slate-400">Parent Ministry</dt>
+                            <dd className="text-base text-gray-900 dark:text-white">{institution.parent_ministry}</dd>
                           </div>
                         )}
                       </dl>
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Links</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Links</h3>
                       <div className="space-y-3">
                         {institution.kuccps_institution_url && (
                           <a
@@ -406,7 +406,7 @@ export default function InstitutionProfilePage() {
 
                       {institution.tags && institution.tags.length > 0 && (
                         <div className="mt-6">
-                          <h4 className="text-sm font-medium text-gray-600 mb-2">Tags</h4>
+                          <h4 className="text-sm font-medium text-gray-600 dark:text-slate-400 mb-2">Tags</h4>
                           <div className="flex flex-wrap gap-2">
                             {institution.tags.map((tag: string, index: number) => (
                               <Badge key={index} variant="secondary">

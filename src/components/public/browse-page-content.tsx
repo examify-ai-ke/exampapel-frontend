@@ -89,18 +89,18 @@ export function BrowsePageContent() {
         <aside className="hidden lg:block w-80 shrink-0">
           <div className="sticky top-24">
             {filtersLoading ? (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Loading Filters...</h2>
+              <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Loading Filters...</h2>
                 <div className="space-y-4">
-                  <div className="h-4 bg-gray-200 rounded animate-pulse" />
-                  <div className="h-4 bg-gray-200 rounded animate-pulse" />
-                  <div className="h-4 bg-gray-200 rounded animate-pulse" />
-                  <div className="h-4 bg-gray-200 rounded animate-pulse" />
-                  <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded animate-pulse" />
+                  <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded animate-pulse" />
+                  <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded animate-pulse" />
+                  <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded animate-pulse" />
+                  <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded animate-pulse" />
                 </div>
               </div>
             ) : filtersError ? (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
                 <h2 className="text-lg font-semibold text-red-900 mb-2">Error Loading Filters</h2>
                 <p className="text-sm text-red-600 mb-4">
                   {filtersErrorObj?.message || 'Failed to load filter options'}
@@ -121,9 +121,9 @@ export function BrowsePageContent() {
                 isLoading={papersLoading}
               />
             ) : (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">No Filters Available</h2>
-                <p className="text-sm text-gray-600">
+              <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Filters Available</h2>
+                <p className="text-sm text-gray-600 dark:text-slate-400">
                   Filter options will appear here once data is loaded.
                 </p>
               </div>
@@ -139,7 +139,7 @@ export function BrowsePageContent() {
               {/* Mobile Filter Button - Trigger only */}
               <button
                 onClick={() => setIsMobileFilterOpen(true)}
-                className="lg:hidden px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                className="lg:hidden px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md hover:bg-gray-50 dark:hover:bg-slate-800 dark:text-slate-300"
               >
                 Filters
               </button>
@@ -193,11 +193,11 @@ export function BrowsePageContent() {
 
           {/* Empty State */}
           {!isLoading && !isError && papers.length === 0 && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-12 text-center">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <div className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-12 text-center">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 No Exam Papers Found
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-slate-400 mb-6">
                 Try adjusting your filters or search query to find what you're looking for.
               </p>
               <button

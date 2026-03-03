@@ -86,10 +86,10 @@ export function HeroSection({ stats }: HeroSectionProps) {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button
-                onClick={() => router.push('/auth/register')}
+                onClick={() => router.push('/questions')}
                 size="lg"
                 variant="outline"
-                className="h-13 px-8 text-base border-white/20 text-white hover:bg-white/10 hover:border-white/40 rounded-xl font-semibold transition-all duration-200"
+                className="h-13 px-8 text-base border-white/30 bg-white/10 text-white hover:bg-white/20 hover:border-white/50 rounded-xl font-semibold transition-all duration-200 backdrop-blur-sm"
               >
                 Get Started Free
               </Button>

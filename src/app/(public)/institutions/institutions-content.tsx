@@ -168,7 +168,7 @@ export default function InstitutionsPageContent() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Login Gate Dialog */}
       <LoginGateDialog
         isOpen={showLoginPrompt}
@@ -180,10 +180,10 @@ export default function InstitutionsPageContent() {
       <div className="container mx-auto px-4 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
             Browse Institutions
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-gray-600 dark:text-slate-400">
             Explore exam papers from top educational institutions
           </p>
         </div>
@@ -219,7 +219,7 @@ export default function InstitutionsPageContent() {
         <div className="mb-6 space-y-4">
           {/* Institution Type Filter */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+            <label className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2 block">
               Institution Type
             </label>
             <div className="flex flex-wrap gap-2">
@@ -240,7 +240,7 @@ export default function InstitutionsPageContent() {
 
           {/* Results Count, Page Size, Category, Sort and View Mode Toggle */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-slate-400">
               {isLoading ? (
                 'Loading...'
               ) : (
@@ -250,11 +250,11 @@ export default function InstitutionsPageContent() {
             <div className="flex flex-wrap items-center gap-4">
               {/* Page Size Dropdown */}
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Show:</span>
+                <span className="text-sm text-gray-600 dark:text-slate-400">Show:</span>
                 <select
                   value={pageSize}
                   onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="12">12</option>
                   <option value="24">24</option>
@@ -265,11 +265,11 @@ export default function InstitutionsPageContent() {
 
               {/* Category Dropdown */}
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Category:</span>
+                <span className="text-sm text-gray-600 dark:text-slate-400">Category:</span>
                 <select
                   value={institutionCategory}
                   onChange={(e) => handleCategoryFilter(e.target.value as InstitutionCategory)}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="all">All Categories</option>
                   <option value="University">Universities</option>
@@ -283,11 +283,11 @@ export default function InstitutionsPageContent() {
 
               {/* Sort Dropdown */}
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Sort:</span>
+                <span className="text-sm text-gray-600 dark:text-slate-400">Sort:</span>
                 <select
                   value={sortBy}
                   onChange={(e) => handleSortChange(e.target.value as SortOption)}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="alphabetical">Alphabetical</option>
                   <option value="most-papers">Most Papers</option>
@@ -295,7 +295,7 @@ export default function InstitutionsPageContent() {
               </div>
 
               {/* View Mode Toggle */}
-              <div className="flex items-center gap-2 border border-gray-300 rounded-md p-1">
+              <div className="flex items-center gap-2 border border-gray-300 dark:border-slate-600 rounded-md p-1">
                 <Button
                   variant={viewMode === 'list' ? 'default' : 'ghost'}
                   size="sm"
@@ -332,7 +332,7 @@ export default function InstitutionsPageContent() {
         {!isLoading && institutions.length === 0 && (
           <div className="text-center py-20">
             <Building2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-lg text-gray-600 mb-4">
+            <p className="text-lg text-gray-600 dark:text-slate-400 mb-4">
               No institutions found matching your criteria
             </p>
             <Button

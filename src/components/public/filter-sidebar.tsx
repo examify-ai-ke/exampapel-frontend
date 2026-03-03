@@ -70,7 +70,7 @@ function FilterSection({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-sm text-gray-900">{title}</h3>
+        <h3 className="font-semibold text-sm text-gray-900 dark:text-white">{title}</h3>
         {selectedValues.length > 0 && (
           <Badge variant="secondary" className="text-xs">
             {selectedValues.length}
@@ -84,7 +84,7 @@ function FilterSection({
           placeholder={`Search ${title.toLowerCase()}...`}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:placeholder-slate-500"
         />
       )}
 
@@ -92,7 +92,7 @@ function FilterSection({
         {displayOptions.map((option) => (
           <div 
             key={option.value} 
-            className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded-md -mx-2"
+            className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 p-2 rounded-md -mx-2"
             onClick={() => onToggle(option.value)}
           >
             <Checkbox
@@ -106,7 +106,7 @@ function FilterSection({
             >
               <span>{option.label}</span>
               {option.count !== undefined && (
-                <span className="text-xs text-gray-500">({option.count})</span>
+                <span className="text-xs text-gray-500 dark:text-slate-500">({option.count})</span>
               )}
             </Label>
           </div>
@@ -240,11 +240,11 @@ export function FilterSidebar({
     (activeFilters.examDateFrom || activeFilters.examDateTo ? 1 : 0);
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 p-6 ${className}`}>
+    <div className={`bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 p-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Filters</h2>
           {activeFilterCount > 0 && (
             <Badge className="bg-teal-500">
               {activeFilterCount}
@@ -256,7 +256,7 @@ export function FilterSidebar({
             variant="ghost"
             size="sm"
             onClick={onClearFilters}
-            className="text-xs text-gray-600 hover:text-gray-900"
+            className="text-xs text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
           >
             <X className="h-3 w-3 mr-1" />
             Clear All
@@ -359,7 +359,7 @@ export function FilterSidebar({
         {filters?.durationRange && (
           <>
             <div className="space-y-3">
-              <h3 className="font-semibold text-sm text-gray-900">Duration (minutes)</h3>
+              <h3 className="font-semibold text-sm text-gray-900 dark:text-white">Duration (minutes)</h3>
               <div className="flex gap-2 items-center">
                 <Input
                   type="number"
@@ -397,7 +397,7 @@ export function FilterSidebar({
         {/* Date Range Filter */}
         {filters?.dateRange && (
           <div className="space-y-3">
-            <h3 className="font-semibold text-sm text-gray-900">Exam Date</h3>
+            <h3 className="font-semibold text-sm text-gray-900 dark:text-white">Exam Date</h3>
             <div className="space-y-2">
               <Input
                 type="date"
