@@ -54,7 +54,7 @@ export function HeroSection({ stats }: HeroSectionProps) {
             {/* Eyebrow */}
             <div className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 rounded-full px-4 py-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-              <span className="text-sm font-medium text-teal-300 tracking-wide">Kenya's Exam Resource Hub</span>
+              <span className="text-sm font-medium text-teal-300 tracking-wide">Africa's Exam Resource Hub</span>
             </div>
 
             {/* Headline – GTSuper */}

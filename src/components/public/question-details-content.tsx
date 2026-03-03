@@ -15,7 +15,8 @@ import {
   FileText,
   ThumbsUp,
   ThumbsDown,
-  Loader2
+  Loader2,
+  Plus
 } from 'lucide-react';
 
 import { publicAPI } from '@/lib/api-public';
@@ -31,6 +32,7 @@ import { CommentForm } from '@/components/shared/comment-form';
 import { CommentItem } from '@/components/shared/comment-item';
 import { buildCommentTree } from '@/utils/comments';
 import { getQuestionUrl } from '@/utils/question-url';
+import { AnswerForm } from '@/components/forms/answer-form';
 import { formatDistanceToNow } from 'date-fns';
 import {
   AlertDialog,
@@ -54,6 +56,43 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
   const [siblings, setSiblings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAnswerForm, setShowAnswerForm] = useState(false);
+  const [answerTargetQuestionId, setAnswerTargetQuestionId] = useState<string | null>(null);
+  const { user, isAuthenticated } = useAuthStore();
+  const { addNotification } = useUIStore();
+
+  const canAddAnswer = isAuthenticated && (
+    user?.role?.name === 'Admin' || 
+    user?.role?.name === 'Manager' || 
+    user?.is_superuser
+  );
+
+  const handleAddAnswer = (questionId: string) => {
+    if (!canAddAnswer) {
+      addNotification({
+        type: 'error',
+        title: 'Permission Denied',
+        message: 'Only administrators and managers can add answers.'
+      });
+      return;
+    }
+    setAnswerTargetQuestionId(questionId);
+    setShowAnswerForm(true);
+  };
+
+  const handleAnswerSuccess = async () => {
+    setShowAnswerForm(false);
+    setAnswerTargetQuestionId(null);
+    // Re-fetch question data to show new answer
+    try {
+      const { data } = await publicAPI.questions.getById(id);
+      if (data) {
+        setQuestion(data);
+      }
+    } catch (err) {
+      console.error('Error refreshing question data:', err);
+    }
+  };
 
   useEffect(() => {
     async function fetchQuestionData() {
@@ -146,18 +185,18 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 pb-20">
       {/* Hero Header Section */}
-      <div className="relative bg-gradient-to-br from-slate-50 via-white to-slate-100 border-b border-slate-200 overflow-hidden pt-8 pb-12 sm:pt-12 sm:pb-16">
+      <div className="relative bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 border-b border-slate-200 dark:border-slate-800 overflow-hidden pt-8 pb-12 sm:pt-12 sm:pb-16">
         {/* Subtle Background Effects */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
-          <div className="absolute top-[-10%] right-[-5%] w-[30%] h-[30%] bg-teal-500/5 blur-[100px] rounded-full" />
-          <div className="absolute bottom-[-10%] left-[-5%] w-[30%] h-[30%] bg-blue-500/5 blur-[100px] rounded-full" />
+          <div className="absolute top-[-10%] right-[-5%] w-[30%] h-[30%] bg-teal-500/5 dark:bg-teal-500/10 blur-[100px] rounded-full" />
+          <div className="absolute bottom-[-10%] left-[-5%] w-[30%] h-[30%] bg-blue-500/5 dark:bg-blue-500/10 blur-[100px] rounded-full" />
         </div>
 
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Breadcrumb */}
           <Link 
             href={question.exam_paper?.slug ? `/exampapers/${question.exam_paper.slug}` : "/browse"}
-            className="inline-flex items-center text-sm font-medium text-slate-600 hover:text-teal-600 transition-colors mb-6 group"
+            className="inline-flex items-center text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors mb-6 group"
           >
             <ChevronLeft className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" />
             Back to Exam Paper
@@ -165,13 +204,13 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
 
           {/* Parent Question Indicator (for sub-questions) */}
           {parentQuestion && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-start gap-2">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="text-xs text-blue-600 uppercase tracking-wider font-semibold">Sub-question of:</span>
+                  <span className="text-xs text-blue-600 dark:text-blue-400 uppercase tracking-wider font-semibold">Sub-question of:</span>
                   <Link
                     href={getQuestionUrl(parentQuestion)}
-                    className="text-sm font-medium text-blue-700 hover:text-blue-800 hover:underline transition-colors flex items-center gap-2"
+                    className="text-sm font-medium text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 hover:underline transition-colors flex items-center gap-2"
                   >
                     <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-blue-600 text-white font-bold text-xs">
                       {parentQuestion.question_number || '?'}
@@ -192,22 +231,22 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
               {/* Meta Badges */}
               <div className="flex flex-wrap items-center gap-2">
                 {institutionName && (
-                  <Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-200">
+                  <Badge variant="outline" className="bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800">
                     {institutionName}
                   </Badge>
                 )}
                 {question.course?.course_acronym && (
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
                     {question.course.course_acronym}
                   </Badge>
                 )}
                 {question.modules && question.modules.length > 0 && (
-                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                  <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800">
                     {question.modules[0].unit_code || question.modules[0].name}
                   </Badge>
                 )}
                 {question.exam_paper?.year_of_exam && (
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                  <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
                     {question.exam_paper.year_of_exam}
                   </Badge>
                 )}
@@ -220,19 +259,19 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
 
               {/* Question Number and Title Area */}
               <div className="flex items-start gap-6">
-                <div className="shrink-0 flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-blue-600 text-white font-bold text-2xl shadow-lg">
+                <div className="shrink-0 flex items-center justify-center w-15 h-15 rounded-2xl bg-gradient-to-br from-teal-500 to-blue-600 text-white font-semibold text-5xl shadow-lg">
                   {question.question_number || '?'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-4">
+                  <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">
                     {parentQuestion ? 'Sub-Question Details' : 'Question Details'}
                   </h1>
 
                   {/* Metadata: Date and Exam Paper */}
-                  <div className="flex flex-col gap-3 mb-4 pb-4 border-b border-slate-200">
+                  <div className="flex flex-col gap-3 mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
                     {/* Date */}
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Calendar className="w-4 h-4 text-slate-400" />
+                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                      <Calendar className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                       <span>
                         Posted {question.created_at 
                           ? formatDistanceToNow(new Date(question.created_at), { addSuffix: true })
@@ -243,9 +282,9 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
                     {/* Exam Paper Source */}
                     {examPaperName && (
                       <div className="flex items-start gap-2">
-                        <FileText className="w-4 h-4 mt-0.5 text-slate-400 flex-shrink-0" />
+                        <FileText className="w-4 h-4 mt-0.5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <span className="text-xs text-slate-500 uppercase tracking-wider font-medium">From: </span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">From: </span>
                           {question.exam_paper?.slug ? (
                             <Link
                               href={`/exampapers/${question.exam_paper.slug}`}
@@ -254,7 +293,7 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
                               {examPaperName}
                             </Link>
                           ) : (
-                            <span className="text-sm font-medium text-slate-700">{examPaperName}</span>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{examPaperName}</span>
                           )}
                         </div>
                       </div>
@@ -262,7 +301,7 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
 
                     {/* Answer Count */}
                     {question.answers?.length > 0 && (
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                         <CircleCheck className="w-4 h-4 text-teal-500" />
                         <span>
                           {question.answers.length} {question.answers.length === 1 ? 'Answer' : 'Answers'} available
@@ -272,7 +311,7 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
                   </div>
                   
                   {/* Question Text */}
-                  <div className="prose prose-slate prose-xl max-w-none text-slate-900 leading-relaxed font-medium">
+                  <div className="prose prose-slate dark:prose-invert prose-xl max-w-none text-slate-900 dark:text-slate-200 leading-relaxed font-medium">
                     {typeof question.text === 'string' ? (
                       <p>{question.text}</p>
                     ) : (
@@ -288,7 +327,7 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
               <Button size="lg" className="bg-teal-500 hover:bg-teal-600 text-white border-0 shadow-lg shadow-teal-500/20 px-8">
                 <Share2 className="w-4 h-4 mr-2" /> Share
               </Button>
-              <Button variant="outline" size="lg" className="bg-white border-slate-300 text-slate-700 hover:bg-slate-50">
+              <Button variant="outline" size="lg" className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
                 <Bookmark className="w-4 h-4 mr-2" /> Bookmark
               </Button>
             </div>
@@ -306,6 +345,16 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
                 <div className="w-1 h-8 bg-gradient-to-b from-teal-500 to-blue-600 rounded-full" />
                 {parentQuestion ? 'Sub-Question Answers' : 'Answers'} <span className="text-slate-400 text-lg font-normal">({question.answers.length})</span>
               </h2>
+              {canAddAnswer && (
+                <Button 
+                  size="sm" 
+                  className="bg-teal-600 hover:bg-teal-700 text-white shadow-sm"
+                  onClick={() => handleAddAnswer(question.id)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Answer
+                </Button>
+              )}
             </div>
 
             <div className="space-y-6">
@@ -313,6 +362,19 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
                 <EnhancedAnswerDisplay key={answer.id} answer={answer} index={index + 1} />
               ))}
             </div>
+
+            {/* Answer Form for main question */}
+            {showAnswerForm && answerTargetQuestionId === question.id && (
+              <Card className="border-2 border-teal-200 bg-teal-50/30 overflow-hidden">
+                <CardContent className="p-6">
+                  <AnswerForm
+                    questionId={question.id}
+                    onSuccess={handleAnswerSuccess}
+                    onCancel={() => { setShowAnswerForm(false); setAnswerTargetQuestionId(null); }}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 
@@ -370,22 +432,68 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
                       {/* Sub-Question Answers */}
                       {subQuestion.answers && subQuestion.answers.length > 0 ? (
                         <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 space-y-4">
-                          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                            <CircleCheck className="w-5 h-5 text-green-600" />
-                            {subQuestion.answers.length === 1 ? 'Answer' : 'Answers'}
-                          </h3>
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                              <CircleCheck className="w-5 h-5 text-green-600" />
+                              {subQuestion.answers.length === 1 ? 'Answer' : 'Answers'}
+                            </h3>
+                            {canAddAnswer && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="text-teal-600 border-teal-300 hover:bg-teal-50"
+                                onClick={() => handleAddAnswer(subQuestion.id)}
+                              >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Add Answer
+                              </Button>
+                            )}
+                          </div>
                           <div className="space-y-4">
                             {subQuestion.answers.map((answer: any, ansIndex: number) => (
                               <EnhancedAnswerDisplay key={answer.id} answer={answer} index={ansIndex + 1} />
                             ))}
                           </div>
+                          {/* Answer Form for sub-question with existing answers */}
+                          {showAnswerForm && answerTargetQuestionId === subQuestion.id && (
+                            <div className="mt-4">
+                              <AnswerForm
+                                questionId={subQuestion.id}
+                                onSuccess={handleAnswerSuccess}
+                                onCancel={() => { setShowAnswerForm(false); setAnswerTargetQuestionId(null); }}
+                              />
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
-                          <div className="flex items-center gap-3 text-slate-500">
-                            <MessageSquare className="w-5 h-5" />
-                            <span className="text-sm italic">No answers yet for this sub-question</span>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 text-slate-500">
+                              <MessageSquare className="w-5 h-5" />
+                              <span className="text-sm italic">No answers yet for this sub-question</span>
+                            </div>
+                            {canAddAnswer && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="text-teal-600 border-teal-300 hover:bg-teal-50"
+                                onClick={() => handleAddAnswer(subQuestion.id)}
+                              >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Add Answer
+                              </Button>
+                            )}
                           </div>
+                          {/* Answer Form for sub-question */}
+                          {showAnswerForm && answerTargetQuestionId === subQuestion.id && (
+                            <div className="mt-4">
+                              <AnswerForm
+                                questionId={subQuestion.id}
+                                onSuccess={handleAnswerSuccess}
+                                onCancel={() => { setShowAnswerForm(false); setAnswerTargetQuestionId(null); }}
+                              />
+                            </div>
+                          )}
                         </div>
                       )}
                     </CardContent>
@@ -404,10 +512,28 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
               </div>
               <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">No answers yet</h3>
               <p className="text-slate-500 max-w-sm mb-6">Be the first to provide an answer to this question and help others.</p>
-              <Button className="bg-teal-600 hover:bg-teal-700 text-white shadow-sm">
-                Write an Answer
-              </Button>
+              {canAddAnswer && (
+                <Button 
+                  className="bg-teal-600 hover:bg-teal-700 text-white shadow-sm"
+                  onClick={() => handleAddAnswer(question.id)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Write an Answer
+                </Button>
+              )}
             </Card>
+            {/* Answer Form for empty state */}
+            {showAnswerForm && answerTargetQuestionId === question.id && (
+              <Card className="border-2 border-teal-200 bg-teal-50/30 overflow-hidden">
+                <CardContent className="p-6">
+                  <AnswerForm
+                    questionId={question.id}
+                    onSuccess={handleAnswerSuccess}
+                    onCancel={() => { setShowAnswerForm(false); setAnswerTargetQuestionId(null); }}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 
