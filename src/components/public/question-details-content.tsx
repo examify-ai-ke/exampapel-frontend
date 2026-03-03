@@ -157,14 +157,25 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
             <div className="flex-1 space-y-5">
               {/* Meta Badges */}
-              <div className="flex flex-wrap items-center gap-3">
-                <Badge variant="outline" className="bg-slate-100 border-slate-300 text-slate-700">
-                  <FileText className="w-3.5 h-3.5 mr-2" />
-                  {examPaperName}
-                </Badge>
+              <div className="flex flex-wrap items-center gap-2">
                 {institutionName && (
-                  <Badge className="bg-teal-50 text-teal-700 border-teal-200">
+                  <Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-200">
                     {institutionName}
+                  </Badge>
+                )}
+                {question.course?.course_acronym && (
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    {question.course.course_acronym}
+                  </Badge>
+                )}
+                {question.modules && question.modules.length > 0 && (
+                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                    {question.modules[0].unit_code || question.modules[0].name}
+                  </Badge>
+                )}
+                {question.exam_paper?.year_of_exam && (
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                    {question.exam_paper.year_of_exam}
                   </Badge>
                 )}
                 {question.marks && (
@@ -205,6 +216,28 @@ export function QuestionDetailsContent({ id }: QuestionDetailsContentProps) {
                   </div>
                 )}
               </div>
+
+              {/* Exam Paper Source */}
+              {examPaperName && (
+                <div className="pt-3 border-t border-slate-200">
+                  <div className="flex items-start gap-2">
+                    <FileText className="w-4 h-4 mt-0.5 text-slate-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs text-slate-500 uppercase tracking-wider font-medium block mb-1">From Exam Paper:</span>
+                      {question.exam_paper?.slug ? (
+                        <Link
+                          href={`/exampapers/${question.exam_paper.slug}`}
+                          className="text-sm font-medium text-teal-600 hover:text-teal-700 hover:underline line-clamp-2 transition-colors"
+                        >
+                          {examPaperName}
+                        </Link>
+                      ) : (
+                        <span className="text-sm font-medium text-slate-700 line-clamp-2">{examPaperName}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Actions */}
