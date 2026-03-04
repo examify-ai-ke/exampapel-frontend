@@ -118,21 +118,21 @@ function LoginForm() {
                         variant="outline" 
                         className="w-full"
                         type="button"
-                        onClick={() => handleXLogin()}
-                        disabled={isLoading}
-                    >
-                        <XLogo />
-                        X
-                    </Button>
-                    <Button 
-                        variant="outline" 
-                        className="w-full"
-                        type="button"
                         onClick={() => handleGoogleLogin()}
                         disabled={isLoading}
                     >
                         <GoogleLogo />
                         Google
+                    </Button>
+                    <Button 
+                        variant="outline" 
+                        className="w-full"
+                        type="button"
+                        onClick={() => handleXLogin()}
+                        disabled={isLoading}
+                    >
+                        <XLogo />
+                        X
                     </Button>
                 </div>
 

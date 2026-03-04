@@ -124,21 +124,21 @@ export default function RegisterPage() {
               variant="outline" 
               className="w-full"
               type="button"
-              onClick={handleXSignup}
-              disabled={isLoading}
-            >
-              <XLogo />
-              X
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              type="button"
               onClick={handleGoogleSignup}
               disabled={isLoading}
             >
               <GoogleLogo />
               Google
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              type="button"
+              onClick={handleXSignup}
+              disabled={isLoading}
+            >
+              <XLogo />
+              X
             </Button>
           </div>
 
