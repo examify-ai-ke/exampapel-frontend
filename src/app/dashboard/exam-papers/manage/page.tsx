@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
     Search,
@@ -98,7 +98,7 @@ const mockStats: PapersStats = {
     recentPapers: 23,
 };
 
-export default function ExamPapersManagePage() {
+function ExamPapersManageContent() {
     const { user } = useAuth();
     const { addNotification } = useUIStore();
     const searchParams = useSearchParams();
@@ -665,5 +665,17 @@ export default function ExamPapersManagePage() {
                 </Card>
             </div>
         </ContentManagerGuard>
+    );
+}
+
+export default function ExamPapersManagePage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-96 items-center justify-center">
+                <LoadingSpinner size="lg" />
+            </div>
+        }>
+            <ExamPapersManageContent />
+        </Suspense>
     );
 }

@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { exchangeGitHubCode } from '@/lib/social-auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
-export default function GitHubCallbackPage() {
+function GitHubCallbackContent() {
     const [error, setError] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(true);
     const router = useRouter();
@@ -188,4 +188,23 @@ export default function GitHubCallbackPage() {
     }
 
     return null;
+}
+
+export default function GitHubCallbackPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <Card className="w-full max-w-md">
+                    <CardHeader className="text-center">
+                        <CardTitle className="flex items-center justify-center gap-2">
+                            <LoadingSpinner size="sm" />
+                            Connecting to GitHub...
+                        </CardTitle>
+                    </CardHeader>
+                </Card>
+            </div>
+        }>
+            <GitHubCallbackContent />
+        </Suspense>
+    );
 }

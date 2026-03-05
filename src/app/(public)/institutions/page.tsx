@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import InstitutionsPageContent from './institutions-content';
+import { InstitutionsListSkeleton } from '@/components/ui/skeleton-loaders';
 
 export const metadata: Metadata = {
   title: 'Browse Institutions | Universities & Colleges | Exampapel',
@@ -47,4 +49,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default InstitutionsPageContent;
+export default function InstitutionsPage() {
+    return (
+        <Suspense fallback={
+            <div className="container mx-auto px-4 py-8">
+                <div className="mb-8">
+                    <div className="h-10 w-64 bg-gray-200 dark:bg-slate-800 animate-pulse rounded mb-2"></div>
+                    <div className="h-6 w-96 bg-gray-200 dark:bg-slate-800 animate-pulse rounded"></div>
+                </div>
+                <InstitutionsListSkeleton count={6} />
+            </div>
+        }>
+            <InstitutionsPageContent />
+        </Suspense>
+    );
+}

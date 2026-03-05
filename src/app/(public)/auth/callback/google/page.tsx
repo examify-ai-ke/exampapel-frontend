@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { exchangeGoogleCode } from '@/lib/social-auth';
 import { useAuthStore } from '@/stores/auth';
 
-export default function GoogleCallbackPage() {
+function GoogleCallbackContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const login = useAuthStore((state) => state.login);
@@ -180,5 +180,22 @@ export default function GoogleCallbackPage() {
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+export default function GoogleCallbackPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+                <Card className="w-full max-w-md">
+                    <CardContent className="flex flex-col items-center py-10">
+                        <LoadingSpinner className="h-12 w-12" />
+                        <p className="mt-4 text-muted-foreground">Redirecting to Google...</p>
+                    </CardContent>
+                </Card>
+            </div>
+        }>
+            <GoogleCallbackContent />
+        </Suspense>
     );
 }

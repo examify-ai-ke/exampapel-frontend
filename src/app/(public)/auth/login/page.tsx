@@ -220,6 +220,12 @@ function LoginForm() {
     );
 }
 
+import { Suspense } from 'react';
+
 export default function LoginPage() {
-    return <LoginForm />;
-} 
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center p-8">Loading login form...</div>}>
+            <LoginForm />
+        </Suspense>
+    );
+}

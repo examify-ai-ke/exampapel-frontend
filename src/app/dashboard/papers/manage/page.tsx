@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
-export default function PapersManageRedirect() {
+function PapersManageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -25,5 +25,13 @@ export default function PapersManageRedirect() {
                 <p className="mt-4 text-gray-600">Redirecting to Exam Papers Management...</p>
             </div>
         </div>
+    );
+}
+
+export default function PapersManageRedirect() {
+    return (
+        <Suspense fallback={null}>
+            <PapersManageContent />
+        </Suspense>
     );
 }

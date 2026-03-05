@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { exchangeXCode } from '@/lib/social-auth';
@@ -9,7 +9,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function XCallbackPage() {
+function XCallbackContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const login = useAuthStore((state) => state.login);
@@ -192,5 +192,22 @@ export default function XCallbackPage() {
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+export default function XCallbackPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+                <Card className="w-full max-w-md">
+                    <CardContent className="flex flex-col items-center py-10">
+                        <LoadingSpinner className="h-12 w-12" />
+                        <p className="mt-4 text-muted-foreground">Initializing authentication...</p>
+                    </CardContent>
+                </Card>
+            </div>
+        }>
+            <XCallbackContent />
+        </Suspense>
     );
 }

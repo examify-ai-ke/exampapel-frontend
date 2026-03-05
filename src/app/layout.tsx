@@ -67,6 +67,8 @@ export const viewport: Viewport = {
   ],
 };
 
+import { Suspense } from "react";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -75,19 +77,21 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${firaSans.variable} ${gtSuper.variable} font-sans antialiased`} suppressHydrationWarning>
-        {/* Google Analytics */}
-        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
-          <GoogleAnalytics measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
-        )}
-        
-        <ThemeProvider>
-          <PostHogProvider>
-            <QueryProvider>
-              {children}
-              <Notifications />
-            </QueryProvider>
-          </PostHogProvider>
-        </ThemeProvider>
+        <Suspense fallback={null}>
+          {/* Google Analytics */}
+          {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+            <GoogleAnalytics measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+          )}
+          
+          <ThemeProvider>
+            <PostHogProvider>
+              <QueryProvider>
+                {children}
+                <Notifications />
+              </QueryProvider>
+            </PostHogProvider>
+          </ThemeProvider>
+        </Suspense>
       </body>
     </html>
   );
