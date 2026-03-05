@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Building2, FileText, MapPin } from 'lucide-react';
 import type { InstitutionCardProps } from './types';
 import type { InstitutionRead } from '@/components/public/types';
+import Image from 'next/image';
 
 export function InstitutionCard({ institution, className = '' }: InstitutionCardProps) {
   const router = useRouter();
@@ -14,7 +15,7 @@ export function InstitutionCard({ institution, className = '' }: InstitutionCard
   const handleViewInstitution = () => {
     router.push(`/institutions/${institution.slug}`);
   };
-  console.log(institution);
+  // console.log(institution);
   // Get paper count from the institution object
   const paperCount = (institution as InstitutionRead & { exams_count?: number }).exams_count || 0;
 
@@ -23,14 +24,14 @@ export function InstitutionCard({ institution, className = '' }: InstitutionCard
       <CardContent className="pt-6">
         <div className="flex flex-col items-center text-center space-y-4">
           {/* Institution Logo/Icon */}
-          <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden shrink-0">
-            {institution.logo?.media? (
-              <img
-                src={institution.logo?.media?.link || '/placeholder.svg'}
-                alt={institution.logo?.media?.title || institution.name || 'Institution logo'}
-                width={80}
-                height={80}
-                className="w-full h-full object-cover"
+          <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden shrink-0 relative">
+            {institution.logo?.media?.link ? (
+              <Image
+                src={institution.logo.media.link}
+                alt={institution.name || 'Institution logo'}
+                fill
+                className="object-contain p-2"
+                unoptimized
               />
             ) : (
               <Building2 className="h-10 w-10 text-blue-600" />

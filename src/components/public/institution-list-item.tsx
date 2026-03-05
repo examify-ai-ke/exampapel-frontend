@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Building2, FileText, MapPin, GraduationCap, School } from 'lucide-react';
 import type { InstitutionRead } from '@/components/public/types';
+import Image from 'next/image';
 
 interface InstitutionListItemProps {
   institution: InstitutionRead;
@@ -20,8 +21,8 @@ export function InstitutionListItem({ institution, className = '' }: Institution
   // console.log(institution);
   // Get paper count from the institution object
   const paperCount = (institution as InstitutionRead & { exams_count?: number }).exams_count || 0;
-  console.log(paperCount);
-  console.log(institution);
+  // console.log(paperCount);
+  // console.log(institution);
   // Get appropriate icon based on institution type
   const getInstitutionIcon = (type?: string) => {
     switch (type?.toLowerCase()) {
@@ -43,14 +44,14 @@ export function InstitutionListItem({ institution, className = '' }: Institution
       <div className="flex items-center space-x-4 flex-1 min-w-0">
         {/* Institution Logo/Icon */}
         <div className="flex-shrink-0">
-          <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
-            {institution.logo?.media? (
-              <img
-                src={institution.logo?.media?.link || '/placeholder.svg'}
-                alt={institution.logo?.media?.title || institution.name || 'Institution logo'}
-                width={80}  
-                height={80}                
-                className="w-full h-full object-cover"
+          <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden relative">
+            {institution.logo?.media?.link ? (
+              <Image
+                src={institution.logo.media.link}
+                alt={institution.name || 'Institution logo'}
+                fill
+                className="object-contain p-2"
+                unoptimized
               />
             ) : (
               <InstitutionIcon className="h-8 w-8 text-blue-600" />

@@ -75,9 +75,24 @@ export interface InstitutionFilters {
 function extractItems<T>(response: any): T[] {
     if (!response || !response.data) return [];
     
-    if (typeof response.data === 'object' && 'data' in response.data) {
-        const data = response.data.data as any;
-        return data?.items || [];
+    // Case 1: Nested structure { data: { items: [...] } }
+    if (typeof response.data === 'object' && response.data.data?.items) {
+        return response.data.data.items;
+    }
+    
+    // Case 2: Flat structure { items: [...] }
+    if (typeof response.data === 'object' && response.data.items) {
+        return response.data.items;
+    }
+
+    // Case 3: Direct array
+    if (Array.isArray(response.data)) {
+        return response.data;
+    }
+    
+    // Case 4: data is the array
+    if (response.data.data && Array.isArray(response.data.data)) {
+        return response.data.data;
     }
     
     return [];
@@ -89,9 +104,19 @@ function extractItems<T>(response: any): T[] {
 function extractTotal(response: any): number {
     if (!response || !response.data) return 0;
     
-    if (typeof response.data === 'object' && 'data' in response.data) {
-        const data = response.data.data as any;
-        return data?.total || 0;
+    // Nested structure
+    if (typeof response.data === 'object' && response.data.data?.total !== undefined) {
+        return response.data.data.total;
+    }
+    
+    // Flat structure
+    if (typeof response.data === 'object' && response.data.total !== undefined) {
+        return response.data.total;
+    }
+
+    // Array length as fallback
+    if (Array.isArray(response.data)) {
+        return response.data.length;
     }
     
     return 0;
@@ -101,23 +126,27 @@ function extractTotal(response: any): number {
  * Helper to safely extract pagination info
  */
 function extractPagination(response: any) {
+    const defaultPagination = { page: 1, size: 10, pages: 0, total: 0 };
     if (!response || !response.data) {
-        return { page: 1, size: 10, pages: 0, total: 0 };
+        return defaultPagination;
     }
     
-    if (typeof response.data === 'object' && 'data' in response.data) {
-        const data = response.data.data as any;
+    const data = (typeof response.data === 'object' && response.data.data) 
+        ? response.data.data 
+        : response.data;
+
+    if (typeof data === 'object') {
         return {
-            page: data?.page || 1,
-            size: data?.size || 10,
-            pages: data?.pages || 0,
-            total: data?.total || 0,
-            previous_page: data?.previous_page,
-            next_page: data?.next_page,
+            page: data.page || 1,
+            size: data.size || data.limit || 10,
+            pages: data.pages || 0,
+            total: data.total || 0,
+            previous_page: data.previous_page,
+            next_page: data.next_page,
         };
     }
     
-    return { page: 1, size: 10, pages: 0, total: 0 };
+    return defaultPagination;
 }
 
 /**
@@ -586,7 +615,6 @@ export const publicAPI = {
          */
         async list(filters?: InstitutionFilters) {
             try {
-                console.log('🏛️ Fetching institutions from:', process.env.NEXT_PUBLIC_API_URL || 'http://fastapi.localhost');
                 
                 const queryParams: any = {
                     skip: filters?.skip || 0,
@@ -599,7 +627,7 @@ export const publicAPI = {
                 if (filters?.institution_type) queryParams.institution_type = filters.institution_type;
                 if (filters?.category) queryParams.category = filters.category;
                 if (filters?.location) queryParams.location = filters.location;
-
+                
                 const response = await api.GET('/api/v1/institution', {
                     params: {
                         query: queryParams
@@ -612,14 +640,6 @@ export const publicAPI = {
                 }
 
                 const items = extractItems<InstitutionRead>(response);
-                console.log('📦 Institutions response:', {
-                    count: items.length,
-                    filters: queryParams,
-                    sampleData: items[0],
-                    hasExamsCount: items[0] && 'exams_count' in items[0],
-                    hasFacultiesCount: items[0] && 'faculties_count' in items[0],
-                    hasCampusesCount: items[0] && 'campuses_count' in items[0],
-                });
 
                 return {
                     data: items,

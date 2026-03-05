@@ -81,16 +81,6 @@ export default function InstitutionsPageContent() {
       
       // Sort on client side if needed
       let institutions = result.data || [];
-      console.log(institutions);
-      if (sortBy === 'most-papers') {
-        institutions = [...institutions].sort((a: any, b: any) => 
-          (b.exams_count || 0) - (a.exams_count || 0)
-        );
-      } else if (sortBy === 'alphabetical') {
-        institutions = [...institutions].sort((a, b) => 
-          a.name.localeCompare(b.name)
-        );
-      }
       
       return {
         data: institutions,
@@ -99,6 +89,10 @@ export default function InstitutionsPageContent() {
       };
     },
   });
+
+  const institutions = data?.data || [];
+  const totalResults = data?.total || 0;
+  const totalPages = Math.ceil(totalResults / pageSize);
 
   // Update URL when filters change
   useEffect(() => {
@@ -156,9 +150,6 @@ export default function InstitutionsPageContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const institutions = data?.data || [];
-  const totalResults = data?.total || 0;
-  const totalPages = Math.ceil(totalResults / pageSize);
 
   const institutionTypes: { value: InstitutionType; label: string; icon: any }[] = [
     { value: 'all', label: 'All Types', icon: Building2 },

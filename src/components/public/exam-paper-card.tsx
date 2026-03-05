@@ -31,7 +31,7 @@ export function ExamPaperCard({
   const handleBookmark = (e: React.MouseEvent) => {
     e.stopPropagation();
     // TODO: Implement bookmark functionality (show sign-up prompt for guests)
-    console.log('Bookmark clicked');
+    // console.log('Bookmark clicked');
   };
 
   // Extract data safely from API schema
@@ -76,15 +76,14 @@ export function ExamPaperCard({
       >
         <div className="flex flex-col sm:flex-row">
           {/* Institution Logo */}
-          <div className="sm:w-32 sm:shrink-0 p-6 flex items-center justify-center bg-gray-50 dark:bg-slate-800">
-            {institution?.logo?.media ? (
-              <img
-                src={institution.logo?.media?.link || '/placeholder.svg'}
-                alt={institution.logo?.media?.title || 'Institution logo'}
-                width={80}
-                height={80}
-                className="object-contain"
-              
+          <div className="sm:w-32 sm:shrink-0 p-6 flex items-center justify-center bg-gray-50 dark:bg-slate-800 relative overflow-hidden">
+            {institution?.logo?.media?.link ? (
+              <Image
+                src={institution.logo.media.link}
+                alt={institution.name || 'Institution logo'}
+                fill
+                className="object-contain p-4"
+                unoptimized
               />
             ) : (
               <div className="w-20 h-20 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center">
@@ -210,20 +209,21 @@ export function ExamPaperCard({
         {/* Institution Logo */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            {institution?.logo?.media?.link ? (
-              <Image
-                src={institution.logo.media?.link}
-                alt={institution.name || 'Institution'}
-                width={40}
-                height={40}
-                className="object-contain rounded"
-                unoptimized
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-teal-600" />
-              </div>
-            )}
+            <div className="w-10 h-10 rounded-full overflow-hidden relative shrink-0">
+              {institution?.logo?.media?.link ? (
+                <Image
+                  src={institution.logo.media.link}
+                  alt={institution.name || 'Institution'}
+                  fill
+                  className="object-contain p-1"
+                  unoptimized
+                />
+              ) : (
+                <div className="w-full h-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-teal-600" />
+                </div>
+              )}
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                 {institutionName}
