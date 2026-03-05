@@ -173,20 +173,20 @@ export function RecentQuestionsSection({
                     `}
                   >
                     {/* Tags row */}
-                    <div className="flex flex-wrap items-center gap-1.5 mb-3">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold border border-primary/20">
+                    <div className="flex flex-wrap items-center gap-1.5 mb-4">
+                      <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-teal-700 text-white text-sm font-bold shadow-sm">
                         {institution}
                       </span>
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-700 text-xs font-semibold border border-teal-500/20">
+                      <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-rose-600 text-white text-sm font-bold shadow-sm">
                         {courseAcronym}
                       </span>
                       {programme && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-700 text-xs font-semibold border border-purple-500/20">
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-amber-600 text-white text-sm font-bold shadow-sm">
                           {programme}
                         </span>
                       )}
                       {module && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-700 text-xs font-semibold border border-amber-500/20">
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-indigo-600 text-white text-sm font-bold shadow-sm">
                           {module}
                         </span>
                       )}
@@ -195,19 +195,19 @@ export function RecentQuestionsSection({
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         {/* Question number + marks */}
-                        <div className="flex flex-wrap items-center gap-2.5 mb-2.5">
-                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-primary text-primary-foreground font-bold text-xs flex-shrink-0">
+                        <div className="flex flex-wrap items-center gap-2.5 mb-3">
+                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold text-sm flex-shrink-0 shadow-sm">
                             {question.question_number || '?'}
                           </span>
-                          <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                          <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
                             Question
                           </span>
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-yellow-500/10 text-yellow-700 text-xs font-semibold border border-yellow-500/20">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full bg-yellow-500 text-white text-sm font-bold shadow-sm">
                             {totalMarks} {totalMarks === 1 ? 'mark' : 'marks'}
                           </span>
                           {hasAnswers && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-green-500/10 text-green-700 text-xs font-semibold border border-green-500/20">
-                              <CheckCircle2 className="w-3 h-3" />
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-600 text-white text-sm font-bold shadow-sm">
+                              <CheckCircle2 className="w-4 h-4" />
                               Has Answer
                             </span>
                           )}
@@ -217,7 +217,7 @@ export function RecentQuestionsSection({
                         <Link 
                           href={getQuestionUrl(question)} 
                           onClick={(e) => e.stopPropagation()}
-                          className="block text-foreground mb-3 line-clamp-3 text-sm leading-relaxed hover:text-primary transition-colors cursor-pointer"
+                          className="block text-foreground mb-4 line-clamp-3 text-base font-medium leading-relaxed hover:text-primary transition-colors cursor-pointer"
                         >
                           {question.text && typeof question.text === 'object' && question.text.blocks ? (
                             <EditorRenderer data={question.text} className="line-clamp-3" />
@@ -227,15 +227,15 @@ export function RecentQuestionsSection({
                         </Link>
 
                         {/* Meta row */}
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mb-3">
+                        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-muted-foreground mb-4">
                           {childrenCount > 0 && (
-                            <span><span className="font-medium text-foreground">{childrenCount}</span> sub-questions</span>
+                            <span><span className="font-semibold text-foreground">{childrenCount}</span> sub-questions</span>
                           )}
-                          <span>Year: <span className="font-medium text-foreground">{year}</span></span>
+                          <span>Year: <span className="font-semibold text-foreground">{year}</span></span>
                           {question.modules && question.modules.length > 0 && (
                             <span>
                               Module:{' '}
-                              <span className="font-medium text-foreground">
+                              <span className="font-semibold text-foreground">
                                 {question.modules.map((m: any) => m.unit_code).filter(Boolean).join(', ') ||
                                   question.modules.map((m: any) => m.name).filter(Boolean).join(', ')}
                               </span>
@@ -244,18 +244,18 @@ export function RecentQuestionsSection({
                         </div>
 
                         {/* Exam paper footer */}
-                        <div className="flex items-center gap-2 pt-2.5 border-t border-border/50">
-                          <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">From:</span>
+                        <div className="flex items-center gap-2 pt-3 border-t border-border/60">
+                          <span className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">From:</span>
                           {exam_paper_slug ? (
                             <Link
                               href={`/exampapers/${exam_paper_slug}`}
                               onClick={(e) => e.stopPropagation()}
-                              className="text-xs font-semibold text-primary hover:underline transition-colors"
+                              className="text-sm font-bold text-primary hover:underline transition-colors"
                             >
                               {exam_paper_name}
                             </Link>
                           ) : (
-                            <span className="text-xs font-medium text-foreground">{exam_paper_name}</span>
+                            <span className="text-sm font-bold text-foreground">{exam_paper_name}</span>
                           )}
                         </div>
                       </div>
@@ -286,14 +286,14 @@ export function RecentQuestionsSection({
                           style={{ borderLeft: '3px solid var(--color-primary)' }}
                         >
                           <div className="flex items-start gap-3">
-                            <span className="text-xs font-bold text-primary bg-primary/10 rounded-md px-2 py-1 min-w-fit">
+                            <span className="text-sm font-bold text-primary bg-primary/10 rounded-md px-2.5 py-1.5 min-w-fit shadow-sm">
                               {subQuestion.question_number || '?'}
                             </span>
                             <div className="flex-1 min-w-0">
                               <Link 
                                 href={getQuestionUrl(subQuestion.id ? subQuestion : question)}
                                 onClick={(e) => e.stopPropagation()}
-                                className="block text-sm text-foreground mb-2 leading-relaxed hover:text-primary transition-colors cursor-pointer"
+                                className="block text-base text-foreground mb-2 leading-relaxed hover:text-primary transition-colors cursor-pointer font-medium"
                               >
                                 {subQuestion.text && typeof subQuestion.text === 'object' && subQuestion.text.blocks ? (
                                   <EditorRenderer data={subQuestion.text} />
@@ -301,13 +301,13 @@ export function RecentQuestionsSection({
                                   <p className="text-muted-foreground italic">No text available</p>
                                 )}
                               </Link>
-                              <div className="flex items-center gap-3">
-                                <span className="text-xs text-muted-foreground">
-                                  Marks: <span className="font-semibold text-primary">{subQuestion.marks || 0}</span>
+                              <div className="flex items-center gap-4">
+                                <span className="text-sm text-muted-foreground">
+                                  Marks: <span className="font-bold text-primary">{subQuestion.marks || 0}</span>
                                 </span>
                                 {subHasAnswers && (
-                                  <span className="inline-flex items-center gap-1 text-xs text-green-700 font-medium">
-                                    <CheckCircle2 className="w-3 h-3" />
+                                  <span className="inline-flex items-center gap-1.5 text-sm text-green-700 font-bold">
+                                    <CheckCircle2 className="w-4 h-4" />
                                     Has Answer
                                   </span>
                                 )}
