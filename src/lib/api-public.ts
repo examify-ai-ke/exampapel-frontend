@@ -1653,17 +1653,14 @@ export const publicAPI = {
         /**
          * Send a contact form message
          */
-        async send(data: {
-            full_name: string;
-            email: string;
-            institution: string;
-            topic: any;
-            message: string;
-        }) {
+        async send(data: components['schemas']['ContactCreate']) {
+            console.log('publicAPI.contact.send data:', data);
             try {
                 const response = await api.POST('/api/v1/contact', {
                     body: data
                 });
+                
+                console.log('publicAPI.contact.send full response:', response);
 
                 // Extract data from nested response structure (IPostResponseBase_ContactResponse_)
                 const responseData = response.data && typeof response.data === 'object' && 'data' in response.data
@@ -1673,6 +1670,7 @@ export const publicAPI = {
                 return {
                     data: responseData || null,
                     error: response.error,
+                    status: response.response.status,
                 };
             } catch (error) {
                 console.error('Error sending contact message:', error);

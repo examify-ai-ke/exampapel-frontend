@@ -1,5 +1,6 @@
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { CaptchaProvider } from "@/components/providers/captcha-provider";
 
 export default function PublicLayout({
     children,
@@ -7,12 +8,14 @@ export default function PublicLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-1">
-                {children}
-            </main>
-            <Footer />
-        </div>
+        <CaptchaProvider>
+            <div className="min-h-screen flex flex-col">
+                <Header />
+                <main className="flex-1">
+                    {children}
+                </main>
+                <Footer />
+            </div>
+        </CaptchaProvider>
     );
 } 

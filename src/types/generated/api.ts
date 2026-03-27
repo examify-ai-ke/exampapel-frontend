@@ -4448,7 +4448,7 @@ export interface components {
             /** Time */
             time: number;
             /** Blocks */
-            blocks: components["schemas"]["app__schemas__comment_schema__Block"][];
+            blocks: components["schemas"]["app__schemas__answer_schema__Block"][];
         };
         /** AnswerUpdate */
         AnswerUpdate: {
@@ -4943,7 +4943,7 @@ export interface components {
             /** Time */
             time: number;
             /** Blocks */
-            blocks: components["schemas"]["app__schemas__comment_schema__Block"][];
+            blocks: components["schemas"]["app__schemas__answer_schema__Block"][];
         };
         /** CommentUpdate */
         CommentUpdate: {
@@ -4999,6 +4999,11 @@ export interface components {
              * @description Contact message
              */
             message: string;
+            /**
+             * Recaptcha Token
+             * @description Google reCAPTCHA token for verification
+             */
+            recaptcha_token: string;
         };
         /**
          * ContactResponse
@@ -9417,7 +9422,7 @@ export interface components {
             type: string;
         };
         /** Block */
-        app__schemas__comment_schema__Block: {
+        app__schemas__answer_schema__Block: {
             /** Id */
             id: string;
             /** Data */
@@ -9578,7 +9583,7 @@ export interface components {
             /** Time */
             time: number;
             /** Blocks */
-            blocks: components["schemas"]["app__schemas__comment_schema__Block"][];
+            blocks: components["schemas"]["app__schemas__answer_schema__Block"][];
         };
     };
     responses: never;

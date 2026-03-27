@@ -19,6 +19,7 @@ import {
 import { PartnerWithUsSection } from '@/components/public/partner-with-us-section';
 import publicAPI from '@/lib/api-public';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 export default function ContactUsPage() {
   const [formData, setFormData] = React.useState({
@@ -34,13 +35,45 @@ export default function ContactUsPage() {
     message: string | null;
   }>({ type: null, message: null });
 
+  const { executeRecaptcha } = useGoogleReCaptcha();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!executeRecaptcha) {
+      setStatus({
+        type: 'error',
+        message: 'Security validation is not ready. Please refresh the page.'
+      });
+      return;
+    }
+
     setLoading(true);
     setStatus({ type: null, message: null });
 
     try {
-      const response = await publicAPI.contact.send(formData);
+      // Execute reCAPTCHA v3 to get token
+      const token = await executeRecaptcha('contact_form');
+      
+      if (!token) {
+        setStatus({
+          type: 'error',
+          message: 'Security validation failed. Please try again or refresh the page.'
+        });
+        setLoading(false);
+        return;
+      }
+
+      const requestData = {
+        ...formData,
+        recaptcha_token: token
+      };
+
+      console.log('Sending contact form data:', requestData);
+
+      const response = await publicAPI.contact.send(requestData);
+      
+      console.log('Contact API Response:', response);
       
       const success = (response.data as any)?.success;
       const message = (response.data as any)?.message;
@@ -58,9 +91,23 @@ export default function ContactUsPage() {
           message: ''
         });
       } else {
+        let errorMsg = message || 'Failed to send message. Please try again later.';
+        
+        if (response.status === 429) {
+          errorMsg = 'Too many requests. Please try again in an hour.';
+        } else if (response.status === 422) {
+          // Extract FastAPI validation error details
+          const details = (response.error as any)?.detail;
+          if (Array.isArray(details) && details.length > 0) {
+            errorMsg = `Validation error: ${details.map(d => `${d.loc[d.loc.length - 1]}: ${d.msg}`).join(', ')}`;
+          } else {
+            errorMsg = 'Invalid data submitted. Please check your form entries.';
+          }
+        }
+
         setStatus({
           type: 'error',
-          message: message || 'Failed to send message. Please try again later.'
+          message: errorMsg
         });
       }
     } catch (error) {
