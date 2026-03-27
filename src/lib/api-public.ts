@@ -1645,6 +1645,44 @@ export const publicAPI = {
             }
         },
     },
+
+    /**
+     * Contact
+     */
+    contact: {
+        /**
+         * Send a contact form message
+         */
+        async send(data: {
+            full_name: string;
+            email: string;
+            institution: string;
+            topic: any;
+            message: string;
+        }) {
+            try {
+                const response = await api.POST('/api/v1/contact', {
+                    body: data
+                });
+
+                // Extract data from nested response structure (IPostResponseBase_ContactResponse_)
+                const responseData = response.data && typeof response.data === 'object' && 'data' in response.data
+                    ? (response.data as any).data
+                    : response.data;
+
+                return {
+                    data: responseData || null,
+                    error: response.error,
+                };
+            } catch (error) {
+                console.error('Error sending contact message:', error);
+                return {
+                    data: null,
+                    error: error as any,
+                };
+            }
+        }
+    },
 };
 
 export default publicAPI;

@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export function PartnerWithUsSection() {
@@ -13,12 +14,16 @@ export function PartnerWithUsSection() {
           Exampapel is actively seeking strategic partnerships to scale our infrastructure. Help us deploy our curated question banks to pilot universities and transform how students learn worldwide.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-          <Button size="lg" className="bg-[#af1665] hover:bg-[#af1665]/90 text-white rounded-full px-8 h-12 text-base transition-all shadow-md active:scale-95">
-            Contact us for Partnership
-          </Button>
-          <Button size="lg" variant="outline" className="rounded-full px-8 h-12 border-border text-base bg-transparent hover:bg-muted/50 transition-all">
-            Request more Info
-          </Button>
+          <Link href="/contact-us">
+            <Button size="lg" className="bg-[#af1665] hover:bg-[#af1665]/90 text-white rounded-full px-8 h-12 text-base transition-all shadow-md active:scale-95">
+              Contact us for Partnership
+            </Button>
+          </Link>
+          <Link href="/contact-us">
+            <Button size="lg" variant="outline" className="rounded-full px-8 h-12 border-border text-base bg-transparent hover:bg-muted/50 transition-all">
+              Request more Info
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

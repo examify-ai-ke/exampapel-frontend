@@ -138,6 +138,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Contact Message
+         * @description Send a contact form message to the support team.
+         *
+         *     Rate limited to 5 submissions per hour per IP to prevent spam.
+         *     The message will be sent to the support email configured in settings.
+         */
+        post: operations["send_contact_message_api_v1_contact_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/login": {
         parameters: {
             query?: never;
@@ -4938,6 +4961,65 @@ export interface components {
             prerequisites: components["schemas"]["PrerequisitesCreate"];
             questions: components["schemas"]["QuestionsCreate"];
         };
+        /**
+         * ContactCreate
+         * @description Schema for creating a contact form submission
+         * @example {
+         *       "email": "john.doe@university.edu",
+         *       "full_name": "Dr. John Doe",
+         *       "institution": "University of Nairobi",
+         *       "message": "We are interested in exploring partnership opportunities...",
+         *       "topic": "Strategic Partnership"
+         *     }
+         */
+        ContactCreate: {
+            /**
+             * Full Name
+             * @description Full name of the contact
+             */
+            full_name: string;
+            /**
+             * Email
+             * Format: email
+             * @description Work email address
+             */
+            email: string;
+            /**
+             * Institution
+             * @description Institution or Organization name
+             */
+            institution: string;
+            /**
+             * @description Topic of the contact
+             * @default General Inquiry
+             */
+            topic: components["schemas"]["ContactTopic"];
+            /**
+             * Message
+             * @description Contact message
+             */
+            message: string;
+        };
+        /**
+         * ContactResponse
+         * @description Schema for contact form submission response
+         * @example {
+         *       "message": "Your message has been sent successfully. We will get back to you soon.",
+         *       "success": true
+         *     }
+         */
+        ContactResponse: {
+            /** Success */
+            success: boolean;
+            /** Message */
+            message: string;
+        };
+        /**
+         * ContactTopic
+         * @description Contact form topic options
+         * @enum {string}
+         */
+        ContactTopic: "Strategic Partnership" | "General Inquiry" | "Technical Support" | "Sales" | "Feedback" | "Other";
         /** CourseCreate */
         CourseCreate: {
             /** Name */
@@ -6802,6 +6884,22 @@ export interface components {
                 [key: string]: unknown;
             } | unknown | null;
             data?: components["schemas"]["CommentRead"] | null;
+        };
+        /** IPostResponseBase[ContactResponse] */
+        IPostResponseBase_ContactResponse_: {
+            /**
+             * Message
+             * @default Data created correctly
+             */
+            message: string | null;
+            /**
+             * Meta
+             * @default {}
+             */
+            meta: {
+                [key: string]: unknown;
+            } | unknown | null;
+            data?: components["schemas"]["ContactResponse"] | null;
         };
         /** IPostResponseBase[CourseRead] */
         IPostResponseBase_CourseRead_: {
@@ -9611,6 +9709,39 @@ export interface operations {
             };
         };
     };
+    send_contact_message_api_v1_contact_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IPostResponseBase_ContactResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     login_api_v1_login_post: {
         parameters: {
             query?: never;
@@ -11316,7 +11447,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["IGetResponsePaginated_InstitutionRead_"];
                 };
             };
             /** @description Validation Error */

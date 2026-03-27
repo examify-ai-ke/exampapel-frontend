@@ -20,12 +20,20 @@ export default function AboutUsPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground overflow-hidden">
       
       {/* Hero Section */}
-      <section className="relative px-6 pt-20 pb-16 md:pt-32 md:pb-24 flex flex-col items-center justify-center text-center">
-        {/* Background decorative elements */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full overflow-hidden -z-10 bg-background pointer-events-none">
-          <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[70%] rounded-full bg-teal-500/10 blur-[120px]" />
-          <div className="absolute top-[20%] -right-[10%] w-[40%] h-[60%] rounded-full bg-purple-500/10 blur-[120px]" />
-          <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[50%] rounded-full bg-coral-500/10 blur-[100px]" />
+      <section className="relative px-6 pt-20 pb-16 md:pt-32 md:pb-24 flex flex-col items-center justify-center text-center overflow-hidden">
+        {/* Soft Hero Section Background */}
+        <div className="absolute top-0 left-0 w-full h-[45rem] bg-teal-500/[0.05] -z-10 [mask-image:linear-gradient(to_bottom,black_70%,transparent_100%)]"></div>
+        
+        {/* Dynamic Background Grid */}
+        <div className="absolute inset-0 -z-10 bg-background">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+          
+          {/* Background decorative elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[70%] rounded-full bg-teal-500/10 blur-[120px]" />
+            <div className="absolute top-[20%] -right-[10%] w-[40%] h-[60%] rounded-full bg-purple-500/10 blur-[120px]" />
+            <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[50%] rounded-full bg-coral-500/10 blur-[100px]" />
+          </div>
         </div>
 
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-sm font-medium mb-8">

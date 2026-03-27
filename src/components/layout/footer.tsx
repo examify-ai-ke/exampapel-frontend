@@ -13,9 +13,11 @@ export function Footer({ className }: FooterProps) {
 
   return (
     <footer className={cn(
-      'border-t bg-background',
+      'border-t bg-background relative overflow-hidden',
       className
     )}>
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_bottom_right,var(--teal-500),transparent_25%)] opacity-[0.03]"></div>
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,var(--purple-500),transparent_20%)] opacity-[0.02]"></div>
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -170,7 +172,7 @@ export function Footer({ className }: FooterProps) {
               </li>
               <li>
                 <Link
-                  href="/contact"
+                  href="/contact-us"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Contact Us
