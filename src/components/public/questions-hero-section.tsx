@@ -30,7 +30,7 @@ export function QuestionsHeroSection({ stats, onSearchClick }: QuestionsHeroSect
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-slate-900 dark:text-white">
               Master Your Exams with
               <br />
-              <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-teal-600 dark:text-teal-400">
                 {stats.totalQuestions.toLocaleString()}+ Real Exam Questions
               </span>
             </h1>
@@ -91,7 +91,7 @@ export function QuestionsHeroSection({ stats, onSearchClick }: QuestionsHeroSect
             <Button
               onClick={handleBrowseAllClick}
               size="lg"
-              className="h-12 px-8 text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold"
+              className="h-12 px-8 text-base bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold shadow-md transition-all active:scale-95"
             >
               Browse All Papers
               <ArrowRight className="ml-2 h-5 w-5" />

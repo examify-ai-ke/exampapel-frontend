@@ -16,6 +16,7 @@ export { HeroSection } from './hero-section';
 export { QuestionsHeroSection } from './questions-hero-section';
 export { RecentQuestionsSection } from './recent-questions-section';
 export { FeaturedInstitutionsSection } from './featured-institutions-section';
+export { PartnerWithUsSection } from './partner-with-us-section';
 export { StatsSection } from './stats-section';
 
 // Card components

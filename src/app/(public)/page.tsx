@@ -6,6 +6,7 @@ import {
   RecentQuestionsSection,
   FeaturedInstitutionsSection,
   StatsSection,
+  PartnerWithUsSection,
 } from '@/components/public';
 import {
   usePlatformStats,
@@ -144,6 +145,9 @@ export default function HomePage() {
       ) : (
         <FeaturedInstitutionsSection institutions={institutions || []} />
       )}
+
+      {/* Partner With Us Section */}
+      <PartnerWithUsSection />
 
       {/* Stats Section with Animated Counters - Shows skeleton while loading */}
       {statsLoading ? (

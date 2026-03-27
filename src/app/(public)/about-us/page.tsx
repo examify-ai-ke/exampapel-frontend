@@ -13,6 +13,7 @@ import {
   Users, 
   Briefcase 
 } from 'lucide-react';
+import { PartnerWithUsSection } from '@/components/public';
 
 export default function AboutUsPage() {
   return (
@@ -212,46 +213,7 @@ export default function AboutUsPage() {
       </section>
 
       {/* Partner & Invest With Us Section */}
-      <section className="py-24 px-6 md:px-12 bg-teal-500/5 border-t border-border mt-auto">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-block p-4 rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400 mb-6 border border-teal-500/20">
-            <Trends className="w-8 h-8 mx-auto" />
-          </div>
-          <h2 className="font-heading mb-6 text-3xl md:text-5xl tracking-tight">Partner With Us</h2>
-          <p className="text-xl text-muted-foreground mb-10 leading-relaxed font-body">
-            Exampapel is actively seeking seed funding and strategic partnerships to scale our infrastructure. Help us deploy our Enterprise dashboard to pilot universities and transform how students learn worldwide.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-            <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 rounded-full px-8 h-12 text-base transition-all">
-              Contact Us for Investment
-            </Button>
-            <Button size="lg" variant="outline" className="rounded-full px-8 h-12 border-border text-base bg-transparent hover:bg-muted/50 transition-all">
-              Request a Pilot Demo
-            </Button>
-          </div>
-        </div>
-      </section>
+      <PartnerWithUsSection />
     </div>
-  );
-}
-
-// Icon helper for the last section
-function Trends(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-      <polyline points="16 7 22 7 22 13" />
-    </svg>
   );
 }
