@@ -67,6 +67,8 @@ export interface InstitutionFilters {
     location?: string;
     limit?: number;
     skip?: number;
+    order_by?: string;
+    order?: 'ascendent' | 'descendent';
 }
 
 /**
@@ -627,6 +629,8 @@ export const publicAPI = {
                 if (filters?.institution_type) queryParams.institution_type = filters.institution_type;
                 if (filters?.category) queryParams.category = filters.category;
                 if (filters?.location) queryParams.location = filters.location;
+                if (filters?.order_by) queryParams.order_by = filters.order_by;
+                if (filters?.order) queryParams.order = filters.order;
                 
                 const response = await api.GET('/api/v1/institution', {
                     params: {
@@ -732,39 +736,16 @@ export const publicAPI = {
          */
         async getFeatured(limit: number = 8) {
             try {
-                console.log('🏛️ Fetching featured institutions sorted by exam count');
+                console.log('🏛️ Fetching featured institutions using standard list endpoint (with logos)');
                 
-                // Use the advanced search endpoint with exam_count sorting
-                const response = await api.GET('/api/v1/institution/search/advanced', {
-                    params: {
-                        query: {
-                            skip: 0,
-                            limit: limit,
-                            sort_by: 'exam_count',
-                            sort_order: 'desc',
-                        }
-                    }
+                // Use the standard list endpoint which includes logos
+                // Replaced advanced search which was missing nested logo data
+                return this.list({
+                    skip: 0,
+                    limit: limit,
+                    order_by: 'exams_count',
+                    order: 'descendent',
                 });
-
-                if (response.error) {
-                    console.error('❌ Featured institutions API Error:', response.error);
-                    throw new Error(`API Error: ${JSON.stringify(response.error)}`);
-                }
-
-                const institutions = extractItems<InstitutionRead>(response);
-                
-                console.log('📦 Featured institutions response:', {
-                    count: institutions.length,
-                    sortedBy: 'exam_count',
-                    topInstitution: institutions[0]?.name,
-                    topExamCount: institutions[0] && 'exams_count' in institutions[0] ? (institutions[0] as any).exams_count : 0,
-                });
-
-                return {
-                    data: institutions,
-                    total: institutions.length,
-                    error: response.error,
-                };
             } catch (error) {
                 console.error('❌ Error fetching featured institutions:', error);
                 return {
@@ -1669,52 +1650,6 @@ export const publicAPI = {
                 };
             }
         },
-
-        /**
-         * Toggle like on a comment
-         */
-        async toggleLike(commentId: string) {
-            try {
-                const response = await api.POST('/api/v1/comment/{comment_id}/like', {
-                    params: {
-                        path: { comment_id: commentId }
-                    }
-                });
-                return {
-                    data: response.data,
-                    error: response.error
-                };
-            } catch (error) {
-                console.error('Error toggling like:', error);
-                return {
-                    data: null,
-                    error: error as any
-                };
-            }
-        },
-
-        /**
-         * Toggle dislike on a comment
-         */
-        async toggleDislike(commentId: string) {
-            try {
-                const response = await api.POST('/api/v1/comment/{comment_id}/dislike', {
-                    params: {
-                        path: { comment_id: commentId }
-                    }
-                });
-                return {
-                    data: response.data,
-                    error: response.error
-                };
-            } catch (error) {
-                console.error('Error toggling dislike:', error);
-                return {
-                    data: null,
-                    error: error as any
-                };
-            }
-        }
     },
 };
 
