@@ -37,10 +37,12 @@ const nextConfig: NextConfig = {
     qualities: [100, 75],
   },
   async rewrites() {
+    // Fallback to a valid URL format during build if the environment variable is missing
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
+        destination: `${apiUrl}/:path*`,
       },
     ];
   },
